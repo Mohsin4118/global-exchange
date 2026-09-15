@@ -8,10 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Lang, StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Backoffice } from "@/components/admin/shell";
-
-const ADMIN_EMAIL = "super@globexchange.co.uk";
-const ADMIN_PASSWORD = "Super@2026";
-
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/admin-auth";
 
 /* ---------------- Admin login ---------------- */
 

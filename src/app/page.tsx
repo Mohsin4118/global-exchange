@@ -65,6 +65,11 @@ export default function Page() {
     setView("admin-login");
   }, []);
 
+  const goAdminPanel = useCallback(() => {
+    window.location.hash = "admin";
+    setView("admin-panel");
+  }, []);
+
   const dir = useMemo(() => (lang === "ar" ? "rtl" : "ltr"), [lang]);
 
   return (
@@ -117,7 +122,7 @@ export default function Page() {
             transition={{ duration: 0.35 }}
             className="flex min-h-screen flex-col"
           >
-            <LoginView t={t} lang={lang} onBack={goHome} onSwitchToRegister={() => setView("register")} />
+            <LoginView t={t} lang={lang} onBack={goHome} onSwitchToRegister={() => setView("register")} onAdminSuccess={goAdminPanel} onAdminGate={goAdmin} />
           </motion.div>
         ) : view === "register" ? (
           <motion.div

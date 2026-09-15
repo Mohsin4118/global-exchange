@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, User } from "lucide-react";
 import { Logo } from "./icons";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_EMAIL, isAdminCredentials } from "@/lib/admin-auth";
 import type { Lang, StringKey } from "@/lib/i18n";
 
 export function LoginView({
@@ -12,11 +13,15 @@ export function LoginView({
   lang,
   onBack,
   onSwitchToRegister,
+  onAdminSuccess,
+  onAdminGate,
 }: {
   t: (k: StringKey) => string;
   lang: Lang;
   onBack: () => void;
   onSwitchToRegister: () => void;
+  onAdminSuccess?: () => void;
+  onAdminGate?: () => void;
 }) {
   const title = t("welcomeBack");
   const subtitle = t("signInToAccess");
@@ -30,6 +35,15 @@ export function LoginView({
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       toast({ title: t("fillAllFields"), variant: "destructive" });
+      return;
+    }
+    // Super Admin credentials typed into the client login → straight to the backoffice
+    if (email.trim().toLowerCase() === ADMIN_EMAIL) {
+      if (isAdminCredentials(email, password)) {
+        onAdminSuccess?.();
+        return;
+      }
+      toast({ title: t("adminWrong"), variant: "destructive" });
       return;
     }
     toast({ title: t("signedInToast") });
@@ -100,6 +114,17 @@ export function LoginView({
             {t("createOne")}
           </button>
         </p>
+
+        {onAdminGate && (
+          <button
+            type="button"
+            onClick={onAdminGate}
+            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-white/45 hover:text-red-400 hover:border-red-400/30 transition-colors"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {t("adminBadge")}
+          </button>
+        )}
       </form>
     </AuthShell>
   );

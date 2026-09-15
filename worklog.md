@@ -92,3 +92,20 @@ Stage Summary:
 - Admin access now works 3 ways: footer button, direct URL #admin, reload persistence with #admin
 - Browser-verified: footer click -> login, credentials login -> full backoffice (Dashboard/Clients/Transactions/Withdrawals/Financial/Market/Audit/Notifications/Staff/Profile), mobile 390px no overflow, 0 console errors, lint 0 errors
 - Deliverable: /home/z/my-project/download/globexchange-project.zip
+
+---
+Task ID: 6
+Agent: Main agent (Super Z)
+Task: Fix user-reported "cannot access super admin" (screenshot showed admin creds typed into CLIENT login which goes nowhere)
+
+Work Log:
+- Root cause from screenshot: user landed on green client login (Welcome back) instead of red admin gate; client login only showed a demo toast and never navigated
+- Created src/lib/admin-auth.ts (shared ADMIN_EMAIL/ADMIN_PASSWORD/isAdminCredentials)
+- auth-views.tsx LoginView: admin email + correct password -> onAdminSuccess (straight to backoffice); admin email + wrong password -> "Invalid credentials" rejection; regular users unchanged; added visible "Super Admin" shortcut button on the login card
+- admin-views.tsx now imports shared credentials; page.tsx passes onAdminSuccess/onAdminGate, added goAdminPanel (hash #admin + admin-panel view)
+- Browser-verified all paths: client login + admin creds -> backoffice panel; wrong admin pw -> rejected; regular creds -> demo toast; Super Admin shortcut -> red gate; footer link + #admin still work; sign out clears hash; 0 console errors; lint 0 errors
+- Updated README (3 access paths), rebuilt download/globexchange-project.zip
+
+Stage Summary:
+- Admin credentials now work from ANY login surface; 4 access paths total (footer, #admin URL, client login w/ admin creds, login-card shortcut)
+- Zip refreshed: /home/z/my-project/download/globexchange-project.zip

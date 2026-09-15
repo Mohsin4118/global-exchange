@@ -21,13 +21,16 @@ Open http://localhost:3000
 
 ## Super Admin Backoffice — How to Access
 
-**Two ways:**
+**Three ways:**
 
 1. **From the site footer** — click the bordered **"Super Admin"** button (bottom right of the footer)
 2. **Direct URL** — append `#admin` to the site URL:
    ```
    http://localhost:3000/#admin
    ```
+3. **From the regular client login** — type the Super Admin credentials below and you are
+   taken straight to the backoffice (a "Super Admin" shortcut button is also available on
+   the login card)
 
 **Demo credentials:**
 
