@@ -316,10 +316,10 @@ export function Footer({
           <p className="text-[12px] text-white/35">{t("riskNote")}</p>
           <button
             onClick={onAdmin}
-            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-white/25 hover:text-red-400/80 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-white/55 hover:text-red-400 hover:border-red-400/30 transition-colors"
             title={t("adminBadge")}
           >
-            <ShieldCheck className="h-3 w-3" />
+            <ShieldCheck className="h-3.5 w-3.5" />
             {t("adminBadge")}
           </button>
         </div>

@@ -43,7 +43,27 @@ export default function Page() {
             : "Global Exchange | Private Financial Platform";
   }, [view, t]);
 
-  const goHome = useCallback(() => setView("home"), []);
+  // Direct admin access via URL hash (#admin) — also survives reload
+  useEffect(() => {
+    const applyHash = () => {
+      if (window.location.hash === "#admin") setView((v) => (v === "admin-panel" ? v : "admin-login"));
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
+
+  const goHome = useCallback(() => {
+    if (window.location.hash) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    setView("home");
+  }, []);
+
+  const goAdmin = useCallback(() => {
+    window.location.hash = "admin";
+    setView("admin-login");
+  }, []);
 
   const dir = useMemo(() => (lang === "ar" ? "rtl" : "ltr"), [lang]);
 
@@ -86,7 +106,7 @@ export default function Page() {
             <Testimonials t={t} />
             <Faq t={t} />
             <FinalCta t={t} onRegister={() => setView("register")} onLogin={() => setView("login")} />
-            <Footer t={t} onLogin={() => setView("login")} onRegister={() => setView("register")} onAdmin={() => setView("admin-login")} />
+            <Footer t={t} onLogin={() => setView("login")} onRegister={() => setView("register")} onAdmin={goAdmin} />
           </motion.div>
         ) : view === "login" ? (
           <motion.div

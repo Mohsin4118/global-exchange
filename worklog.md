@@ -75,3 +75,20 @@ Stage Summary:
 - Super Admin backoffice now replicates the captured platform 1:1 (light theme, emerald accents, mono ids, JSON audit details)
 - Entry: footer "Super Admin" -> login -> full panel; all actions update data + audit trail live
 - Files: src/lib/admin-data.ts, src/components/admin/{types,ui,shell,dashboard,clients,ledger,misc}.tsx, admin-views.tsx rewired
+
+---
+Task ID: 5
+Agent: Main agent (Super Z)
+Task: Fix "admin access impossible" user report + deliver project as zip
+
+Work Log:
+- Diagnosed: backoffice existed (Task 4) but entry was nearly invisible (footer link 11px at 25% opacity) and no direct URL access
+- page.tsx: added #admin hash support (on mount + hashchange listener) so the admin login opens via direct URL; goAdmin sets hash; goHome clears hash via replaceState (no scroll jump)
+- closing-sections.tsx footer: Super Admin link upgraded to bordered pill button (12px, white/55, hover red-400)
+- Created README.md (run instructions, admin credentials super@globexchange.co.uk / Super@2026, feature list)
+- Built clean zip: download/globexchange-project.zip (99 files, 236KB: src, public, prisma, configs, package.json, bun.lock, README) — excluded node_modules/skills/upload/scripts internals
+
+Stage Summary:
+- Admin access now works 3 ways: footer button, direct URL #admin, reload persistence with #admin
+- Browser-verified: footer click -> login, credentials login -> full backoffice (Dashboard/Clients/Transactions/Withdrawals/Financial/Market/Audit/Notifications/Staff/Profile), mobile 390px no overflow, 0 console errors, lint 0 errors
+- Deliverable: /home/z/my-project/download/globexchange-project.zip
