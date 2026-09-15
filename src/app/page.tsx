@@ -130,7 +130,7 @@ export default function Page() {
             transition={{ duration: 0.35 }}
             className="flex min-h-screen flex-col"
           >
-            <AdminPanelView t={t} onSignOut={goHome} />
+            <AdminPanelView onSignOut={goHome} />
           </motion.div>
         )}
       </AnimatePresence>

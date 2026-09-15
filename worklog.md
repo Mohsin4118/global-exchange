@@ -56,3 +56,22 @@ Stage Summary:
 - Site fully recapped: homepage SPA (hero, features, live market, swap widget, steps, security, FCA footer), login, register, robots.txt
 - Contact channels found: support@globexchange.co.uk, WhatsApp/Telegram/imo +44 7591 274617
 - Recap delivered in chat (user requested delivery "here", no file output)
+
+---
+Task ID: 4
+Agent: Main agent (Super Z)
+Task: Rebuild Super Admin backoffice as pixel-faithful replica of uploaded FireShot captures (12 pages of globexchange.co.uk "Private Financial Platform")
+
+Work Log:
+- Extracted 12 PNG captures from upload zip; catalogued every admin page (Dashboard, Clients, Client detail, Transactions, Withdrawals + Update modal, Financial Overview, Market Overview, Audit Trail, Notifications, Staff & Roles, Profile)
+- Created src/lib/admin-data.ts: 16 clients (exact captured names/balances incl. Arabic names), 18 completed CREDIT transactions tuned so headline aggregates match captures exactly (Total Balances $6,711,092.00, Transaction Volume $6,725,285.10, "18 transactions"), 3 pending withdrawals with real-style addresses, 57 audit entries with JSON details (red old / green new), 18 notifications (7 unread), 2 staff, 2 roles w/ permission chips, 20 market coins with captured prices
+- Built modular admin components: shell.tsx (dark navy sidebar + collapse handle + Platform Integrity box + Profile/Sign Out; topbar bell w/ live unread badge + Administrator dropdown; mobile drawer), ui.tsx (Card/StatCard/badges/modal/select primitives), dashboard.tsx (stat cards, Client Growth chart with dark header + smooth SVG curve, Recent Transactions; Financial: bar chart, 100%-credits donut with notch, Top-5 by latest balanceAfter; Market: search + 6 range pills + 20 sparkline cards), clients.tsx (search/status filter/pagination/New Client modal; detail: editable form, financial summary, comments w/ Post), ledger.tsx (expandable tx rows w/ reference/method/notes, New Transaction modal; withdrawals + Update Withdrawal Status modal), misc.tsx (Audit w/ numbered pagination, Notifications w/ mark-all-read, Staff & Roles, Profile w/ password change)
+- Rewired admin-views.tsx (kept red-accent AdminLoginView gate, replaced old demo panel) via scripts/rewrite_admin_views.py; Backoffice renders after login (super@globexchange.co.uk / Super@2026)
+- Live state wiring: creating client/transaction/staff and updating withdrawals writes audit entries + notifications, updates balances/badge in real time
+- Fixed TS errors (AuditAction union, nullable coin.change); lint 0 errors, tsc clean
+- Browser-verified all 10 pages vs captures side-by-side; tested: login, client create (badge 7->8), comment post, tx create (+$75,000, balance $230,697.30->$305,697.30), withdrawal PROCESSING update, mark-all-read (badge cleared), audit new entry, sidebar collapse, mobile 390px no overflow, sign out -> homepage. Zero console errors.
+
+Stage Summary:
+- Super Admin backoffice now replicates the captured platform 1:1 (light theme, emerald accents, mono ids, JSON audit details)
+- Entry: footer "Super Admin" -> login -> full panel; all actions update data + audit trail live
+- Files: src/lib/admin-data.ts, src/components/admin/{types,ui,shell,dashboard,clients,ledger,misc}.tsx, admin-views.tsx rewired

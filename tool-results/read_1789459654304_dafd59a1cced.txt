@@ -1,0 +1,543 @@
+     1→"use client";
+     2→
+     3→import { useMemo, useState } from "react";
+     4→import { motion } from "framer-motion";
+     5→import {
+     6→  ShieldCheck, Users, ArrowLeftRight, FileCheck2, LogOut, Search, Wallet,
+     7→  TrendingUp, Ticket, Activity, CheckCircle2, XCircle, Ban, RotateCcw, Info, ArrowLeft,
+     8→} from "lucide-react";
+     9→import { LogoMark } from "./icons";
+    10→import { useToast } from "@/hooks/use-toast";
+    11→import type { Lang, StringKey } from "@/lib/i18n";
+    12→import { cn } from "@/lib/utils";
+    13→
+    14→const ADMIN_EMAIL = "super@globexchange.co.uk";
+    15→const ADMIN_PASSWORD = "Super@2026";
+    16→
+    17→/* ---------------- data seeds ---------------- */
+    18→
+    19→type Kyc = "Verified" | "Pending" | "Rejected";
+    20→type UserStatus = "Active" | "Suspended";
+    21→
+    22→interface AdminUser {
+    23→  id: number;
+    24→  name: string;
+    25→  email: string;
+    26→  country: string;
+    27→  balance: string;
+    28→  kyc: Kyc;
+    29→  status: UserStatus;
+    30→  lastActive: string;
+    31→}
+    32→
+    33→interface AdminTx {
+    34→  id: string;
+    35→  user: string;
+    36→  type: "Deposit" | "Withdraw" | "Swap";
+    37→  amount: string;
+    38→  status: "Completed" | "Pending" | "Rejected";
+    39→}
+    40→
+    41→const SEED_USERS: AdminUser[] = [
+    42→  { id: 1, name: "Omar Farouk", email: "omar.f@gmail.com", country: "United Kingdom", balance: "$12,450.80", kyc: "Verified", status: "Active", lastActive: "2 min ago" },
+    43→  { id: 2, name: "Layla Hassan", email: "layla.h@outlook.com", country: "UAE", balance: "$8,930.25", kyc: "Pending", status: "Active", lastActive: "14 min ago" },
+    44→  { id: 3, name: "Daniel Smith", email: "d.smith@yahoo.com", country: "Germany", balance: "$25,102.40", kyc: "Verified", status: "Active", lastActive: "1 h ago" },
+    45→  { id: 4, name: "Fatima Noor", email: "fatima.n@gmail.com", country: "Qatar", balance: "$3,210.00", kyc: "Pending", status: "Active", lastActive: "3 h ago" },
+    46→  { id: 5, name: "Lucas Meyer", email: "lucas.m@gmail.com", country: "Switzerland", balance: "$57,880.10", kyc: "Verified", status: "Suspended", lastActive: "2 d ago" },
+    47→  { id: 6, name: "Aisha Karim", email: "aisha.k@gmail.com", country: "Egypt", balance: "$940.55", kyc: "Rejected", status: "Active", lastActive: "5 h ago" },
+    48→  { id: 7, name: "Michael Brown", email: "m.brown@gmail.com", country: "United States", balance: "$41,220.75", kyc: "Verified", status: "Active", lastActive: "22 min ago" },
+    49→  { id: 8, name: "Sara Ali", email: "sara.ali@hotmail.com", country: "Saudi Arabia", balance: "$16,705.30", kyc: "Pending", status: "Active", lastActive: "45 min ago" },
+    50→];
+    51→
+    52→const SEED_TXS: AdminTx[] = [
+    53→  { id: "TX-90412", user: "Omar Farouk", type: "Withdraw", amount: "0.85 BTC", status: "Pending" },
+    54→  { id: "TX-90411", user: "Michael Brown", type: "Deposit", amount: "12,500 USDT", status: "Completed" },
+    55→  { id: "TX-90410", user: "Layla Hassan", type: "Swap", amount: "3.2 ETH → BTC", status: "Completed" },
+    56→  { id: "TX-90409", user: "Daniel Smith", type: "Withdraw", amount: "1.4 ETH", status: "Pending" },
+    57→  { id: "TX-90408", user: "Sara Ali", type: "Deposit", amount: "5,000 USDT", status: "Completed" },
+    58→  { id: "TX-90407", user: "Lucas Meyer", type: "Swap", amount: "0.5 BTC → USDT", status: "Rejected" },
+    59→  { id: "TX-90406", user: "Fatima Noor", type: "Withdraw", amount: "320 USDT", status: "Pending" },
+    60→  { id: "TX-90405", user: "Aisha Karim", type: "Deposit", amount: "1.1 BTC", status: "Completed" },
+    61→];
+    62→
+    63→/* ---------------- shared bits ---------------- */
+    64→
+    65→function StatusPill({ kind, label }: { kind: "good" | "warn" | "bad" | "off"; label: string }) {
+    66→  return (
+    67→    <span
+    68→      className={cn(
+    69→        "inline-flex items-center rounded-md px-2 py-0.5 text-[10.5px] font-bold whitespace-nowrap",
+    70→        kind === "good" && "bg-emerald-400/12 text-emerald-400",
+    71→        kind === "warn" && "bg-amber-400/12 text-amber-400",
+    72→        kind === "bad" && "bg-red-400/12 text-red-400",
+    73→        kind === "off" && "bg-white/8 text-white/50"
+    74→      )}
+    75→    >
+    76→      {label}
+    77→    </span>
+    78→  );
+    79→}
+    80→
+    81→function MiniButton({
+    82→  children,
+    83→  onClick,
+    84→  tone,
+    85→}: {
+    86→  children: React.ReactNode;
+    87→  onClick: () => void;
+    88→  tone: "green" | "red" | "gray";
+    89→}) {
+    90→  return (
+    91→    <button
+    92→      onClick={onClick}
+    93→      className={cn(
+    94→        "inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold transition-colors whitespace-nowrap",
+    95→        tone === "green" && "bg-[#00E5A0]/12 text-[#00E5A0] hover:bg-[#00E5A0]/22",
+    96→        tone === "red" && "bg-red-400/12 text-red-400 hover:bg-red-400/22",
+    97→        tone === "gray" && "bg-white/8 text-white/70 hover:bg-white/14"
+    98→      )}
+    99→    >
+   100→      {children}
+   101→    </button>
+   102→  );
+   103→}
+   104→
+   105→/* ---------------- Admin login ---------------- */
+   106→
+   107→export function AdminLoginView({
+   108→  t,
+   109→  lang,
+   110→  onBack,
+   111→  onSuccess,
+   112→}: {
+   113→  t: (k: StringKey) => string;
+   114→  lang: Lang;
+   115→  onBack: () => void;
+   116→  onSuccess: () => void;
+   117→}) {
+   118→  const { toast } = useToast();
+   119→  const [email, setEmail] = useState("");
+   120→  const [password, setPassword] = useState("");
+   121→  const [error, setError] = useState(false);
+   122→
+   123→  const submit = (e: React.FormEvent) => {
+   124→    e.preventDefault();
+   125→    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+   126→      setError(false);
+   127→      onSuccess();
+   128→    } else {
+   129→      setError(true);
+   130→      toast({ title: t("adminWrong"), variant: "destructive" });
+   131→    }
+   132→  };
+   133→
+   134→  return (
+   135→    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#04121c]">
+   136→      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+   137→        <div className="absolute -top-32 start-1/3 h-[420px] w-[420px] rounded-full bg-red-400/[0.05] blur-[130px]" />
+   138→        <div className="absolute bottom-0 end-10 h-[320px] w-[320px] rounded-full bg-[#00E5A0]/[0.04] blur-[120px]" />
+   139→      </div>
+   140→
+   141→      <header className="relative z-10 border-b border-white/[0.06] bg-[#031019]/90 backdrop-blur-xl">
+   142→        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+   143→          <div className="flex items-center gap-3">
+   144→            <LogoMark className="h-10 w-10" />
+   145→            <span className="rounded-md bg-red-400/12 px-2 py-0.5 text-[11px] font-bold text-red-400">{t("adminBadge")}</span>
+   146→          </div>
+   147→          <button
+   148→            onClick={onBack}
+   149→            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[13px] font-semibold text-white/70 hover:text-white transition-colors"
+   150→          >
+   151→            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+   152→            {t("backHome")}
+   153→          </button>
+   154→        </div>
+   155→      </header>
+   156→
+   157→      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-12">
+   158→        <motion.div
+   159→          initial={{ opacity: 0, y: 24 }}
+   160→          animate={{ opacity: 1, y: 0 }}
+   161→          transition={{ duration: 0.6, ease: "easeOut" }}
+   162→          className="w-full max-w-md"
+   163→        >
+   164→          <div className="rounded-2xl border border-red-400/15 bg-[#071923]/90 p-6 sm:p-8 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)]">
+   165→            <div className="mb-6 text-center">
+   166→              <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-400/12 text-red-400">
+   167→                <ShieldCheck className="h-6 w-6" />
+   168→              </span>
+   169→              <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">{t("adminLoginTitle")}</h1>
+   170→              <p className="mt-1.5 text-[13px] text-white/50">{t("adminLoginSub")}</p>
+   171→            </div>
+   172→
+   173→            <form onSubmit={submit} className="flex flex-col gap-4">
+   174→              <div>
+   175→                <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">{t("emailAddress")}</label>
+   176→                <input
+   177→                  type="email"
+   178→                  value={email}
+   179→                  onChange={(e) => setEmail(e.target.value)}
+   180→                  placeholder="admin@globexchange.co.uk"
+   181→                  autoComplete="email"
+   182→                  className={cn(
+   183→                    "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
+   184→                    error ? "border-red-400/50 focus:ring-red-400/15" : "border-white/10 focus:border-red-400/40 focus:ring-red-400/10"
+   185→                  )}
+   186→                />
+   187→              </div>
+   188→              <div>
+   189→                <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">{t("password")}</label>
+   190→                <input
+   191→                  type="password"
+   192→                  value={password}
+   193→                  onChange={(e) => setPassword(e.target.value)}
+   194→                  placeholder="••••••••••"
+   195→                  autoComplete="current-password"
+   196→                  className={cn(
+   197→                    "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
+   198→                    error ? "border-red-400/50 focus:ring-red-400/15" : "border-white/10 focus:border-red-400/40 focus:ring-red-400/10"
+   199→                  )}
+   200→                />
+   201→                {error && <p className="mt-1.5 text-[12px] font-medium text-red-400">{t("adminWrong")}</p>}
+   202→              </div>
+   203→
+   204→              <button
+   205→                type="submit"
+   206→                className="mt-1 h-12 rounded-xl bg-red-400 text-[15px] font-bold text-[#2a0505] shadow-[0_8px_32px_-8px_rgba(248,113,113,0.5)] hover:bg-red-300 active:scale-[0.99] transition-all"
+   207→              >
+   208→                {t("signIn")}
+   209→              </button>
+   210→            </form>
+   211→
+   212→            <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
+   213→              <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/35" />
+   214→              <p className="text-[11.5px] leading-relaxed text-white/45" dir="ltr">
+   215→                <span className="font-bold text-white/60">{t("adminHint")}:</span> {ADMIN_EMAIL} / {ADMIN_PASSWORD}
+   216→              </p>
+   217→            </div>
+   218→          </div>
+   219→          <p className="mt-5 text-center text-[11.5px] text-white/30">{t("privatePortal")}</p>
+   220→        </motion.div>
+   221→      </main>
+   222→      <span className="hidden">{lang}</span>
+   223→    </div>
+   224→  );
+   225→}
+   226→
+   227→/* ---------------- Admin panel ---------------- */
+   228→
+   229→type Tab = "overview" | "users" | "transactions" | "kyc";
+   230→
+   231→export function AdminPanelView({
+   232→  t,
+   233→  onSignOut,
+   234→}: {
+   235→  t: (k: StringKey) => string;
+   236→  onSignOut: () => void;
+   237→}) {
+   238→  const { toast } = useToast();
+   239→  const [tab, setTab] = useState<Tab>("overview");
+   240→  const [users, setUsers] = useState<AdminUser[]>(SEED_USERS);
+   241→  const [txs, setTxs] = useState<AdminTx[]>(SEED_TXS);
+   242→  const [query, setQuery] = useState("");
+   243→
+   244→  const pendingCount = txs.filter((x) => x.status === "Pending").length;
+   245→  const kycQueue = users.filter((u) => u.kyc === "Pending");
+   246→
+   247→  const filteredUsers = useMemo(() => {
+   248→    const q = query.trim().toLowerCase();
+   249→    if (!q) return users;
+   250→    return users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+   251→  }, [users, query]);
+   252→
+   253→  const setKyc = (id: number, kyc: Kyc) => {
+   254→    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, kyc } : u)));
+   255→    toast({ title: kyc === "Verified" ? t("userVerifiedToast") : t("txRejectedToast") });
+   256→  };
+   257→
+   258→  const setUserStatus = (id: number, status: UserStatus) => {
+   259→    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
+   260→    toast({ title: status === "Suspended" ? t("userSuspendedToast") : t("userReactivatedToast") });
+   261→  };
+   262→
+   263→  const setTxStatus = (id: string, status: AdminTx["status"]) => {
+   264→    setTxs((prev) => prev.map((x) => (x.id === id ? { ...x, status } : x)));
+   265→    toast({ title: status === "Completed" ? t("txApprovedToast") : t("txRejectedToast") });
+   266→  };
+   267→
+   268→  const tabs: { key: Tab; label: string; icon: React.ElementType; count?: number }[] = [
+   269→    { key: "overview", label: t("overview"), icon: Activity },
+   270→    { key: "users", label: t("usersTab"), icon: Users, count: users.length },
+   271→    { key: "transactions", label: t("transactionsTab"), icon: ArrowLeftRight, count: pendingCount || undefined },
+   272→    { key: "kyc", label: t("kycTab"), icon: FileCheck2, count: kycQueue.length || undefined },
+   273→  ];
+   274→
+   275→  const statCards = [
+   276→    { icon: Users, label: t("totalUsers"), value: "512,847", delta: "+2,314 this week" },
+   277→    { icon: TrendingUp, label: t("volume24h"), value: "$184.2M", delta: "+8.4% vs yesterday" },
+   278→    { icon: Wallet, label: t("pendingWithdrawals"), value: String(pendingCount), delta: "awaiting approval" },
+   279→    { icon: Ticket, label: t("openTickets"), value: "27", delta: "avg. response 6 min" },
+   280→  ];
+   281→
+   282→  return (
+   283→    <div className="flex min-h-screen flex-col bg-[#04121c]">
+   284→      {/* top bar */}
+   285→      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#031019]/95 backdrop-blur-xl">
+   286→        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+   287→          <div className="flex items-center gap-3">
+   288→            <LogoMark className="h-9 w-9" />
+   289→            <span className="hidden sm:block text-[15px] font-semibold text-white">Global Exchange</span>
+   290→            <span className="rounded-md bg-red-400/12 px-2 py-0.5 text-[11px] font-bold text-red-400">{t("adminBadge")}</span>
+   291→          </div>
+   292→          <button
+   293→            onClick={onSignOut}
+   294→            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[13px] font-semibold text-white/70 hover:text-white hover:border-red-400/40 hover:text-red-400 transition-colors"
+   295→          >
+   296→            <LogOut className="h-4 w-4 rtl:rotate-180" />
+   297→            {t("signOut")}
+   298→          </button>
+   299→        </div>
+   300→        {/* tabs */}
+   301→        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+   302→          <nav className="flex gap-1 overflow-x-auto" aria-label="Admin sections">
+   303→            {tabs.map(({ key, label, icon: Icon, count }) => (
+   304→              <button
+   305→                key={key}
+   306→                onClick={() => setTab(key)}
+   307→                className={cn(
+   308→                  "relative flex items-center gap-2 whitespace-nowrap rounded-t-lg px-4 py-3 text-[13px] font-semibold transition-colors",
+   309→                  tab === key ? "text-[#00E5A0]" : "text-white/45 hover:text-white/80"
+   310→                )}
+   311→              >
+   312→                <Icon className="h-4 w-4" />
+   313→                {label}
+   314→                {count !== undefined && count > 0 && (
+   315→                  <span className="rounded-full bg-[#00E5A0]/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#00E5A0]">
+   316→                    {count}
+   317→                  </span>
+   318→                )}
+   319→                {tab === key && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[#00E5A0]" />}
+   320→              </button>
+   321→            ))}
+   322→          </nav>
+   323→        </div>
+   324→      </header>
+   325→
+   326→      <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 py-6">
+   327→        {tab === "overview" && (
+   328→          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex flex-col gap-6">
+   329→            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   330→              {statCards.map((s) => (
+   331→                <div key={s.label} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-5">
+   332→                  <div className="flex items-center justify-between">
+   333→                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#00E5A0]/12 text-[#00E5A0]">
+   334→                      <s.icon className="h-4.5 w-4.5" />
+   335→                    </span>
+   336→                  </div>
+   337→                  <p className="mt-3.5 font-mono text-2xl font-bold text-white tabular-nums" dir="ltr">{s.value}</p>
+   338→                  <p className="mt-0.5 text-[12px] font-medium uppercase tracking-wide text-white/45">{s.label}</p>
+   339→                  <p className="mt-1.5 text-[11px] text-emerald-400/90" dir="ltr">{s.delta}</p>
+   340→                </div>
+   341→              ))}
+   342→            </div>
+   343→
+   344→            <div className="grid gap-4 lg:grid-cols-2">
+   345→              {/* health */}
+   346→              <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-5">
+   347→                <div className="flex items-center justify-between">
+   348→                  <p className="text-[13px] font-bold text-white/85">{t("systemsOperational")}</p>
+   349→                  <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+   350→                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+   351→                    100%
+   352→                  </span>
+   353→                </div>
+   354→                <div className="mt-4 flex items-end gap-1" dir="ltr" aria-hidden="true">
+   355→                  {Array.from({ length: 30 }).map((_, i) => (
+   356→                    <span key={i} className={cn("flex-1 rounded-sm", i === 21 ? "bg-amber-400/60" : "bg-emerald-400/50")} style={{ height: `${14 + ((i * 7) % 12)}px` }} />
+   357→                  ))}
+   358→                </div>
+   359→                <div className="mt-3 flex items-center justify-between text-[11px] text-white/40">
+   360→                  <span>{t("uptime")}</span>
+   361→                  <span className="font-mono font-bold text-white/70" dir="ltr">99.98%</span>
+   362→                </div>
+   363→              </div>
+   364→              {/* latest pending */}
+   365→              <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-5">
+   366→                <p className="text-[13px] font-bold text-white/85">{t("pendingWithdrawals")}</p>
+   367→                <div className="mt-3 flex flex-col gap-2">
+   368→                  {txs.filter((x) => x.status === "Pending").map((x) => (
+   369→                    <div key={x.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.05] px-3 py-2">
+   370→                      <div className="min-w-0">
+   371→                        <p className="truncate font-mono text-[11px] text-white/40" dir="ltr">{x.id}</p>
+   372→                        <p className="truncate text-[12.5px] font-semibold text-white/85">{x.user}</p>
+   373→                      </div>
+   374→                      <div className="flex items-center gap-2">
+   375→                        <span className="font-mono text-[12px] font-bold text-white" dir="ltr">{x.amount}</span>
+   376→                        <MiniButton tone="green" onClick={() => setTxStatus(x.id, "Completed")}>
+   377→                          <CheckCircle2 className="h-3 w-3" /> {t("approve")}
+   378→                        </MiniButton>
+   379→                      </div>
+   380→                    </div>
+   381→                  ))}
+   382→                </div>
+   383→              </div>
+   384→            </div>
+   385→            <p className="text-center text-[11px] text-white/30">{t("auditNote")}</p>
+   386→          </motion.div>
+   387→        )}
+   388→
+   389→        {tab === "users" && (
+   390→          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+   391→            <div className="relative mb-4">
+   392→              <Search className="absolute inset-y-0 start-3.5 my-auto h-4 w-4 text-white/30" />
+   393→              <input
+   394→                value={query}
+   395→                onChange={(e) => setQuery(e.target.value)}
+   396→                placeholder={t("searchUsers")}
+   397→                className="h-11 w-full max-w-md rounded-xl border border-white/10 bg-white/[0.03] ps-10 pe-4 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15 transition"
+   398→              />
+   399→            </div>
+   400→            <div className="overflow-x-auto rounded-xl border border-white/[0.07]">
+   401→              <table className="w-full min-w-[760px] text-start text-[13px]">
+   402→                <thead>
+   403→                  <tr className="border-b border-white/[0.07] bg-white/[0.03] text-white/45">
+   404→                    <th className="px-4 py-3 text-start font-semibold">{t("colUser")}</th>
+   405→                    <th className="px-4 py-3 text-start font-semibold">{t("colCountry")}</th>
+   406→                    <th className="px-4 py-3 text-start font-semibold">{t("colBalance")}</th>
+   407→                    <th className="px-4 py-3 text-start font-semibold">{t("colKyc")}</th>
+   408→                    <th className="px-4 py-3 text-start font-semibold">{t("colStatus")}</th>
+   409→                    <th className="px-4 py-3 text-end font-semibold">{t("colActions")}</th>
+   410→                  </tr>
+   411→                </thead>
+   412→                <tbody>
+   413→                  {filteredUsers.map((u) => (
+   414→                    <tr key={u.id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
+   415→                      <td className="px-4 py-3">
+   416→                        <p className="font-semibold text-white">{u.name}</p>
+   417→                        <p className="font-mono text-[11px] text-white/35" dir="ltr">{u.email}</p>
+   418→                      </td>
+   419→                      <td className="px-4 py-3 text-white/60">{u.country}</td>
+   420→                      <td className="px-4 py-3 font-mono font-semibold text-white tabular-nums" dir="ltr">{u.balance}</td>
+   421→                      <td className="px-4 py-3">
+   422→                        <StatusPill kind={u.kyc === "Verified" ? "good" : u.kyc === "Pending" ? "warn" : "bad"} label={u.kyc === "Verified" ? t("verified") : u.kyc === "Pending" ? t("pending") : t("rejected")} />
+   423→                      </td>
+   424→                      <td className="px-4 py-3">
+   425→                        <StatusPill kind={u.status === "Active" ? "good" : "off"} label={u.status === "Active" ? t("active") : t("suspended")} />
+   426→                      </td>
+   427→                      <td className="px-4 py-3">
+   428→                        <div className="flex justify-end gap-1.5">
+   429→                          {u.kyc !== "Verified" && (
+   430→                            <MiniButton tone="green" onClick={() => setKyc(u.id, "Verified")}>
+   431→                              <CheckCircle2 className="h-3 w-3" /> {t("verify")}
+   432→                            </MiniButton>
+   433→                          )}
+   434→                          {u.status === "Active" ? (
+   435→                            <MiniButton tone="red" onClick={() => setUserStatus(u.id, "Suspended")}>
+   436→                              <Ban className="h-3 w-3" /> {t("suspend")}
+   437→                            </MiniButton>
+   438→                          ) : (
+   439→                            <MiniButton tone="gray" onClick={() => setUserStatus(u.id, "Active")}>
+   440→                              <RotateCcw className="h-3 w-3" /> {t("reactivate")}
+   441→                            </MiniButton>
+   442→                          )}
+   443→                        </div>
+   444→                      </td>
+   445→                    </tr>
+   446→                  ))}
+   447→                  {filteredUsers.length === 0 && (
+   448→                    <tr>
+   449→                      <td colSpan={6} className="px-4 py-10 text-center text-white/35">{t("kycEmpty")}</td>
+   450→                    </tr>
+   451→                  )}
+   452→                </tbody>
+   453→              </table>
+   454→            </div>
+   455→          </motion.div>
+   456→        )}
+   457→
+   458→        {tab === "transactions" && (
+   459→          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+   460→            <div className="overflow-x-auto rounded-xl border border-white/[0.07]">
+   461→              <table className="w-full min-w-[680px] text-[13px]">
+   462→                <thead>
+   463→                  <tr className="border-b border-white/[0.07] bg-white/[0.03] text-white/45">
+   464→                    <th className="px-4 py-3 text-start font-semibold">{t("colId")}</th>
+   465→                    <th className="px-4 py-3 text-start font-semibold">{t("colUser")}</th>
+   466→                    <th className="px-4 py-3 text-start font-semibold">{t("colType")}</th>
+   467→                    <th className="px-4 py-3 text-start font-semibold">{t("colAmount")}</th>
+   468→                    <th className="px-4 py-3 text-start font-semibold">{t("colStatus")}</th>
+   469→                    <th className="px-4 py-3 text-end font-semibold">{t("colActions")}</th>
+   470→                  </tr>
+   471→                </thead>
+   472→                <tbody>
+   473→                  {txs.map((x) => (
+   474→                    <tr key={x.id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
+   475→                      <td className="px-4 py-3 font-mono text-[11.5px] text-white/45" dir="ltr">{x.id}</td>
+   476→                      <td className="px-4 py-3 font-semibold text-white">{x.user}</td>
+   477→                      <td className="px-4 py-3 text-white/60">{x.type}</td>
+   478→                      <td className="px-4 py-3 font-mono font-bold text-white" dir="ltr">{x.amount}</td>
+   479→                      <td className="px-4 py-3">
+   480→                        <StatusPill kind={x.status === "Completed" ? "good" : x.status === "Pending" ? "warn" : "bad"} label={x.status === "Completed" ? t("completed") : x.status === "Pending" ? t("pending") : t("rejected")} />
+   481→                      </td>
+   482→                      <td className="px-4 py-3">
+   483→                        {x.status === "Pending" ? (
+   484→                          <div className="flex justify-end gap-1.5">
+   485→                            <MiniButton tone="green" onClick={() => setTxStatus(x.id, "Completed")}>
+   486→                              <CheckCircle2 className="h-3 w-3" /> {t("approve")}
+   487→                            </MiniButton>
+   488→                            <MiniButton tone="red" onClick={() => setTxStatus(x.id, "Rejected")}>
+   489→                              <XCircle className="h-3 w-3" /> {t("reject")}
+   490→                            </MiniButton>
+   491→                          </div>
+   492→                        ) : (
+   493→                          <span className="block text-end text-[11px] text-white/25">—</span>
+   494→                        )}
+   495→                      </td>
+   496→                    </tr>
+   497→                  ))}
+   498→                </tbody>
+   499→              </table>
+   500→            </div>
+   501→          </motion.div>
+   502→        )}
+   503→
+   504→        {tab === "kyc" && (
+   505→          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="flex flex-col gap-3">
+   506→            {kycQueue.length === 0 && (
+   507→              <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-10 text-center text-white/40">
+   508→                {t("kycEmpty")}
+   509→              </div>
+   510→            )}
+   511→            {kycQueue.map((u) => (
+   512→              <div key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between rounded-xl border border-white/[0.07] bg-white/[0.02] p-5">
+   513→                <div className="flex items-center gap-3.5">
+   514→                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#00E5A0]/70 to-teal-600 text-[15px] font-bold text-[#03251b]">
+   515→                    {u.name.charAt(0)}
+   516→                  </span>
+   517→                  <div>
+   518→                    <p className="text-[14px] font-semibold text-white">{u.name}</p>
+   519→                    <p className="font-mono text-[11.5px] text-white/40" dir="ltr">{u.email}</p>
+   520→                    <p className="mt-0.5 text-[11px] text-white/35">{t("kycDocs")} · {u.country}</p>
+   521→                  </div>
+   522→                </div>
+   523→                <div className="flex gap-1.5">
+   524→                  <MiniButton tone="green" onClick={() => setKyc(u.id, "Verified")}>
+   525→                    <CheckCircle2 className="h-3 w-3" /> {t("verify")}
+   526→                  </MiniButton>
+   527→                  <MiniButton tone="red" onClick={() => setKyc(u.id, "Rejected")}>
+   528→                    <XCircle className="h-3 w-3" /> {t("reject")}
+   529→                  </MiniButton>
+   530→                </div>
+   531→              </div>
+   532→            ))}
+   533→          </motion.div>
+   534→        )}
+   535→      </main>
+   536→
+   537→      <footer className="border-t border-white/[0.06] bg-[#01060b] py-4">
+   538→        <p className="text-center text-[11px] text-white/30">{t("auditNote")}</p>
+   539→      </footer>
+   540→    </div>
+   541→  );
+   542→}
+   543→
