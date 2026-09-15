@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Fingerprint, Lock, ScanLine, ServerCog, EyeOff, Mail, MessageCircle, Send, Phone } from "lucide-react";
+import { Fingerprint, Lock, ScanLine, ServerCog, EyeOff, Mail, MessageCircle, Send, Phone, ShieldCheck } from "lucide-react";
 import { CoinBadge, LogoMark } from "./icons";
 import { formatChange, formatPrice, type ActivityItem, type Coin } from "@/lib/market";
 import type { StringKey } from "@/lib/i18n";
@@ -219,10 +219,12 @@ export function Footer({
   t,
   onLogin,
   onRegister,
+  onAdmin,
 }: {
   t: (k: StringKey) => string;
   onLogin: () => void;
   onRegister: () => void;
+  onAdmin: () => void;
 }) {
   const year = 2026;
   return (
@@ -312,6 +314,14 @@ export function Footer({
             © {year} Global Exchange. {t("rights")}
           </p>
           <p className="text-[12px] text-white/35">{t("riskNote")}</p>
+          <button
+            onClick={onAdmin}
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-white/25 hover:text-red-400/80 transition-colors"
+            title={t("adminBadge")}
+          >
+            <ShieldCheck className="h-3 w-3" />
+            {t("adminBadge")}
+          </button>
         </div>
       </div>
     </footer>
