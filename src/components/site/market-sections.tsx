@@ -60,7 +60,7 @@ export function Ticker({ coins }: { coins: Coin[] }) {
             <span
               className={cn(
                 "font-mono text-[11px] font-semibold tabular-nums",
-                c.change24h >= 0 ? "text-emerald-400" : "text-red-400"
+                c.change24h >= 0 ? "text-emerald-400" : "text-amber-400"
               )}
             >
               {formatChange(c.change24h)}
@@ -119,7 +119,7 @@ export function LiveMarket({
               <p
                 className={cn(
                   "mt-0.5 font-mono text-[12.5px] font-semibold tabular-nums",
-                  c.change24h >= 0 ? "text-emerald-400" : "text-red-400"
+                  c.change24h >= 0 ? "text-emerald-400" : "text-amber-400"
                 )}
               >
                 {formatChange(c.change24h)} (24h)

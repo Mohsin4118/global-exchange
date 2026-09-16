@@ -147,8 +147,8 @@ function TxRow({ tx, expanded, onToggle }: { tx: AdminCtx["state"]["transactions
         <td className="px-2 py-4"><MonoId id={tx.id} /></td>
         <td className="whitespace-nowrap px-4 py-4 text-slate-600">{tx.date}</td>
         <td className="max-w-[280px] truncate px-4 py-4 font-semibold text-slate-900">{tx.clientName}</td>
-        <td className={cn("px-4 py-4 text-[13px] font-semibold", tx.type === "CREDIT" ? "text-emerald-500" : "text-red-500")}>{tx.type}</td>
-        <td className={cn("whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums", tx.type === "CREDIT" ? "text-emerald-500" : "text-red-500")}>
+        <td className={cn("px-4 py-4 text-[13px] font-semibold", tx.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>{tx.type}</td>
+        <td className={cn("whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums", tx.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>
           {tx.type === "CREDIT" ? "+" : "-"}{usd(tx.amount)}
         </td>
         <td className="px-4 py-4"><StatusBadge status={tx.status} /></td>

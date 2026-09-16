@@ -42,7 +42,7 @@ export function AdminLoginView({
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#04121c]">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute -top-32 start-1/3 h-[420px] w-[420px] rounded-full bg-red-400/[0.05] blur-[130px]" />
+        <div className="absolute -top-32 start-1/3 h-[420px] w-[420px] rounded-full bg-amber-400/[0.05] blur-[130px]" />
         <div className="absolute bottom-0 end-10 h-[320px] w-[320px] rounded-full bg-[#00E5A0]/[0.04] blur-[120px]" />
       </div>
 
@@ -50,7 +50,7 @@ export function AdminLoginView({
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <LogoMark className="h-10 w-10" />
-            <span className="rounded-md bg-red-400/12 px-2 py-0.5 text-[11px] font-bold text-red-400">{t("adminBadge")}</span>
+            <span className="rounded-md bg-amber-400/12 px-2 py-0.5 text-[11px] font-bold text-amber-400">{t("adminBadge")}</span>
           </div>
           <button
             onClick={onBack}
@@ -69,9 +69,9 @@ export function AdminLoginView({
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="w-full max-w-md"
         >
-          <div className="rounded-2xl border border-red-400/15 bg-[#071923]/90 p-6 sm:p-8 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)]">
+          <div className="rounded-2xl border border-amber-400/15 bg-[#071923]/90 p-6 sm:p-8 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)]">
             <div className="mb-6 text-center">
-              <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-400/12 text-red-400">
+              <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/12 text-amber-400">
                 <ShieldCheck className="h-6 w-6" />
               </span>
               <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">{t("adminLoginTitle")}</h1>
@@ -89,7 +89,7 @@ export function AdminLoginView({
                   autoComplete="email"
                   className={cn(
                     "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
-                    error ? "border-red-400/50 focus:ring-red-400/15" : "border-white/10 focus:border-red-400/40 focus:ring-red-400/10"
+                    error ? "border-amber-400/50 focus:ring-amber-400/15" : "border-white/10 focus:border-amber-400/40 focus:ring-amber-400/10"
                   )}
                 />
               </div>
@@ -103,15 +103,15 @@ export function AdminLoginView({
                   autoComplete="current-password"
                   className={cn(
                     "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
-                    error ? "border-red-400/50 focus:ring-red-400/15" : "border-white/10 focus:border-red-400/40 focus:ring-red-400/10"
+                    error ? "border-amber-400/50 focus:ring-amber-400/15" : "border-white/10 focus:border-amber-400/40 focus:ring-amber-400/10"
                   )}
                 />
-                {error && <p className="mt-1.5 text-[12px] font-medium text-red-400">{t("adminWrong")}</p>}
+                {error && <p className="mt-1.5 text-[12px] font-medium text-amber-400">{t("adminWrong")}</p>}
               </div>
 
               <button
                 type="submit"
-                className="mt-1 h-12 rounded-xl bg-red-400 text-[15px] font-bold text-[#2a0505] shadow-[0_8px_32px_-8px_rgba(248,113,113,0.5)] hover:bg-red-300 active:scale-[0.99] transition-all"
+                className="mt-1 h-12 rounded-xl bg-amber-400 text-[15px] font-bold text-[#2a1a02] shadow-[0_8px_32px_-8px_rgba(251,191,36,0.5)] hover:bg-amber-300 active:scale-[0.99] transition-all"
               >
                 {t("signIn")}
               </button>

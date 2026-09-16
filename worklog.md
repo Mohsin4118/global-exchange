@@ -129,3 +129,21 @@ Work Log:
 Stage Summary:
 - Site rebranded to CryptoWise / cryptowiseuk.com; fiat currencies SAR/QAR/AED/GBP (+USD/EUR) live in swap + supported strip; client wallet preview implements all 3 annotated card changes; Arabic fully RTL
 - Admin credential is now super@cryptowiseuk.com / Super@2026
+
+---
+Task ID: 8
+Agent: Main agent (Super Z)
+Task: Remove all red colors from the site (user: "No red colors please")
+
+Work Log:
+- Swept entire src/ for red/rose usages (red-*, rose-*, red hexes, rgba reds, oklch destructive)
+- Site (dark navy theme): AdminLoginView gate recolored red->amber (badge, glow, shield icon, card border, input focus/error states, error text, Sign In button bg-amber-400/text-[#2a1a02]/amber glow); negative 24h price changes text-red-400 -> text-amber-400 (hero mockup, ticker, LiveMarket, SupportedCryptos); footer + login-card Super Admin hover red -> amber; account-preview "No" withdrawal chip rose-100/rose-600 -> slate-100/slate-600 (keeps 6 distinct chip colors)
+- Backoffice (light theme): unread notification badge bg-red-500 -> bg-amber-500 w/ #451a03 text; StatusBadge SUSPENDED/FAILED/REJECTED red -> slate-100/slate-600; audit trail old values text-red-500 -> text-amber-600; DEBIT type/amount + Total Debits + Total Debits stat link/icon red -> amber-600/amber-500; market card down chip bg-red-50/text-red-500 -> amber + sparkline stroke #ef4444 -> #f59e0b; staff/role delete-button hovers -> amber
+- Tokens: globals.css --destructive oklch red -> amber (0.666 0.179 58.318 light / 0.769 0.188 70.08 dark), dark --chart-5 red -> amber; toast destructive close classes red -> amber
+- Verified: grep 0 red/rose matches in src; lint 0 errors; browser screenshots — admin gate fully golden, dashboard amber badge, audit amber old values, market amber negative changes; 0 console errors; 390px no overflow
+- Rebuilt download/cryptowiseuk-project.zip (100 files, ~245KB)
+
+Stage Summary:
+- Zero red anywhere: red replaced by amber (danger/negative) and slate (badges), consistent with navy/mint/gold palette
+- All views unchanged functionally; credentials and flows untouched
+- Zip refreshed: /home/z/my-project/download/cryptowiseuk-project.zip

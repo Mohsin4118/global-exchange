@@ -112,7 +112,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
                     <td className="px-4 py-3.5"><MonoId id={t.id} /></td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{t.date}</td>
                     <td className="px-4 py-3.5">
-                      <span className={cn("text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-red-500")}>
+                      <span className={cn("text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>
                         {t.type}
                       </span>
                     </td>
@@ -260,12 +260,12 @@ export function FinancialPage({ ctx }: { ctx: AdminCtx }) {
           value={usd(debits)}
           sub="Completed debit transactions"
           link={
-            <button onClick={() => ctx.navigate("transactions")} className="text-red-500 hover:text-red-600">
+            <button onClick={() => ctx.navigate("transactions")} className="text-amber-600 hover:text-amber-700">
               {debitCount} transactions
             </button>
           }
           icon={<ArrowDownRight className="h-5 w-5" />}
-          iconBg="bg-red-500"
+          iconBg="bg-amber-500"
         />
         <StatCard
           label="Net Flow"
@@ -484,7 +484,7 @@ export function MarketPage({ ctx: _ctx }: { ctx: AdminCtx }) {
                 <span
                   className={cn(
                     "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold",
-                    flat ? "bg-slate-100 text-slate-500" : up ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500",
+                    flat ? "bg-slate-100 text-slate-500" : up ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600",
                   )}
                 >
                   {flat ? (
@@ -503,7 +503,7 @@ export function MarketPage({ ctx: _ctx }: { ctx: AdminCtx }) {
                   <path
                     d={path}
                     fill="none"
-                    stroke={flat ? "#94a3b8" : up ? "#10b981" : "#ef4444"}
+                    stroke={flat ? "#94a3b8" : up ? "#10b981" : "#f59e0b"}
                     strokeWidth="1.8"
                     strokeLinecap="round"
                   />

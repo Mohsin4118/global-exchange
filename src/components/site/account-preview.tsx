@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const WITHDRAW_STATES: { key: StringKey; cls: string }[] = [
   { key: "stYes", cls: "bg-emerald-100 text-emerald-700" },
-  { key: "stNo", cls: "bg-rose-100 text-rose-600" },
+  { key: "stNo", cls: "bg-slate-100 text-slate-600" },
   { key: "stVerification", cls: "bg-amber-100 text-amber-700" },
   { key: "stTax", cls: "bg-sky-100 text-sky-700" },
   { key: "stDocs", cls: "bg-orange-100 text-orange-700" },

@@ -69,12 +69,12 @@ export function StatCard({
 
 const badgeStyles: Record<string, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-600",
-  SUSPENDED: "bg-red-50 text-red-600",
+  SUSPENDED: "bg-slate-100 text-slate-600",
   PENDING: "bg-amber-50 text-amber-600",
   PROCESSING: "bg-blue-50 text-blue-600",
   COMPLETED: "bg-emerald-50 text-emerald-600",
-  FAILED: "bg-red-50 text-red-600",
-  REJECTED: "bg-red-50 text-red-600",
+  FAILED: "bg-slate-100 text-slate-600",
+  REJECTED: "bg-slate-100 text-slate-600",
 };
 
 export function StatusBadge({ status }: { status: string }) {

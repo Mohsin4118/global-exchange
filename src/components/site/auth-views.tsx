@@ -119,7 +119,7 @@ export function LoginView({
           <button
             type="button"
             onClick={onAdminGate}
-            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-white/45 hover:text-red-400 hover:border-red-400/30 transition-colors"
+            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-white/45 hover:text-amber-400 hover:border-amber-400/30 transition-colors"
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             {t("adminBadge")}

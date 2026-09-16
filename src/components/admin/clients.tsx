@@ -299,7 +299,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
           <div className="mt-4 divide-y divide-slate-100">
             <SummaryRow icon={<Wallet className="h-4 w-4 text-slate-400" />} label="Balance" value={usd(client.balance)} valueClass="font-bold text-slate-900" />
             <SummaryRow icon={<ArrowUpCircle className="h-4 w-4 text-emerald-500" />} label="Total Credits" value={usd(client.credits)} valueClass="font-semibold text-emerald-500" />
-            <SummaryRow icon={<ArrowDownCircle className="h-4 w-4 text-red-500" />} label="Total Debits" value={usd(client.debits)} valueClass="font-semibold text-red-500" />
+            <SummaryRow icon={<ArrowDownCircle className="h-4 w-4 text-amber-600" />} label="Total Debits" value={usd(client.debits)} valueClass="font-semibold text-amber-600" />
             <SummaryRow icon={<TrendIcon />} label="Performance" value="+0.00%" valueClass="font-semibold text-emerald-500" />
             <div className="flex items-center justify-between py-4">
               <span className="text-sm text-slate-500">Total Transactions</span>
@@ -333,9 +333,9 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
               {txs.map((t) => (
                 <tr key={t.id} className="border-b border-slate-50 last:border-0">
                   <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{t.date}{t.status === "PENDING" ? "" : ""}</td>
-                  <td className={cn("px-4 py-3.5 text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-red-500")}>{t.type}</td>
+                  <td className={cn("px-4 py-3.5 text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>{t.type}</td>
                   <td className="max-w-[220px] truncate px-4 py-3.5 text-slate-500">{t.notes === "—" ? "—" : t.notes}</td>
-                  <td className={cn("whitespace-nowrap px-4 py-3.5 text-right font-semibold tabular-nums", t.type === "CREDIT" ? "text-emerald-500" : "text-red-500")}>
+                  <td className={cn("whitespace-nowrap px-4 py-3.5 text-right font-semibold tabular-nums", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>
                     {t.type === "CREDIT" ? "+" : "-"}{usd(t.amount)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3.5 text-right font-bold tabular-nums text-slate-900">{usd(t.balanceAfter)}</td>

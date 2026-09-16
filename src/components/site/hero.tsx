@@ -207,7 +207,7 @@ function DashboardMockup({
           </div>
           <div className="text-end">
             <p className="font-mono text-[17px] font-bold text-white tabular-nums">{formatPrice(btc.price)}</p>
-            <p className={`font-mono text-[11.5px] font-semibold tabular-nums ${btc.change24h >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+            <p className={`font-mono text-[11.5px] font-semibold tabular-nums ${btc.change24h >= 0 ? "text-emerald-400" : "text-amber-400"}`}>
               {formatChange(btc.change24h)} (24h)
             </p>
           </div>
@@ -271,7 +271,7 @@ function DashboardMockup({
                 </div>
                 <div className="text-end">
                   <p className="font-mono text-[10.5px] font-semibold text-white tabular-nums">{formatPrice(c.price)}</p>
-                  <p className={`font-mono text-[9px] font-semibold tabular-nums ${c.change24h >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  <p className={`font-mono text-[9px] font-semibold tabular-nums ${c.change24h >= 0 ? "text-emerald-400" : "text-amber-400"}`}>
                     {formatChange(c.change24h)}
                   </p>
                 </div>

@@ -101,7 +101,7 @@ export function AuditPage({ ctx }: { ctx: AdminCtx }) {
                   <td className="whitespace-nowrap px-4 py-4 text-[13px] font-medium tracking-wide text-slate-600">{a.entity}</td>
                   <td className="max-w-[420px] px-4 py-3">
                     {a.detailsOld && (
-                      <p className="truncate font-mono text-xs text-red-500" title={a.detailsOld}>{a.detailsOld}</p>
+                      <p className="truncate font-mono text-xs text-amber-600" title={a.detailsOld}>{a.detailsOld}</p>
                     )}
                     <p className="truncate font-mono text-xs text-emerald-600" title={a.detailsNew}>{a.detailsNew}</p>
                   </td>
@@ -278,7 +278,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
                         aria-label="Remove staff member"
                         disabled={m.you}
                         onClick={() => ctx.removeStaff(m.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -347,7 +347,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
                         <button aria-label="Edit role" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button aria-label="Delete role" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500">
+                        <button aria-label="Delete role" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
