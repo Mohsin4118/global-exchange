@@ -85,7 +85,7 @@ export function AdminLoginView({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@globexchange.co.uk"
+                  placeholder="admin@cryptowiseuk.com"
                   autoComplete="email"
                   className={cn(
                     "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Zap, Headset, Globe2, ArrowDownUp, CheckCircle2, RefreshCcw } from "lucide-react";
 import { CoinBadge } from "./icons";
-import { formatPrice, type Coin } from "@/lib/market";
+import { formatPrice, FIAT_CURRENCIES, type Coin } from "@/lib/market";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -123,13 +123,14 @@ export function TradingSection({
   const [amount, setAmount] = useState("1");
   const [flipping, setFlipping] = useState(false);
 
-  const send = coins[sendIdx];
-  const recv = coins[recvIdx];
+  // Crypto + fiat assets (SAR / QAR / AED / GBP / EUR / USD) share the swap pool
+  const assets: Coin[] = useMemo(() => [...coins, ...FIAT_CURRENCIES], [coins]);
+
+  const send = assets[sendIdx];
+  const recv = assets[recvIdx];
   const rate = recv.price > 0 ? send.price / recv.price : 0;
   const num = parseFloat(amount) || 0;
   const receive = num * rate;
-
-  const swapOptions = useMemo(() => coins.slice(0, 4), [coins]);
 
   const flip = () => {
     setFlipping(true);
@@ -141,7 +142,7 @@ export function TradingSection({
   const features = [t("feat1"), t("feat2"), t("feat3")];
 
   return (
-    <section id="trading" className="scroll-mt-20">
+    <section id="trading" className="scroll-mt-20 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <motion.div
@@ -202,7 +203,7 @@ export function TradingSection({
                     onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
                     inputMode="decimal"
                     aria-label={t("youSend")}
-                    className="min-w-0 flex-1 bg-transparent font-mono text-2xl font-bold text-white outline-none placeholder:text-white/25 tabular-nums"
+                    className="w-0 min-w-0 flex-1 bg-transparent font-mono text-2xl font-bold text-white outline-none placeholder:text-white/25 tabular-nums"
                     placeholder="0.00"
                   />
                   <select
@@ -213,13 +214,22 @@ export function TradingSection({
                       if (v === recvIdx) setRecvIdx(sendIdx);
                     }}
                     aria-label="Send currency"
-                    className="shrink-0 cursor-pointer rounded-lg border border-white/10 bg-[#04121c] px-2.5 py-2 text-sm font-semibold text-white outline-none hover:border-[#00E5A0]/40"
+                    className="w-20 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-[#04121c] px-2 py-2 text-sm font-semibold text-white outline-none hover:border-[#00E5A0]/40"
                   >
-                    {swapOptions.map((c, i) => (
-                      <option key={c.id} value={i}>
-                        {c.symbol}
-                      </option>
-                    ))}
+                    <optgroup label={t("grpCrypto")}>
+                      {assets.slice(0, coins.length).map((c, i) => (
+                        <option key={c.id} value={i}>
+                          {c.symbol}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={t("grpFiat")}>
+                      {assets.slice(coins.length).map((c, i) => (
+                        <option key={c.id} value={coins.length + i}>
+                          {c.symbol}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
@@ -257,13 +267,22 @@ export function TradingSection({
                       if (v === sendIdx) setSendIdx(recvIdx);
                     }}
                     aria-label="Receive currency"
-                    className="shrink-0 cursor-pointer rounded-lg border border-white/10 bg-[#04121c] px-2.5 py-2 text-sm font-semibold text-white outline-none hover:border-[#00E5A0]/40"
+                    className="w-20 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-[#04121c] px-2 py-2 text-sm font-semibold text-white outline-none hover:border-[#00E5A0]/40"
                   >
-                    {swapOptions.map((c, i) => (
-                      <option key={c.id} value={i}>
-                        {c.symbol}
-                      </option>
-                    ))}
+                    <optgroup label={t("grpCrypto")}>
+                      {assets.slice(0, coins.length).map((c, i) => (
+                        <option key={c.id} value={i}>
+                          {c.symbol}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={t("grpFiat")}>
+                      {assets.slice(coins.length).map((c, i) => (
+                        <option key={c.id} value={coins.length + i}>
+                          {c.symbol}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
                 <div className="mt-2 flex items-center gap-2">

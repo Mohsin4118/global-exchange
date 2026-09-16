@@ -27,12 +27,12 @@ export function Logo({
     <button
       onClick={onClick}
       className="flex items-center gap-3 group outline-none focus-visible:ring-2 focus-visible:ring-[#00E5A0]/60 rounded-xl"
-      aria-label="Global Exchange — home"
+      aria-label="CryptoWise — home"
     >
       <LogoMark className="w-10 h-10 shrink-0 transition-transform duration-300 group-hover:scale-105" />
       <span className="flex flex-col items-start leading-tight">
         <span className={cn("font-semibold tracking-tight text-white text-[17px]", lang === "ar" && "text-base")}>
-          {lang === "ar" ? "جلوبال إكستشينج" : "Global Exchange"}
+          {lang === "ar" ? "كريبتو وايز" : "CryptoWise"}
         </span>
         <span className="text-[10px] tracking-[0.22em] text-[#00E5A0]/80 font-medium uppercase">
           {tagline}

@@ -1,6 +1,6 @@
-# Global Exchange — Website Replica + Super Admin Backoffice
+# CryptoWise — Website Replica + Super Admin Backoffice
 
-Clean-room Next.js 16 replica of globexchange.co.uk (public site) with a complete
+Clean-room Next.js 16 replica of cryptowiseuk.com (public site) with a complete
 Super Admin backoffice (client-side demo data).
 
 ## Quick Start
@@ -36,7 +36,7 @@ Open http://localhost:3000
 
 | Field    | Value                    |
 | -------- | ------------------------ |
-| Email    | `super@globexchange.co.uk` |
+| Email    | `super@cryptowiseuk.com` |
 | Password | `Super@2026`             |
 
 (The credentials are also displayed on the admin login screen itself.)

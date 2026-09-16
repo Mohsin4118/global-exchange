@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  Global Exchange — Administration backoffice seed data              */
+/*  CryptoWise — Administration backoffice seed data              */
 /*  Replicated 1:1 from the platform's admin panel                    */
 /* ------------------------------------------------------------------ */
 
@@ -19,16 +19,16 @@ export interface AdminClient {
 }
 
 export const CLIENTS: AdminClient[] = [
-  { id: "cmu17qlbz001kksrjcmizek47", name: "جميل باعاد", email: "Jamalabaabad@globexchange.co.uk", phone: "966655444511", country: "Saudi Arabia", balance: 630093.15, status: "ACTIVE", transactions: 1, agent: "Super Admin", credits: 630015.0, debits: 0, joinedDaysAgo: 1 },
+  { id: "cmu17qlbz001kksrjcmizek47", name: "جميل باعاد", email: "Jamalabaabad@cryptowiseuk.com", phone: "966655444511", country: "Saudi Arabia", balance: 630093.15, status: "ACTIVE", transactions: 1, agent: "Super Admin", credits: 630015.0, debits: 0, joinedDaysAgo: 1 },
   { id: "cmu12en3o0017ksrj5f2ew7sm", name: "Mohammad zakaria Almairi", email: "mzalmyri@gmail.com", phone: "967712345678", country: "—", balance: 1647314.64, status: "ACTIVE", transactions: 1, agent: "Super Admin", credits: 1662000.0, debits: 0, joinedDaysAgo: 1 },
-  { id: "cmu0wcfw2000jksrj6zsjppcz", name: "Abdalkafi M", email: "abdalkafi11@globexchange.co.uk", phone: "249912345678", country: "Saudi Arabia", balance: 230697.3, status: "ACTIVE", transactions: 1, agent: "Super Admin", credits: 230665.0, debits: 0, joinedDaysAgo: 2 },
+  { id: "cmu0wcfw2000jksrj6zsjppcz", name: "Abdalkafi M", email: "abdalkafi11@cryptowiseuk.com", phone: "249912345678", country: "Saudi Arabia", balance: 230697.3, status: "ACTIVE", transactions: 1, agent: "Super Admin", credits: 230665.0, debits: 0, joinedDaysAgo: 2 },
   { id: "cmu0xcb3x000hksrjxd9gt4nq", name: "Charlie Williams (Joint A/C - No: 35d2c6sd52)", email: "charliew12@gmail.com", phone: "447700900123", country: "United Kingdom", balance: 652103.61, status: "ACTIVE", transactions: 3, agent: "Super Admin", credits: 652000.0, debits: 0, joinedDaysAgo: 2 },
   { id: "cmu0yd9z000gksrjq2pf8wxk", name: "John John", email: "john1@gmail.com", phone: "—", country: "—", balance: 0.0, status: "ACTIVE", transactions: 0, agent: "Super Admin", credits: 0, debits: 0, joinedDaysAgo: 3 },
   { id: "cmu0zr4w000fksrju8hn3v2m", name: "سيد محمد محمود", email: "h6939411@gmail.com", phone: "—", country: "السعودية", balance: 0.0, status: "ACTIVE", transactions: 0, agent: "—", credits: 0, debits: 0, joinedDaysAgo: 4 },
-  { id: "cmtyzus0r000aksrjgsnsegbh", name: "محسن ذيب الفقاطيني", email: "Mohsen@globexchange.co.uk", phone: "962790000000", country: "—", balance: 2856800.62, status: "ACTIVE", transactions: 1, agent: "—", credits: 2856332.0, debits: 0, joinedDaysAgo: 4 },
-  { id: "cmtvd6b3z000jksrjy0ql8d2", name: "عزيز الزهراني", email: "alzhrany@globexchange.co.uk", phone: "966501234567", country: "—", balance: 179679.35, status: "ACTIVE", transactions: 1, agent: "—", credits: 179679.35, debits: 0, joinedDaysAgo: 4 },
+  { id: "cmtyzus0r000aksrjgsnsegbh", name: "محسن ذيب الفقاطيني", email: "Mohsen@cryptowiseuk.com", phone: "962790000000", country: "—", balance: 2856800.62, status: "ACTIVE", transactions: 1, agent: "—", credits: 2856332.0, debits: 0, joinedDaysAgo: 4 },
+  { id: "cmtvd6b3z000jksrjy0ql8d2", name: "عزيز الزهراني", email: "alzhrany@cryptowiseuk.com", phone: "966501234567", country: "—", balance: 179679.35, status: "ACTIVE", transactions: 1, agent: "—", credits: 179679.35, debits: 0, joinedDaysAgo: 4 },
   { id: "cmtvdbf10000iksrj4xw2n7q", name: "محمد النبريصي", email: "mhmdalnbryst214@gmail.com", phone: "—", country: "—", balance: 62088.96, status: "ACTIVE", transactions: 1, agent: "—", credits: 62088.96, debits: 0, joinedDaysAgo: 4 },
-  { id: "cmtve5k80000hksrjq3xn9w2", name: "Salem Hadi", email: "Salem12@globexchange.co.uk", phone: "967734567890", country: "—", balance: 120009.96, status: "ACTIVE", transactions: 1, agent: "—", credits: 120009.96, debits: 0, joinedDaysAgo: 5 },
+  { id: "cmtve5k80000hksrjq3xn9w2", name: "Salem Hadi", email: "Salem12@cryptowiseuk.com", phone: "967734567890", country: "—", balance: 120009.96, status: "ACTIVE", transactions: 1, agent: "—", credits: 120009.96, debits: 0, joinedDaysAgo: 5 },
   { id: "cmtv9p2w00007ksrjum3dx4k", name: "Paula Louise Mole", email: "paula.mole@outlook.com", phone: "447700900456", country: "United Kingdom", balance: 18810.58, status: "ACTIVE", transactions: 2, agent: "—", credits: 21000.0, debits: 2189.42, joinedDaysAgo: 5 },
   { id: "cmtvczfiy0006ksrjb5rs8e2d", name: "Najah Nubraisii", email: "najah.n@gmail.com", phone: "—", country: "—", balance: 60000.0, status: "ACTIVE", transactions: 1, agent: "—", credits: 60000.0, debits: 0, joinedDaysAgo: 6 },
   { id: "cmtvda7w00004ksrjk9lm3f8q", name: "ALY ABDELMOULA", email: "aly.abdelmoula@gmail.com", phone: "21620123456", country: "—", balance: 120525.0, status: "ACTIVE", transactions: 1, agent: "—", credits: 120525.0, debits: 0, joinedDaysAgo: 6 },
@@ -115,13 +115,13 @@ const IP_DASH = "—";
 export const AUDIT_ENTRIES: AuditEntry[] = [
   { id: "a57", date: "Sep 14, 2026, 01:39 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmtyzus0r000aksrjgsnsegbh","type":"CREDIT","amount":2856332,"reference":"TXN-2026-0908-01"}', ip: IP_DASH },
   { id: "a56", date: "Sep 14, 2026, 01:22 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu17qlbz001kksrjcmizek47","type":"CREDIT","amount":630015,"reference":"TXN-2026-0914-05"}', ip: IP_DASH },
-  { id: "a55", date: "Sep 14, 2026, 01:22 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Jamalabaabad@globexchange.co.uk","name":"جميل باعاد","country":"Saudi Arabia"}', ip: IP_DASH },
-  { id: "a54", date: "Sep 14, 2026, 11:06 AM", admin: "Super Admin", action: "Update Client", entity: "USER", detailsOld: '{"name":null,"email":"Abdalkafi11@globexchange.co.uk"}', detailsNew: '{"name":"Abdalkafi M","email":"abdalkafi11@globexchange.co.uk"}', ip: IP_DASH },
+  { id: "a55", date: "Sep 14, 2026, 01:22 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Jamalabaabad@cryptowiseuk.com","name":"جميل باعاد","country":"Saudi Arabia"}', ip: IP_DASH },
+  { id: "a54", date: "Sep 14, 2026, 11:06 AM", admin: "Super Admin", action: "Update Client", entity: "USER", detailsOld: '{"name":null,"email":"Abdalkafi11@cryptowiseuk.com"}', detailsNew: '{"name":"Abdalkafi M","email":"abdalkafi11@cryptowiseuk.com"}', ip: IP_DASH },
   { id: "a53", date: "Sep 14, 2026, 11:03 AM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu12en3o0017ksrj5f2ew7sm","type":"CREDIT","amount":1662000,"reference":"TXN-2026-0914-04"}', ip: IP_DASH },
   { id: "a52", date: "Sep 14, 2026, 08:31 AM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmtyzus0r000aksrjgsnsegbh","type":"CREDIT","amount":2856332,"reference":"TXN-2026-0908-01"}', ip: IP_DASH },
   { id: "a51", date: "Sep 14, 2026, 08:31 AM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmtyzus0r000aksrjgsnsegbh","type":"CREDIT","amount":2856332,"reference":"TXN-2026-0908-01"}', ip: IP_DASH },
   { id: "a50", date: "Sep 14, 2026, 08:04 AM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu0wcfw2000jksrj6zsjppcz","type":"CREDIT","amount":230665,"reference":"TXN-2026-0914-01"}', ip: IP_DASH },
-  { id: "a49", date: "Sep 14, 2026, 08:03 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Abdalkafi11@globexchange.co.uk","name":"Abdalkafi M","country":"Saudi Arabia"}', ip: IP_DASH },
+  { id: "a49", date: "Sep 14, 2026, 08:03 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Abdalkafi11@cryptowiseuk.com","name":"Abdalkafi M","country":"Saudi Arabia"}', ip: IP_DASH },
   { id: "a48", date: "Sep 13, 2026, 04:29 PM", admin: "Super Admin", action: "Update Client", entity: "USER", detailsOld: '{"name":"Charile Williams","email":"charliew12@gmail.com"}', detailsNew: '{"name":"Charlie Williams (Joint A/C - No: 35d2c6sd52)","email":"charliew12@gmail.com"}', ip: IP_DASH },
   // --- older entries (pages 2-6) ---
   { id: "a47", date: "Sep 13, 2026, 02:11 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu0xcb3x000hksrjxd9gt4nq","type":"CREDIT","amount":150000,"reference":"TXN-2026-0914-06"}', ip: IP_DASH },
@@ -136,7 +136,7 @@ export const AUDIT_ENTRIES: AuditEntry[] = [
   { id: "a38", date: "Sep 11, 2026, 03:02 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"aly.abdelmoula@gmail.com","name":"ALY ABDELMOULA"}', ip: IP_DASH },
   { id: "a37", date: "Sep 10, 2026, 06:44 PM", admin: "Super Admin", action: "Create Withdrawal", entity: "WITHDRAWAL", detailsNew: '{"clientName":"Salem Hadi","coin":"USDT","amount":"10000.00000000"}', ip: IP_DASH },
   { id: "a36", date: "Sep 10, 2026, 02:27 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmtve5k80000hksrjq3xn9w2","type":"CREDIT","amount":120009.96,"reference":"TXN-2026-0909-01"}', ip: IP_DASH },
-  { id: "a35", date: "Sep 10, 2026, 01:12 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Salem12@globexchange.co.uk","name":"Salem Hadi"}', ip: IP_DASH },
+  { id: "a35", date: "Sep 10, 2026, 01:12 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Salem12@cryptowiseuk.com","name":"Salem Hadi"}', ip: IP_DASH },
   { id: "a34", date: "Sep 10, 2026, 10:05 AM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmtv9p2w00007ksrjum3dx4k","type":"CREDIT","amount":20000,"reference":"TXN-2026-0909-02"}', ip: IP_DASH },
   { id: "a33", date: "Sep 9, 2026, 07:21 PM", admin: "Super Admin", action: "Create Withdrawal", entity: "WITHDRAWAL", detailsNew: '{"clientName":"john john","coin":"BTC","amount":"0.12636634"}', ip: IP_DASH },
   { id: "a32", date: "Sep 9, 2026, 03:49 PM", admin: "Super Admin", action: "Update Staff", entity: "STAFF", detailsNew: '{"email":"bouabidbeegrowth@gmail.com","role":"Super Admin","status":"ACTIVE"}', ip: IP_DASH },
@@ -161,14 +161,14 @@ export const AUDIT_ENTRIES: AuditEntry[] = [
   { id: "a13", date: "Aug 31, 2026, 06:52 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu12en3o0017ksrj5f2ew7sm","type":"CREDIT","amount":1662000,"reference":"TXN-2026-0914-04"}', ip: IP_DASH },
   { id: "a12", date: "Aug 31, 2026, 10:20 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"mzalmyri@gmail.com","name":"Mohammad zakaria Almairi"}', ip: IP_DASH },
   { id: "a11", date: "Aug 30, 2026, 03:44 PM", admin: "Super Admin", action: "Update Staff", entity: "STAFF", detailsOld: '{"role":"Agent"}', detailsNew: '{"role":"Super Admin"}', ip: IP_DASH },
-  { id: "a10", date: "Aug 29, 2026, 01:09 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Mohsen@globexchange.co.uk","name":"محسن ذيب الفقاطيني"}', ip: IP_DASH },
+  { id: "a10", date: "Aug 29, 2026, 01:09 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Mohsen@cryptowiseuk.com","name":"محسن ذيب الفقاطيني"}', ip: IP_DASH },
   { id: "a09", date: "Aug 28, 2026, 04:27 PM", admin: "Super Admin", action: "Sign In", entity: "SESSION", detailsNew: '{"method":"password","mfa":true}', ip: IP_DASH },
-  { id: "a08", date: "Aug 27, 2026, 11:35 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"alzhrany@globexchange.co.uk","name":"عزيز الزهراني"}', ip: IP_DASH },
+  { id: "a08", date: "Aug 27, 2026, 11:35 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"alzhrany@cryptowiseuk.com","name":"عزيز الزهراني"}', ip: IP_DASH },
   { id: "a07", date: "Aug 26, 2026, 09:14 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"mhmdalnbryst214@gmail.com","name":"محمد النبريصي"}', ip: IP_DASH },
   { id: "a06", date: "Aug 25, 2026, 02:58 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu17qlbz001kksrjcmizek47","type":"CREDIT","amount":630015,"reference":"TXN-2026-0914-05"}', ip: IP_DASH },
   { id: "a05", date: "Aug 24, 2026, 10:41 AM", admin: "Super Admin", action: "Update Role", entity: "ROLE", detailsOld: '{"permissions":["view"]}', detailsNew: '{"permissions":["view","create","edit","delete","manage","send"]}', ip: IP_DASH },
-  { id: "a04", date: "Aug 23, 2026, 08:23 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Jamalabaabad@globexchange.co.uk","name":"جميل باعاد"}', ip: IP_DASH },
-  { id: "a03", date: "Aug 22, 2026, 05:37 PM", admin: "Super Admin", action: "Create Staff", entity: "STAFF", detailsNew: '{"email":"admin@globexchange.co.uk","role":"Super Admin"}', ip: IP_DASH },
+  { id: "a04", date: "Aug 23, 2026, 08:23 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Jamalabaabad@cryptowiseuk.com","name":"جميل باعاد"}', ip: IP_DASH },
+  { id: "a03", date: "Aug 22, 2026, 05:37 PM", admin: "Super Admin", action: "Create Staff", entity: "STAFF", detailsNew: '{"email":"admin@cryptowiseuk.com","role":"Super Admin"}', ip: IP_DASH },
   { id: "a02", date: "Aug 22, 2026, 05:35 PM", admin: "Super Admin", action: "Create Role", entity: "ROLE", detailsNew: '{"name":"Super Admin","permissions":["all"]}', ip: IP_DASH },
   { id: "a01", date: "Aug 22, 2026, 05:30 PM", admin: "Super Admin", action: "Sign In", entity: "SESSION", detailsNew: '{"method":"password","mfa":false}', ip: IP_DASH },
 ];
@@ -214,7 +214,7 @@ export interface AdminStaff {
 }
 
 export const STAFF: AdminStaff[] = [
-  { id: "st1", name: "Super Admin", email: "admin@globexchange.co.uk", role: "Super Admin", status: "ACTIVE", lastLogin: "Sep 15, 2026", you: true },
+  { id: "st1", name: "Super Admin", email: "admin@cryptowiseuk.com", role: "Super Admin", status: "ACTIVE", lastLogin: "Sep 15, 2026", you: true },
   { id: "st2", name: "Super Admin", email: "bouabidbeegrowth@gmail.com", role: "Super Admin", status: "ACTIVE", lastLogin: "Sep 14, 2026" },
 ];
 

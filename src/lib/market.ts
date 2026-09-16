@@ -92,6 +92,70 @@ export const TICKER_COINS = [
   "tether",
 ] as const;
 
+/** Fiat currencies supported for on-ramp/off-ramp (price = USD value of 1 unit). */
+export const FIAT_CURRENCIES: Coin[] = [
+  {
+    id: "usd",
+    name: "US Dollar",
+    symbol: "USD",
+    price: 1.0,
+    change24h: 0.0,
+    color: "#4a7dbd",
+    gradient: "from-[#7fb2e8] to-[#2f5a94]",
+    glyph: "$",
+  },
+  {
+    id: "gbp",
+    name: "British Pound",
+    symbol: "GBP",
+    price: 1.2712,
+    change24h: 0.05,
+    color: "#8f2d2d",
+    gradient: "from-[#e0908a] to-[#9c3434]",
+    glyph: "£",
+  },
+  {
+    id: "eur",
+    name: "Euro",
+    symbol: "EUR",
+    price: 1.0842,
+    change24h: -0.02,
+    color: "#2d5a8f",
+    gradient: "from-[#8ab2e0] to-[#34609c]",
+    glyph: "€",
+  },
+  {
+    id: "sar",
+    name: "Saudi Riyal",
+    symbol: "SAR",
+    price: 0.2666,
+    change24h: 0.01,
+    color: "#0f7a4d",
+    gradient: "from-[#4fd1a5] to-[#127a55]",
+    glyph: "﷼",
+  },
+  {
+    id: "qar",
+    name: "Qatari Riyal",
+    symbol: "QAR",
+    price: 0.2747,
+    change24h: 0.0,
+    color: "#7a1f38",
+    gradient: "from-[#d4708a] to-[#8f2440]",
+    glyph: "ق",
+  },
+  {
+    id: "aed",
+    name: "UAE Dirham",
+    symbol: "AED",
+    price: 0.2723,
+    change24h: 0.02,
+    color: "#0f5a7a",
+    gradient: "from-[#6ec2e0] to-[#1a6a8f]",
+    glyph: "د",
+  },
+];
+
 /** Random-walk tick applied client-side only (avoids hydration mismatch). */
 export function tickCoin(coin: Coin): Coin {
   const isStable = coin.id === "tether";

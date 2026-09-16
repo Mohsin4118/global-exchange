@@ -363,7 +363,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Staff">
         <div className="space-y-4">
           <TextInput label="Full Name *" value={name} onChange={setName} placeholder="Staff member name" />
-          <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="staff@globexchange.co.uk" />
+          <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="staff@cryptowiseuk.com" />
           <div>
             <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Role *</span>
             <Select value={role} onChange={setRole} options={ctx.state.roles.map((r) => ({ value: r.name, label: r.name }))} />
@@ -458,7 +458,7 @@ export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
         </div>
         <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
           <TextInput label="Name" value={name} onChange={setName} />
-          <TextInput label="Email" value="admin@globexchange.co.uk" disabled />
+          <TextInput label="Email" value="admin@cryptowiseuk.com" disabled />
           <div>
             <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Role</span>
             <div className="flex h-11 w-full cursor-not-allowed items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3.5 text-sm text-slate-500">
@@ -484,7 +484,7 @@ export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
       <Card className="mt-6 p-6">
         <h2 className="text-lg font-bold text-slate-900">Account Activity</h2>
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ActivityBox icon={<Mail className="h-4 w-4 text-slate-400" />} label="Email" value="admin@globexchange.co.uk" />
+          <ActivityBox icon={<Mail className="h-4 w-4 text-slate-400" />} label="Email" value="admin@cryptowiseuk.com" />
           <ActivityBox icon={<CalendarDays className="h-4 w-4 text-slate-400" />} label="Account Created" value="Sep 4, 2026" />
           <ActivityBox icon={<Clock className="h-4 w-4 text-slate-400" />} label="Last Login" value="Sep 15, 2026, 07:41 AM" />
           <ActivityBox icon={<ShieldCheck className="h-4 w-4 text-slate-400" />} label="Role" value="Super Admin" />

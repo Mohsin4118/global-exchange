@@ -6,6 +6,7 @@ import { Header } from "@/components/site/header";
 import { Hero } from "@/components/site/hero";
 import { Pillars, Ticker, LiveMarket } from "@/components/site/market-sections";
 import { Infrastructure, TradingSection, WhyChooseUs, Steps } from "@/components/site/trading-sections";
+import { AccountPreview } from "@/components/site/account-preview";
 import { SupportedCryptos, SecuritySection, FinalCta, Footer } from "@/components/site/closing-sections";
 import { TrustStats, SecurityBadges, Testimonials, Faq } from "@/components/site/trust-sections";
 import { LoginView, RegisterView } from "@/components/site/auth-views";
@@ -35,12 +36,12 @@ export default function Page() {
   useEffect(() => {
     document.title =
       view === "login"
-        ? `${t("signIn")} — Global Exchange`
+        ? `${t("signIn")} — CryptoWise`
         : view === "register"
-          ? `${t("createAccount")} — Global Exchange`
+          ? `${t("createAccount")} — CryptoWise`
           : view === "admin-login" || view === "admin-panel"
-            ? `${t("adminBadge")} — Global Exchange`
-            : "Global Exchange | Private Financial Platform";
+            ? `${t("adminBadge")} — CryptoWise`
+            : "CryptoWise | Private Financial Platform";
   }, [view, t]);
 
   // Direct admin access via URL hash (#admin) — also survives reload
@@ -103,6 +104,7 @@ export default function Page() {
             <LiveMarket t={t} coins={coins} onRegister={() => setView("register")} />
             <Infrastructure t={t} onRegister={() => setView("register")} onLogin={() => setView("login")} />
             <TradingSection t={t} coins={coins} onLogin={() => setView("login")} />
+            <AccountPreview t={t} />
             <WhyChooseUs t={t} onRegister={() => setView("register")} />
             <Steps t={t} onRegister={() => setView("register")} />
             <SecurityBadges t={t} />

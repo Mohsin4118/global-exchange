@@ -314,7 +314,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
         </div>
         {!collapsed || mobile ? (
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-bold leading-tight text-white">Global Exchange</p>
+            <p className="truncate text-[15px] font-bold leading-tight text-white">CryptoWise</p>
             <p className="truncate text-xs text-slate-400">Administration</p>
           </div>
         ) : null}

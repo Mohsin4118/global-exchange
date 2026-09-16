@@ -159,7 +159,7 @@ function DashboardMockup({
       {/* sidebar */}
       <aside className="hidden sm:flex w-[168px] shrink-0 flex-col border-e border-white/[0.06] bg-[#04121c]/80 p-4">
         <div className="flex items-center gap-2.5 px-1">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00E5A0]/15 text-[11px] font-black text-[#00E5A0]">GXC</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00E5A0]/15 text-[11px] font-black text-[#00E5A0]">CW</span>
         </div>
         <nav className="mt-6 flex flex-col gap-1" aria-hidden="true">
           {navItems.map((item, i) => (
@@ -195,7 +195,7 @@ function DashboardMockup({
         {/* mobile brand row */}
         <div className="flex items-center justify-between sm:hidden pb-3">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#00E5A0]/15 text-[9px] font-black text-[#00E5A0]">GXC</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#00E5A0]/15 text-[9px] font-black text-[#00E5A0]">CW</span>
           </div>
           <span className="text-white/30 text-lg leading-none">☰</span>
         </div>

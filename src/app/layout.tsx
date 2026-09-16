@@ -14,15 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Global Exchange | Private Financial Platform",
+  title: "CryptoWise | Private Financial Platform",
   description:
     "Securely access your account information, monitor financial activity, and follow global cryptocurrency market data.",
-  keywords: ["Global Exchange", "crypto", "bitcoin", "ethereum", "trading", "exchange"],
+  keywords: ["CryptoWise", "crypto", "bitcoin", "ethereum", "trading", "exchange"],
   icons: {
     icon: "/logo.svg",
   },
   openGraph: {
-    title: "Global Exchange | Private Financial Platform",
+    title: "CryptoWise | Private Financial Platform",
     description:
       "Buy, sell and invest in the world's most popular cryptocurrencies — all in one secure platform.",
     type: "website",

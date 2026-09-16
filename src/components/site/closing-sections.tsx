@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Fingerprint, Lock, ScanLine, ServerCog, EyeOff, Mail, MessageCircle, Send, Phone, ShieldCheck } from "lucide-react";
 import { CoinBadge, LogoMark } from "./icons";
-import { formatChange, formatPrice, type ActivityItem, type Coin } from "@/lib/market";
+import { formatChange, formatPrice, FIAT_CURRENCIES, type ActivityItem, type Coin } from "@/lib/market";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -119,6 +119,26 @@ export function SupportedCryptos({
               ))}
             </div>
           </div>
+        </motion.div>
+
+        {/* fiat currencies strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.55, delay: 0.15 }}
+          className="mx-auto mt-6 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"
+        >
+          <span className="text-[11.5px] font-semibold uppercase tracking-wide text-white/40">{t("fiatSupported")}</span>
+          {FIAT_CURRENCIES.map((f) => (
+            <span
+              key={f.id}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[12px] font-semibold text-white/75"
+            >
+              <CoinBadge glyph={f.glyph} gradient={f.gradient} className="h-4 w-4 text-[8px]" />
+              {f.symbol}
+            </span>
+          ))}
         </motion.div>
       </div>
     </section>
@@ -248,17 +268,17 @@ export function Footer({
             <div className="flex items-center gap-3">
               <LogoMark className="h-10 w-10" />
               <div className="leading-tight">
-                <p className="font-semibold text-white">Global Exchange</p>
+                <p className="font-semibold text-white">CryptoWise</p>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-[#00E5A0]/80">{t("tagline")}</p>
               </div>
             </div>
             <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-white/45">{t("footerAbout")}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <a
-                href="mailto:support@globexchange.co.uk"
+                href="mailto:support@cryptowiseuk.com"
                 className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
               >
-                <Mail className="h-3.5 w-3.5" /> support@globexchange.co.uk
+                <Mail className="h-3.5 w-3.5" /> support@cryptowiseuk.com
               </a>
               <a
                 href="https://wa.me/447591274617"
@@ -304,14 +324,14 @@ export function Footer({
 
           {/* help */}
           <FooterCol title={t("footerHelp")}>
-            <FooterLink label={t("contactSupport")} href="mailto:support@globexchange.co.uk" />
+            <FooterLink label={t("contactSupport")} href="mailto:support@cryptowiseuk.com" />
             <FooterLink label={t("security")} href="#about" />
           </FooterCol>
         </div>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/[0.06] pt-6">
           <p className="text-[12px] text-white/35">
-            © {year} Global Exchange. {t("rights")}
+            © {year} CryptoWise. {t("rights")}
           </p>
           <p className="text-[12px] text-white/35">{t("riskNote")}</p>
           <button
