@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Fingerprint, Lock, ScanLine, ServerCog, EyeOff, Mail, MessageCircle, Send, Phone, ShieldCheck } from "lucide-react";
 import { CoinBadge, LogoMark } from "./icons";
 import { formatChange, formatPrice, FIAT_CURRENCIES, type ActivityItem, type Coin } from "@/lib/market";
+import { SITE_PHONE_DISPLAY, SITE_PHONE_TEL } from "@/lib/contact";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -299,11 +300,12 @@ export function Footer({
                 <Send className="h-4 w-4" />
               </a>
               <a
-                href="tel:+447591274617"
-                aria-label="Phone"
-                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
+                href={SITE_PHONE_TEL}
+                aria-label={`${t("phone")}: ${SITE_PHONE_DISPLAY}`}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
               >
-                <Phone className="h-4 w-4" />
+                <Phone className="h-3.5 w-3.5" />
+                <span dir="ltr">{SITE_PHONE_DISPLAY}</span>
               </a>
             </div>
           </div>

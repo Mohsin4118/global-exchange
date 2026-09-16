@@ -1,25 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShieldCheck, Globe2, Zap, Headset, ArrowRight } from "lucide-react";
+import { ShieldCheck, Globe2, Zap, TrendingUp, ArrowRight } from "lucide-react";
 import { CoinBadge } from "./icons";
 import { formatChange, formatPrice, type Coin } from "@/lib/market";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-/* ---------------- Feature pillars ---------------- */
+/* ---------------- Feature row (design: outlined circle icons + dividers) ---------------- */
 
 export function Pillars({ t }: { t: (k: StringKey) => string }) {
   const items = [
-    { icon: ShieldCheck, title: t("fullyRegulated"), desc: t("fullyRegulatedDesc") },
     { icon: Globe2, title: t("globalAccess"), desc: t("globalAccessDesc") },
-    { icon: Zap, title: t("fastTransactions"), desc: t("fastTransactionsDesc") },
-    { icon: Headset, title: t("support247"), desc: t("supportDesc") },
+    { icon: ShieldCheck, title: t("bankGrade"), desc: t("bankGradeDesc") },
+    { icon: Zap, title: t("transparentFees"), desc: t("transparentFeesDesc") },
+    { icon: TrendingUp, title: t("growPortfolio"), desc: t("growPortfolioDesc") },
   ];
   return (
-    <section className="border-y border-white/[0.05] bg-[#04121c]/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <section id="features" className="scroll-mt-20 border-t border-white/[0.04]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-9 gap-x-4">
           {items.map(({ icon: Icon, title, desc }, i) => (
             <motion.div
               key={title}
@@ -27,13 +27,18 @@ export function Pillars({ t }: { t: (k: StringKey) => string }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 hover:border-[#00E5A0]/25 hover:bg-[#00e5a014] transition-colors"
+              className={cn(
+                "px-0 sm:px-5 lg:px-6",
+                i > 0 && "lg:border-s lg:border-white/[0.07]",
+                i === 2 && "sm:border-s sm:border-white/[0.07] lg:border-s",
+                i === 3 && "sm:border-s sm:border-white/[0.07] lg:border-s"
+              )}
             >
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#00E5A0]/12 text-[#00E5A0]">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[#00E5A0]/40 bg-[#00E5A0]/[0.05] text-[#00E5A0]">
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-3.5 text-[15px] font-semibold text-white">{title}</h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-white/50">{desc}</p>
+              <h3 className="mt-4 text-[15.5px] font-bold text-white">{title}</h3>
+              <p className="mt-2 max-w-[240px] text-[13px] leading-relaxed text-white/50">{desc}</p>
             </motion.div>
           ))}
         </div>

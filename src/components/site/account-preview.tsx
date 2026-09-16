@@ -97,7 +97,7 @@ export function AccountPreview({ t }: { t: (k: StringKey) => string }) {
                 <Send className="h-4 w-4 rtl:-scale-x-100" />
               </a>
               <a
-                href="tel:+447591274617"
+                href="tel:+447441909000"
                 aria-label="Phone"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7b5cd6] text-white shadow-lg hover:scale-105 transition-transform"
               >

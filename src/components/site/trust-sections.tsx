@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { BadgeCheck, Lock, KeyRound, Snowflake, FileCheck2, Vault, Star, ChevronDown } from "lucide-react";
+import { BadgeCheck, Lock, KeyRound, Snowflake, FileCheck2, Vault, Star, ChevronDown, Sprout } from "lucide-react";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -43,33 +43,50 @@ function Counter({ target, suffix, decimals = 0 }: { target: number; suffix?: st
 
 export function TrustStats({ t }: { t: (k: StringKey) => string }) {
   const stats = [
-    { target: 500, suffix: "K+", label: t("statsUsers") },
-    { target: 2.4, suffix: "B+", label: t("statsVolume"), prefix: "$", decimals: 1 },
-    { target: 180, suffix: "+", label: t("statsCountries") },
+    { target: 3, suffix: "M+", label: t("statsUsers") },
+    { target: 120, suffix: "B+", label: t("statsVolume"), prefix: "$" },
     { target: 99.9, suffix: "%", label: t("statsUptime"), decimals: 1 },
   ];
   return (
-    <section className="relative border-b border-white/[0.05] bg-[#020b12]/80">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="text-center"
-            >
-              <p className="text-3xl sm:text-4xl font-bold text-white">
-                {s.prefix}
-                <Counter target={s.target} suffix={s.suffix} decimals={s.decimals} />
-              </p>
-              <p className="mt-1.5 text-[12.5px] font-medium uppercase tracking-wide text-[#00E5A0]/80">{s.label}</p>
-            </motion.div>
-          ))}
-        </div>
-        <p className="mt-6 text-center text-[12px] text-white/35">{t("statsCaption")}</p>
+    <section className="relative border-b border-white/[0.04]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.55 }}
+          className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-8 rounded-2xl border border-[#00E5A0]/15 bg-gradient-to-r from-[#00E5A0]/[0.07] via-white/[0.02] to-[#00E5A0]/[0.05] px-6 py-6 md:px-8"
+        >
+          {/* brand trust copy */}
+          <div className="flex items-center gap-4 lg:max-w-[380px]">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#00E5A0]/15 text-[#00E5A0]">
+              <Sprout className="h-5.5 w-5.5" />
+            </span>
+            <div>
+              <p className="text-[15px] font-bold text-[#00E5A0]">{t("trustedBy")}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-white/55">{t("trustedByDesc")}</p>
+            </div>
+          </div>
+
+          {/* animated stats */}
+          <div className="flex flex-1 flex-col sm:flex-row items-center gap-5 sm:gap-0 sm:justify-around lg:ps-6">
+            {stats.map((s, i) => (
+              <div
+                key={s.label}
+                className={
+                  "text-center px-6 sm:px-8" +
+                  (i > 0 ? " sm:border-s sm:border-white/[0.08]" : "")
+                }
+              >
+                <p className="text-2xl sm:text-[26px] font-bold text-white">
+                  {s.prefix}
+                  <Counter target={s.target} suffix={s.suffix} decimals={s.decimals} />
+                </p>
+                <p className="mt-1 text-[12px] font-medium text-white/50">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </section>
   );

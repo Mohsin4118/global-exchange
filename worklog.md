@@ -147,3 +147,24 @@ Stage Summary:
 - Zero red anywhere: red replaced by amber (danger/negative) and slate (badges), consistent with navy/mint/gold palette
 - All views unchanged functionally; credentials and flows untouched
 - Zip refreshed: /home/z/my-project/download/cryptowiseuk-project.zip
+
+---
+Task ID: 9
+Agent: Main agent (Super Z)
+Task: Apply uploaded landing-page design to homepage (header + UI) and add phone +44 744190 9000
+
+Work Log:
+- Studied upload/pasted_image_1789557828763.png (CryptoWise landing mockup)
+- i18n: new EN/AR keys (features, pricing, blog, learnMore, bankGrade(+Desc), transparentFees(+Desc), growPortfolio(+Desc), trustedBy(+Desc)); updated statsVolume->Trading Volume, statsUptime->Uptime, globalAccessDesc to design copy
+- header.tsx rewritten: nav now Home/Features/About/Pricing/Blog w/ mint active underline; hamburger (rounded square) visible on ALL viewports per design, opens animated dropdown with links + phone + lang + login/register; phone chip +44 744190 9000 (tel:+447441909000) in header bar (xl+)
+- hero.tsx rewritten: pill badge, "Crypto Made / Simple." two-line headline (mint 2nd line + glow), trust chips with outlined circle icons (Low Fees / Secure & Regulated / 24/7 Support), pill CTAs Get Started + Learn More; new GlobeVisual SVG (globe graticule + dotted landmass, dual orbit rings w/ pulsing dot, floating BTC coin w/ dashed halo, podium + light cone, sparkle dots); live BTC chart card (coin + price + delta badge w/ dir=ltr, 1D/1W/1M/1Y/ALL pills, 560x110 area chart w/ endpoint glow); exported TaglineStrip (CRYPTOWISE - TRADE - INVEST - GROW between gradient rules + decorative waves)
+- Pillars (market-sections) redesigned to design feature row: id=features, 4 cols w/ vertical dividers, outlined circle icons (Globe2/ShieldCheck/Zap/TrendingUp), new copy keys
+- TrustStats redesigned: "Trusted by Millions" mint-tinted rounded bar w/ Sprout icon + animated counters 3M+ Active Users / $120B+ Trading Volume / 99.9% Uptime
+- page.tsx order: Hero -> Ticker -> Pillars -> TrustStats -> TaglineStrip -> LiveMarket ...
+- Phone number added: src/lib/contact.ts (SITE_PHONE_DISPLAY/TEL), header chip + drawer row, footer labeled chip (was icon-only old number), account-preview Phone FAB retargeted
+- Verified: desktop screenshots (hero/features/trust/strip/menu drawer) match design; nav scroll works; AR RTL full (globe mirrors, badge dir=ltr fix for minus sign); mobile 390px no overflow; lint 0 errors; no console errors
+- Zip rebuilt: download/cryptowiseuk-project.zip
+
+Stage Summary:
+- Homepage top now matches uploaded design 1:1 in spirit: tagline logo header, 5-link nav + functional hamburger drawer, globe/BTC hero, BTC chart card, features row, trust bar, brand strip
+- Phone +44 744190 9000 live in header, drawer, footer and floating action button
