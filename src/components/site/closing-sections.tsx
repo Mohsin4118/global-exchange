@@ -313,6 +313,7 @@ export function Footer({
           {/* platform */}
           <FooterCol title={t("platform")}>
             <FooterLink label={t("markets")} href="#markets" />
+            <FooterLink label={t("stocks")} href="#stocks" />
             <FooterLink label={t("trading")} href="#trading" />
             <FooterLink label={t("investing")} href="#investing" />
             <FooterLink label={t("about")} href="#about" />

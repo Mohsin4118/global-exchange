@@ -59,6 +59,12 @@ export const STRINGS = {
     liveMarketSub:
       "Track real-time prices, market trends and make smarter investment decisions with our powerful tools.",
     viewAll: "View All",
+    // stocks
+    stocks: "Stocks",
+    stocksBadge: "Listed Equities",
+    stocksTitle: "Trade Leading Gulf Stocks",
+    stocksSub:
+      "Diversify beyond crypto with Saudi Aramco and Salik — live prices, simple execution, one account.",
     // infrastructure
     infraBadge: "Professional Crypto Infrastructure",
     infraTitle1: "Crypto Made",
@@ -369,6 +375,12 @@ export const STRINGS = {
     liveMarketTitle: "أبرز العملات الرقمية الآن",
     liveMarketSub: "تابع الأسعار الفورية واتجاهات السوق واتخذ قرارات استثمارية أذكى بأدواتنا القوية.",
     viewAll: "عرض الكل",
+    // stocks
+    stocks: "الأسهم",
+    stocksBadge: "أسهم مدرجة",
+    stocksTitle: "تداول أبرز أسهم الخليج",
+    stocksSub:
+      "نوّع استثماراتك إلى ما بعد العملات الرقمية مع أرامكو السعودية وسالك — أسعار فورية وتنفيذ بسيط وحساب واحد.",
     infraBadge: "بنية تحتية احترافية للعملات الرقمية",
     infraTitle1: "العملات الرقمية",
     infraTitle2: "بأبسط صورة.",

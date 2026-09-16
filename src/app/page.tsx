@@ -4,14 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "@/components/site/header";
 import { Hero, TaglineStrip } from "@/components/site/hero";
-import { Pillars, Ticker, LiveMarket } from "@/components/site/market-sections";
+import { Pillars, Ticker, LiveMarket, StocksSection } from "@/components/site/market-sections";
 import { Infrastructure, TradingSection, WhyChooseUs, Steps } from "@/components/site/trading-sections";
 import { AccountPreview } from "@/components/site/account-preview";
 import { SupportedCryptos, SecuritySection, FinalCta, Footer } from "@/components/site/closing-sections";
 import { TrustStats, SecurityBadges, Testimonials, Faq } from "@/components/site/trust-sections";
 import { LoginView, RegisterView } from "@/components/site/auth-views";
 import { AdminLoginView, AdminPanelView } from "@/components/site/admin-views";
-import { INITIAL_ACTIVITY, INITIAL_COINS, tickCoin, type ActivityItem, type Coin } from "@/lib/market";
+import { INITIAL_ACTIVITY, INITIAL_COINS, STOCKS, tickCoin, type ActivityItem, type Coin } from "@/lib/market";
 import { STRINGS, type Lang, type StringKey } from "@/lib/i18n";
 
 type View = "home" | "login" | "register" | "admin-login" | "admin-panel";
@@ -20,6 +20,7 @@ export default function Page() {
   const [view, setView] = useState<View>("home");
   const [lang, setLang] = useState<Lang>("en");
   const [coins, setCoins] = useState<Coin[]>(INITIAL_COINS);
+  const [stocks, setStocks] = useState<Coin[]>(STOCKS);
   const [activity] = useState<ActivityItem[]>(INITIAL_ACTIVITY);
 
   const t = useCallback((k: StringKey) => STRINGS[lang][k] ?? STRINGS.en[k], [lang]);
@@ -28,6 +29,7 @@ export default function Page() {
   useEffect(() => {
     const id = setInterval(() => {
       setCoins((prev) => prev.map((c) => tickCoin(c)));
+      setStocks((prev) => prev.map((s) => tickCoin(s)));
     }, 3000);
     return () => clearInterval(id);
   }, []);
@@ -97,12 +99,13 @@ export default function Page() {
                 }}
               />
               <Hero t={t} coins={coins} onRegister={() => setView("register")} onLogin={() => setView("login")} />
-              <Ticker coins={coins} />
+              <Ticker coins={[...coins, ...stocks]} />
             </div>
             <TrustStats t={t} />
             <TaglineStrip t={t} lang={lang} />
             <Pillars t={t} />
             <LiveMarket t={t} coins={coins} onRegister={() => setView("register")} />
+            <StocksSection t={t} stocks={stocks} onRegister={() => setView("register")} />
             <Infrastructure t={t} onRegister={() => setView("register")} onLogin={() => setView("login")} />
             <TradingSection t={t} coins={coins} onLogin={() => setView("login")} />
             <AccountPreview t={t} />

@@ -183,3 +183,20 @@ Work Log:
 
 Stage Summary:
 - Mobile hero now carries the glowing ₿ coin in the user-marked spot; desktop untouched; RTL-aware
+
+---
+Task ID: 11
+Agent: Main agent (Super Z)
+Task: Add stocks section featuring Salik (سالك) and Aramco (أرامكو) — user request in Arabic
+
+Work Log:
+- market.ts: Coin interface extended with optional exchange/kind fields; new STOCKS array — Saudi Aramco (symbol 2222, Tadawul, $7.28 ≈ SAR 27.30, +0.42%) and Salik Company (SALIK, DFM, $1.40 ≈ AED 5.15, -0.31%); tickCoin now applies ~half volatility to stocks vs crypto
+- i18n.ts: new EN/AR keys — stocks (Stocks / الأسهم), stocksBadge (Listed Equities / أسهم مدرجة), stocksTitle (Trade Leading Gulf Stocks / تداول أبرز أسهم الخليج), stocksSub
+- market-sections.tsx: new StocksSection (id=stocks) after LiveMarket — same card language as LiveMarket (CoinBadge w/ A/S glyphs, name, symbol · exchange dir=ltr, live $ price, 24h delta, Get Started); change line wrapped in span dir=ltr so +/- renders correctly in RTL while block stays page-aligned (applied to LiveMarket cards too)
+- page.tsx: stocks state ticking in the same 3s interval; Ticker now streams [...coins, ...stocks] (2222 + SALIK visible in marquee); StocksSection rendered between LiveMarket and Infrastructure
+- Footer: Stocks / الأسهم link under Platform column → #stocks
+- Verified: desktop 1440 (cards + ticker), mobile 390 (stacked cards, no overflow), AR RTL (mirrored cards, correct +/- signs, no overflow); prices tick live; lint 0 errors (21 pre-existing warnings); no console errors
+- Zip rebuilt: download/cryptowiseuk-project.zip (100 files)
+
+Stage Summary:
+- Gulf equities live on the platform: Aramco (2222 · Tadawul) and Salik (SALIK · DFM) with simulated live USD pricing, own section, ticker presence, footer link, full EN/AR support

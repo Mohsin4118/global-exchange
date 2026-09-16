@@ -7,6 +7,8 @@ export interface Coin {
   color: string; // brand color for the coin badge
   gradient: string; // tailwind gradient classes for the coin badge
   glyph: string; // short glyph shown inside badge
+  exchange?: string; // listing venue (e.g. Tadawul, DFM) — stocks only
+  kind?: "crypto" | "stock";
 }
 
 export const INITIAL_COINS: Coin[] = [
@@ -79,6 +81,34 @@ export const INITIAL_COINS: Coin[] = [
     color: "#c2a633",
     gradient: "from-[#d9c05e] to-[#96771a]",
     glyph: "Ð",
+  },
+];
+
+/** Equities available on the platform — quoted in USD (converted from native SAR/AED quotes). */
+export const STOCKS: Coin[] = [
+  {
+    id: "aramco",
+    name: "Saudi Aramco",
+    symbol: "2222",
+    price: 7.28, // ≈ SAR 27.30 on Tadawul
+    change24h: 0.42,
+    color: "#0f7a4d",
+    gradient: "from-[#4fd1a5] to-[#0e7a4f]",
+    glyph: "A",
+    exchange: "Tadawul",
+    kind: "stock",
+  },
+  {
+    id: "salik",
+    name: "Salik Company",
+    symbol: "SALIK",
+    price: 1.4, // ≈ AED 5.15 on DFM
+    change24h: -0.31,
+    color: "#0f5a7a",
+    gradient: "from-[#6ec2e0] to-[#1a6a8f]",
+    glyph: "S",
+    exchange: "DFM",
+    kind: "stock",
   },
 ];
 
@@ -166,9 +196,10 @@ export function tickCoin(coin: Coin): Coin {
     const price = Math.min(1.0015, Math.max(0.9985, coin.price + pull + noise));
     return { ...coin, price, change24h: (price - 1) * 100 };
   }
-  const drift = (Math.random() - 0.485) * 0.0025; // ±~0.12% move
+  const isStock = coin.kind === "stock";
+  const drift = (Math.random() - 0.485) * (isStock ? 0.0011 : 0.0025); // equities move ~half as much as crypto
   const price = Math.max(0.0001, coin.price * (1 + drift));
-  const change = coin.change24h + (Math.random() - 0.5) * 0.05;
+  const change = coin.change24h + (Math.random() - 0.5) * (isStock ? 0.02 : 0.05);
   return { ...coin, price, change24h: change };
 }
 
