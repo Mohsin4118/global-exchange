@@ -46,7 +46,11 @@ export function Hero({
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
+            className="relative isolate"
           >
+            {/* mobile-only floating ₿ coin — sits right of the headline (user-requested spot) */}
+            <FloatingCoin />
+
             <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-4 py-1.5 text-[12.5px] font-medium text-[#00E5A0]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
               {t("heroBadge")}
@@ -178,6 +182,45 @@ export function Hero({
         </motion.div>
       </div>
     </section>
+  );
+}
+
+/* ---------------- Mobile floating ₿ coin (right of the headline) ---------------- */
+
+function FloatingCoin() {
+  return (
+    <motion.div
+      aria-hidden="true"
+      dir="ltr"
+      className="lg:hidden pointer-events-none absolute end-0 top-12 -z-10"
+      initial={{ opacity: 0, scale: 0.7 }}
+      animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
+      transition={{
+        opacity: { duration: 0.7, delay: 0.35, ease: "easeOut" },
+        scale: { duration: 0.7, delay: 0.35, ease: "easeOut" },
+        y: { duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.35 },
+      }}
+    >
+      <div className="relative flex h-28 w-28 items-center justify-center sm:h-32 sm:w-32">
+        {/* soft halo */}
+        <div className="absolute inset-0 rounded-full bg-[#00E5A0]/[0.1] blur-2xl" />
+        {/* dashed orbit halo, like the globe coin */}
+        <div className="absolute inset-0 rounded-full border border-dashed border-[#00E5A0]/30" />
+        {/* coin face */}
+        <div
+          className="relative flex h-[74%] w-[74%] items-center justify-center rounded-full border-2 border-[#00E5A0] shadow-[0_0_34px_-4px_rgba(0,229,160,0.55),inset_0_0_18px_rgba(0,229,160,0.14)]"
+          style={{ background: "radial-gradient(circle at 35% 28%, #134234, #0a2b21 60%, #06180f)" }}
+        >
+          <div className="absolute inset-[10%] rounded-full border border-[#00E5A0]/30" />
+          <span className="text-[40px] sm:text-[46px] font-extrabold leading-none text-[#2cf0b5] drop-shadow-[0_0_16px_rgba(44,240,181,0.6)]">
+            ₿
+          </span>
+        </div>
+        {/* sparkle dots */}
+        <span className="absolute -start-1 top-6 h-1.5 w-1.5 rounded-full bg-[#2cf0b5]/80 animate-pulse" />
+        <span className="absolute -end-1.5 bottom-8 h-1 w-1 rounded-full bg-[#2cf0b5]/60 animate-pulse [animation-delay:1.2s]" />
+      </div>
+    </motion.div>
   );
 }
 

@@ -168,3 +168,18 @@ Work Log:
 Stage Summary:
 - Homepage top now matches uploaded design 1:1 in spirit: tagline logo header, 5-link nav + functional hamburger drawer, globe/BTC hero, BTC chart card, features row, trust bar, brand strip
 - Phone +44 744190 9000 live in header, drawer, footer and floating action button
+
+---
+Task ID: 10
+Agent: Main agent (Super Z)
+Task: Mobile hero — show the Bitcoin ₿ coin right of the headline (user screenshot with circled spot)
+
+Work Log:
+- Studied upload/pasted_image_1789570885042.png: user circled the empty area right of "Crypto Made Simple." on mobile
+- hero.tsx: added FloatingCoin (mobile-only, lg:hidden) inside the left copy column — absolute end-0 top-12, 112px coin (128px on sm) with radial-gradient face, mint border, inner ring, dashed orbit halo, glow shadow, 2 pulsing sparkle dots, framer-motion float loop (y 0/-10/0, 5.5s) + entrance fade/scale
+- Copy column got relative + isolate (stacking context) so the -z-10 coin paints above page background but below heading text (initial bug: coin invisible because framer-motion resets transform:none at rest, dropping the coin behind the body background)
+- Verified: mobile 390px EN — coin sits right of headline exactly like the circled spot, no overlap issues; AR RTL — coin mirrors to the left via logical end-0; desktop 1440px — coin hidden, layout unchanged; 0 console errors; no horizontal overflow at 390/1440; lint 0 errors (21 pre-existing warnings)
+- Zip rebuilt: download/cryptowiseuk-project.zip (100 files, all source + configs + public + README + .gitignore)
+
+Stage Summary:
+- Mobile hero now carries the glowing ₿ coin in the user-marked spot; desktop untouched; RTL-aware
