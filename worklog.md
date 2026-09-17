@@ -200,3 +200,19 @@ Work Log:
 
 Stage Summary:
 - Gulf equities live on the platform: Aramco (2222 · Tadawul) and Salik (SALIK · DFM) with simulated live USD pricing, own section, ticker presence, footer link, full EN/AR support
+
+---
+Task ID: 12
+Agent: Main agent (Super Z)
+Task: Header/hero asset cluster per client screenshots — keep Bitcoin, add Ethereum, USDT/Tether, Aramco, Salek (exact spelling); CRM untouched
+
+Work Log:
+- hero.tsx: FloatingCoin -> FloatingCluster (still lg:hidden, -z-10 behind text, inside isolate copy column) — main Bitcoin coin kept exactly at the client-marked spot; 4 satellite chips (CoinBadge h-8 w-8 + tiny name label pills): Ethereum (Ξ, above coin), USDT/Tether (₮, left), Aramco (A, bottom-left), Salek (S, bottom-right); staggered entrance + per-chip float loops; logical end-/top- props so RTL mirrors
+- Naming: market.ts stock renamed "Salik Company"/SALIK -> "Salek"/SALEK (id salik unchanged internally); i18n EN stocksSub now "Saudi Aramco and Salek"; cluster labels exact client strings incl "USDT/Tether"
+- CRM/admin backoffice untouched; colors/styles elsewhere unchanged (lint delta zero, no admin file modified)
+- Positions iterated via 3 mobile screenshots to keep labels clear of the headline (ETH moved above coin)
+- Verified: mobile 390 EN cluster composition + labels; AR RTL mirrors with text above chips; desktop 1440 cluster hidden (display:none), globe/hero unchanged; SALEK in ticker + stocks card ("Salek", SALEK · DFM); 0 lint errors (21 pre-existing warnings); 0 console errors; no horizontal overflow
+- Zip rebuilt: download/cryptowiseuk-project.zip (100 files)
+
+Stage Summary:
+- Mobile hero top now presents the 5 requested assets around the kept Bitcoin coin with exact client naming; everything else (CRM, palette, desktop) untouched

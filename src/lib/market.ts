@@ -100,8 +100,8 @@ export const STOCKS: Coin[] = [
   },
   {
     id: "salik",
-    name: "Salik Company",
-    symbol: "SALIK",
+    name: "Salek",
+    symbol: "SALEK",
     price: 1.4, // ≈ AED 5.15 on DFM
     change24h: -0.31,
     color: "#0f5a7a",

@@ -77,7 +77,7 @@ export function Ticker({ coins }: { coins: Coin[] }) {
   );
 }
 
-/* ---------------- Stocks (Salik, Aramco — user-requested) ---------------- */
+/* ---------------- Stocks (Salek, Aramco — user-requested) ---------------- */
 
 export function StocksSection({
   t,

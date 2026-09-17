@@ -48,8 +48,8 @@ export function Hero({
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="relative isolate"
           >
-            {/* mobile-only floating ₿ coin — sits right of the headline (user-requested spot) */}
-            <FloatingCoin />
+            {/* mobile-only floating asset cluster — Bitcoin kept, satellites added (client request) */}
+            <FloatingCluster />
 
             <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-4 py-1.5 text-[12.5px] font-medium text-[#00E5A0]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
@@ -185,42 +185,78 @@ export function Hero({
   );
 }
 
-/* ---------------- Mobile floating ₿ coin (right of the headline) ---------------- */
+/* ---------------- Mobile floating asset cluster (right of the headline) ---------------- */
 
-function FloatingCoin() {
+const CLUSTER_ASSETS = [
+  { glyph: "Ξ", gradient: "from-[#8ea8f5] to-[#4462c8]", label: "Ethereum", pos: "top-[12px] end-[24px]", float: 4.6, delay: 0.55 },
+  { glyph: "₮", gradient: "from-[#4fd1a5] to-[#127a55]", label: "USDT/Tether", pos: "top-[102px] end-[106px]", float: 5.4, delay: 0.75 },
+  { glyph: "A", gradient: "from-[#4fd1a5] to-[#0e7a4f]", label: "Aramco", pos: "top-[150px] end-[60px]", float: 5.0, delay: 0.95 },
+  { glyph: "S", gradient: "from-[#6ec2e0] to-[#1a6a8f]", label: "Salek", pos: "top-[178px] end-[8px]", float: 5.8, delay: 1.15 },
+];
+
+function FloatingCluster() {
   return (
-    <motion.div
-      aria-hidden="true"
-      dir="ltr"
-      className="lg:hidden pointer-events-none absolute end-0 top-12 -z-10"
-      initial={{ opacity: 0, scale: 0.7 }}
-      animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
-      transition={{
-        opacity: { duration: 0.7, delay: 0.35, ease: "easeOut" },
-        scale: { duration: 0.7, delay: 0.35, ease: "easeOut" },
-        y: { duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.35 },
-      }}
-    >
-      <div className="relative flex h-28 w-28 items-center justify-center sm:h-32 sm:w-32">
-        {/* soft halo */}
-        <div className="absolute inset-0 rounded-full bg-[#00E5A0]/[0.1] blur-2xl" />
-        {/* dashed orbit halo, like the globe coin */}
-        <div className="absolute inset-0 rounded-full border border-dashed border-[#00E5A0]/30" />
-        {/* coin face */}
-        <div
-          className="relative flex h-[74%] w-[74%] items-center justify-center rounded-full border-2 border-[#00E5A0] shadow-[0_0_34px_-4px_rgba(0,229,160,0.55),inset_0_0_18px_rgba(0,229,160,0.14)]"
-          style={{ background: "radial-gradient(circle at 35% 28%, #134234, #0a2b21 60%, #06180f)" }}
-        >
-          <div className="absolute inset-[10%] rounded-full border border-[#00E5A0]/30" />
-          <span className="text-[40px] sm:text-[46px] font-extrabold leading-none text-[#2cf0b5] drop-shadow-[0_0_16px_rgba(44,240,181,0.6)]">
-            ₿
-          </span>
+    <div className="lg:hidden pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+      {/* main Bitcoin coin — kept exactly where the client pointed */}
+      <motion.div
+        dir="ltr"
+        className="absolute end-0 top-12"
+        initial={{ opacity: 0, scale: 0.7 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
+        transition={{
+          opacity: { duration: 0.7, delay: 0.35, ease: "easeOut" },
+          scale: { duration: 0.7, delay: 0.35, ease: "easeOut" },
+          y: { duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.35 },
+        }}
+      >
+        <div className="relative flex h-28 w-28 items-center justify-center sm:h-32 sm:w-32">
+          {/* soft halo */}
+          <div className="absolute inset-0 rounded-full bg-[#00E5A0]/[0.1] blur-2xl" />
+          {/* dashed orbit halo, like the globe coin */}
+          <div className="absolute inset-0 rounded-full border border-dashed border-[#00E5A0]/30" />
+          {/* coin face */}
+          <div
+            className="relative flex h-[74%] w-[74%] items-center justify-center rounded-full border-2 border-[#00E5A0] shadow-[0_0_34px_-4px_rgba(0,229,160,0.55),inset_0_0_18px_rgba(0,229,160,0.14)]"
+            style={{ background: "radial-gradient(circle at 35% 28%, #134234, #0a2b21 60%, #06180f)" }}
+          >
+            <div className="absolute inset-[10%] rounded-full border border-[#00E5A0]/30" />
+            <span className="text-[40px] sm:text-[46px] font-extrabold leading-none text-[#2cf0b5] drop-shadow-[0_0_16px_rgba(44,240,181,0.6)]">
+              ₿
+            </span>
+          </div>
+          {/* sparkle dots */}
+          <span className="absolute -start-1 top-6 h-1.5 w-1.5 rounded-full bg-[#2cf0b5]/80 animate-pulse" />
+          <span className="absolute -end-1.5 bottom-8 h-1 w-1 rounded-full bg-[#2cf0b5]/60 animate-pulse [animation-delay:1.2s]" />
         </div>
-        {/* sparkle dots */}
-        <span className="absolute -start-1 top-6 h-1.5 w-1.5 rounded-full bg-[#2cf0b5]/80 animate-pulse" />
-        <span className="absolute -end-1.5 bottom-8 h-1 w-1 rounded-full bg-[#2cf0b5]/60 animate-pulse [animation-delay:1.2s]" />
-      </div>
-    </motion.div>
+      </motion.div>
+
+      {/* satellite assets — Ethereum, USDT/Tether, Aramco, Salek (exact client naming) */}
+      {CLUSTER_ASSETS.map((a) => (
+        <motion.div
+          key={a.label}
+          className={cn("absolute flex flex-col items-center", a.pos)}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+          transition={{
+            opacity: { duration: 0.5, delay: a.delay, ease: "easeOut" },
+            scale: { duration: 0.5, delay: a.delay, ease: "easeOut" },
+            y: { duration: a.float, repeat: Infinity, ease: "easeInOut", delay: a.delay },
+          }}
+        >
+          <CoinBadge
+            glyph={a.glyph}
+            gradient={a.gradient}
+            className="h-8 w-8 text-[13px] ring-1 ring-white/20 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.75)]"
+          />
+          <span
+            dir="ltr"
+            className="mt-0.5 whitespace-nowrap rounded-full border border-white/10 bg-[#04121c]/85 px-1.5 py-px text-[8px] font-semibold leading-tight text-white/65"
+          >
+            {a.label}
+          </span>
+        </motion.div>
+      ))}
+    </div>
   );
 }
 

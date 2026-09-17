@@ -64,7 +64,7 @@ export const STRINGS = {
     stocksBadge: "Listed Equities",
     stocksTitle: "Trade Leading Gulf Stocks",
     stocksSub:
-      "Diversify beyond crypto with Saudi Aramco and Salik — live prices, simple execution, one account.",
+      "Diversify beyond crypto with Saudi Aramco and Salek — live prices, simple execution, one account.",
     // infrastructure
     infraBadge: "Professional Crypto Infrastructure",
     infraTitle1: "Crypto Made",
