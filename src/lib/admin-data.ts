@@ -97,7 +97,7 @@ export const WITHDRAWALS: AdminWithdrawal[] = [
   { id: "wdw_01j5x7k1", date: "Sep 9, 2026", clientId: "cmu0yd9z000gksrjq2pf8wxk", clientName: "john john", coin: "BTC", amount: "0.12636634", status: "PENDING", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin", notes: "" },
 ];
 
-export type AuditAction = "Create Transaction" | "Create Client" | "Update Client" | "Update Withdrawal" | "Create Withdrawal" | "Update Staff" | "Create Staff" | "Update Role" | "Create Role" | "Sign In";
+export type AuditAction = "Create Transaction" | "Create Client" | "Update Client" | "Update Withdrawal" | "Create Withdrawal" | "Update Staff" | "Create Staff" | "Update Role" | "Create Role" | "Sign In" | "Update Portal Client" | "Delete Portal Client" | "Create Portal Transaction" | "Delete Portal Transaction" | "Update Portal Request";
 
 export interface AuditEntry {
   id: string;

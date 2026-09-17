@@ -245,12 +245,14 @@ export function Modal({
   title,
   children,
   wide,
+  panelClassName,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
   wide?: boolean;
+  panelClassName?: string;
 }) {
   if (!open) return null;
   return (
@@ -260,6 +262,7 @@ export function Modal({
         className={cn(
           "relative z-10 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl",
           wide ? "max-w-lg" : "max-w-md",
+          panelClassName,
         )}
       >
         <div className="flex items-start justify-between p-6 pb-0">

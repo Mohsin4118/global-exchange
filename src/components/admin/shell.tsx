@@ -16,6 +16,7 @@ import {
   Menu,
   ShieldCheck,
   TrendingUp,
+  UserCog,
   Users,
   X,
 } from "lucide-react";
@@ -31,16 +32,20 @@ import {
   STAFF,
   TRANSACTIONS,
   WITHDRAWALS,
+  type AuditAction,
+  type AuditEntry,
 } from "@/lib/admin-data";
 import type { AdminPage, AdminState, AdminCtx } from "./types";
 import { DashboardPage, FinancialPage, MarketPage } from "./dashboard";
 import { ClientDetailPage, ClientsPage } from "./clients";
 import { TransactionsPage, WithdrawalsPage } from "./ledger";
 import { AuditPage, NotificationsPage, ProfilePage, StaffPage } from "./misc";
+import { PortalClientsPage } from "./portal";
 
 const NAV: { page: AdminPage; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { page: "dashboard", label: "Dashboard", icon: LayoutGrid },
   { page: "clients", label: "Clients", icon: Users },
+  { page: "portal", label: "Portal Clients", icon: UserCog },
   { page: "transactions", label: "Transactions", icon: ArrowLeftRight },
   { page: "withdrawals", label: "Withdrawals", icon: ArrowDownToLine },
   { page: "financial", label: "Financial Overview", icon: TrendingUp },
@@ -184,6 +189,23 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
           ],
         }));
         toastFn("Changes saved", "Client details were updated.");
+      },
+      pushAudit: (action: AuditAction, entity: AuditEntry["entity"], detailsNew: string) => {
+        setState((s) => ({
+          ...s,
+          audit: [
+            {
+              id: makeAuditId(),
+              date: nowStamp(),
+              admin: "Super Admin",
+              action,
+              entity,
+              detailsNew,
+              ip: "—",
+            },
+            ...s.audit,
+          ],
+        }));
       },
       createTransaction: ({ clientId, type, amount, method, notes }) => {
         // Resolve the client outside setState (side-effect-safe) and mirror the
@@ -505,6 +527,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
           {page === "dashboard" && <DashboardPage ctx={ctx} />}
           {page === "clients" && <ClientsPage ctx={ctx} />}
           {page === "client-detail" && <ClientDetailPage ctx={ctx} />}
+          {page === "portal" && <PortalClientsPage ctx={ctx} />}
           {page === "transactions" && <TransactionsPage ctx={ctx} />}
           {page === "withdrawals" && <WithdrawalsPage ctx={ctx} />}
           {page === "financial" && <FinancialPage ctx={ctx} />}

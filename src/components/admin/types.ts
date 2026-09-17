@@ -6,6 +6,7 @@ import type {
   AdminStaff,
   AdminTx,
   AdminWithdrawal,
+  AuditAction,
   AuditEntry,
   TxType,
   WithdrawalStatus,
@@ -15,6 +16,7 @@ export type AdminPage =
   | "dashboard"
   | "clients"
   | "client-detail"
+  | "portal"
   | "transactions"
   | "withdrawals"
   | "financial"
@@ -43,6 +45,7 @@ export interface AdminCtx {
   navigate: (page: AdminPage, clientId?: string) => void;
   addClient: (c: { name: string; email: string; password: string; phone: string; country: string; balance: number }) => void;
   updateClient: (id: string, patch: Partial<AdminClient>) => void;
+  pushAudit: (action: AuditAction, entity: AuditEntry["entity"], detailsNew: string) => void;
   createTransaction: (args: { clientId: string; type: TxType; amount: number; method: string; notes: string }) => void;
   updateWithdrawal: (id: string, status: WithdrawalStatus, notes: string) => void;
   addComment: (clientId: string, body: string) => void;
