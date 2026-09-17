@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
+import { ArrowLeft, Lock, Mail, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
 import { Logo } from "./icons";
 import { useToast } from "@/hooks/use-toast";
-import { ADMIN_EMAIL, isAdminCredentials } from "@/lib/admin-auth";
-import {
-  authenticate,
-  DEMO_EMAIL,
-  DEMO_PASSWORD,
-  findAccountByEmail,
-  registerSelfAccount,
-  type ClientAccount,
-} from "@/lib/client-auth";
+import { PasswordInput } from "@/components/ui/password-input";
+import { ADMIN_EMAIL } from "@/lib/admin-auth";
+import { apiAdminLogin, apiClientLogin, apiRegister } from "@/lib/api";
+import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/admin-auth";
 import type { Lang, StringKey } from "@/lib/i18n";
 
 export function LoginView({
@@ -31,38 +26,42 @@ export function LoginView({
   onSwitchToRegister: () => void;
   onAdminSuccess?: () => void;
   onAdminGate?: () => void;
-  onClientSuccess?: (account: ClientAccount) => void;
+  onClientSuccess?: () => void;
 }) {
   const title = t("welcomeBack");
   const subtitle = t("signInToAccess");
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim() || busy) {
       toast({ title: t("fillAllFields"), variant: "destructive" });
       return;
     }
+    setBusy(true);
     // Super Admin credentials typed into the client login → straight to the backoffice
     if (email.trim().toLowerCase() === ADMIN_EMAIL) {
-      if (isAdminCredentials(email, password)) {
+      const res = await apiAdminLogin(email.trim(), password);
+      setBusy(false);
+      if (res.ok) {
         onAdminSuccess?.();
-        return;
+      } else {
+        toast({ title: t("adminWrong"), variant: "destructive" });
       }
-      toast({ title: t("adminWrong"), variant: "destructive" });
       return;
     }
     // Client portal account (demo or created by the Super Admin in the CRM)
-    const account = authenticate(email, password);
-    if (account) {
-      onClientSuccess?.(account);
+    const res = await apiClientLogin(email.trim(), password);
+    setBusy(false);
+    if (res.ok) {
+      onClientSuccess?.();
       return;
     }
-    toast({ title: t("invalidCredentials"), variant: "destructive" });
+    toast({ title: res.error === "suspended" ? t("suspendedBanner") : t("invalidCredentials"), variant: "destructive" });
   };
 
   return (
@@ -88,22 +87,14 @@ export function LoginView({
             <span className="absolute inset-y-0 start-3 flex items-center text-white/30">
               <Lock className="h-4 w-4" />
             </span>
-            <input
-              type={showPw ? "text" : "password"}
+            <PasswordInput
+              theme="dark"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              onChange={setPassword}
               placeholder="••••••••"
-              className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.03] ps-10 pe-10 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15 transition"
+              autoComplete="current-password"
+              className="[&_input]:ps-10"
             />
-            <button
-              type="button"
-              onClick={() => setShowPw((v) => !v)}
-              aria-label={showPw ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 end-3 flex items-center text-white/30 hover:text-white/60"
-            >
-              {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
           </div>
         </div>
 
@@ -119,9 +110,10 @@ export function LoginView({
 
         <button
           type="submit"
-          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[15px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all"
+          disabled={busy}
+          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[15px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
         >
-          {t("signIn")}
+          {busy ? "…" : t("signIn")}
         </button>
 
         {onClientSuccess && (
@@ -181,7 +173,7 @@ export function RegisterView({
   lang: Lang;
   onBack: () => void;
   onSwitchToLogin: () => void;
-  onClientSuccess?: (account: ClientAccount) => void;
+  onClientSuccess?: () => void;
 }) {
   const title = t("createYourAccount");
   const subtitle = t("fillDetails");
@@ -192,10 +184,11 @@ export function RegisterView({
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!first.trim() || !last.trim() || !email.trim() || !password.trim() || !confirm.trim()) {
+    if (!first.trim() || !last.trim() || !email.trim() || !password.trim() || !confirm.trim() || busy) {
       toast({ title: t("fillAllFields"), variant: "destructive" });
       return;
     }
@@ -207,22 +200,15 @@ export function RegisterView({
       toast({ title: t("weakPassword"), variant: "destructive" });
       return;
     }
-    if (findAccountByEmail(email)) {
-      toast({ title: t("emailAlreadyUsed"), variant: "destructive" });
-      return;
-    }
-    const account = registerSelfAccount({
-      name: `${first.trim()} ${last.trim()}`,
-      email: email.trim(),
-      password,
-      phone: phone.trim(),
-    });
-    if (!account) {
-      toast({ title: t("emailAlreadyUsed"), variant: "destructive" });
+    setBusy(true);
+    const res = await apiRegister(`${first.trim()} ${last.trim()}`, email.trim(), password, phone.trim());
+    setBusy(false);
+    if (!res.ok) {
+      toast({ title: res.error === "taken" ? t("emailAlreadyUsed") : t("weakPassword"), variant: "destructive" });
       return;
     }
     toast({ title: t("accountCreatedToast") });
-    onClientSuccess?.(account);
+    onClientSuccess?.();
   };
 
   return (
@@ -234,14 +220,35 @@ export function RegisterView({
         </div>
         <Field icon={<Mail className="h-4 w-4" />} label={t("emailAddress")} type="email" value={email} onChange={setEmail} placeholder="name@example.com" autoComplete="email" required />
         <Field icon={<Phone className="h-4 w-4" />} label={`${t("phone")} (${t("optional")})`} type="tel" value={phone} onChange={setPhone} placeholder="+44 ..." autoComplete="tel" />
-        <Field icon={<Lock className="h-4 w-4" />} label={t("password")} type="password" value={password} onChange={setPassword} placeholder="••••••••" autoComplete="new-password" required />
-        <Field icon={<Lock className="h-4 w-4" />} label={t("confirmPassword")} type="password" value={confirm} onChange={setConfirm} placeholder="••••••••" autoComplete="new-password" required />
+        <div>
+          <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">
+            {t("password")} <span className="text-[#00E5A0]">*</span>
+          </label>
+          <div className="relative">
+            <span className="absolute inset-y-0 start-3 flex items-center text-white/30">
+              <Lock className="h-4 w-4" />
+            </span>
+            <PasswordInput theme="dark" value={password} onChange={setPassword} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">
+            {t("confirmPassword")} <span className="text-[#00E5A0]">*</span>
+          </label>
+          <div className="relative">
+            <span className="absolute inset-y-0 start-3 flex items-center text-white/30">
+              <Lock className="h-4 w-4" />
+            </span>
+            <PasswordInput theme="dark" value={confirm} onChange={setConfirm} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
+          </div>
+        </div>
 
         <button
           type="submit"
-          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[15px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all"
+          disabled={busy}
+          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[15px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
         >
-          {t("createAccount")}
+          {busy ? "…" : t("createAccount")}
         </button>
 
         <p className="text-center text-[13.5px] text-white/50">
@@ -353,5 +360,3 @@ function AuthShell({
     </div>
   );
 }
-
-

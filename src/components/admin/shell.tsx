@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowDownToLine,
-  ArrowLeftRight,
+  ArrowDownUp,
   BarChart3,
   Bell,
   ChevronDown,
@@ -12,70 +12,39 @@ import {
   CircleUser,
   ClipboardList,
   LayoutGrid,
+  Loader2,
   LogOut,
   Menu,
   ShieldCheck,
   TrendingUp,
-  UserCog,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import { LogoMark } from "@/components/site/icons";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { applyAdminTransaction, createPortalAccount } from "@/lib/client-auth";
-import {
-  AUDIT_ENTRIES,
-  CLIENTS,
-  NOTIFICATIONS,
-  ROLES,
-  STAFF,
-  TRANSACTIONS,
-  WITHDRAWALS,
-  type AuditAction,
-  type AuditEntry,
-} from "@/lib/admin-data";
+import { apiAdminAction, apiAdminGet, apiLogout } from "@/lib/api";
+import type { AdminAction } from "@/lib/shared-types";
 import type { AdminPage, AdminState, AdminCtx } from "./types";
 import { DashboardPage, FinancialPage, MarketPage } from "./dashboard";
 import { ClientDetailPage, ClientsPage } from "./clients";
-import { TransactionsPage, WithdrawalsPage } from "./ledger";
+import { BalancesPage, DepositsPage, TransactionsPage, WithdrawalsPage } from "./ledger";
 import { AuditPage, NotificationsPage, ProfilePage, StaffPage } from "./misc";
-import { PortalClientsPage } from "./portal";
 
 const NAV: { page: AdminPage; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { page: "dashboard", label: "Dashboard", icon: LayoutGrid },
   { page: "clients", label: "Clients", icon: Users },
-  { page: "portal", label: "Portal Clients", icon: UserCog },
-  { page: "transactions", label: "Transactions", icon: ArrowLeftRight },
+  { page: "transactions", label: "Transactions", icon: ArrowDownUp },
+  { page: "deposits", label: "Deposits", icon: Wallet },
   { page: "withdrawals", label: "Withdrawals", icon: ArrowDownToLine },
   { page: "financial", label: "Financial Overview", icon: TrendingUp },
+  { page: "balances", label: "Balances", icon: BarChart3 },
   { page: "market", label: "Market Overview", icon: BarChart3 },
   { page: "audit", label: "Audit Logs", icon: ClipboardList },
   { page: "notifications", label: "Notifications", icon: Bell },
   { page: "staff", label: "Staff", icon: ShieldCheck },
 ];
-
-function nowStamp(): string {
-  const d = new Date();
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  let h = d.getHours();
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  const min = String(d.getMinutes()).padStart(2, "0");
-  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}, ${String(h).padStart(2, "0")}:${min} ${ampm}`;
-}
-
-let auditSeq = 100;
-function makeAuditId(): string {
-  auditSeq += 1;
-  return `a${auditSeq}`;
-}
-
-let txSeq = 1000;
-function makeTxId(): string {
-  txSeq += 1;
-  return `cmu${txSeq.toString(36)}new${Math.random().toString(36).slice(2, 8)}`;
-}
 
 export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
   const { toast } = useToast();
@@ -84,21 +53,70 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const [state, setState] = useState<AdminState>({
-    clients: CLIENTS,
-    transactions: TRANSACTIONS,
-    withdrawals: WITHDRAWALS,
-    audit: AUDIT_ENTRIES,
-    notifications: NOTIFICATIONS,
-    staff: STAFF,
-    roles: ROLES,
-    comments: {},
-  });
+  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<AdminState | null>(null);
 
   const toastFn = useCallback(
     (title: string, description?: string) => toast({ title, description }),
     [toast],
+  );
+
+  /* ---- one source of truth: the server snapshot ---- */
+  const refresh = useCallback(async () => {
+    const res = await apiAdminGet();
+    if (!res.ok) {
+      if (res.error === "unauthorized") {
+        toastFn("Session expired", "Please sign in again.");
+        onSignOut();
+      }
+      return;
+    }
+    if (res.snapshot) {
+      setState(res.snapshot);
+      setLoading(false);
+    }
+  }, [onSignOut, toastFn]);
+
+  useEffect(() => {
+    const boot = () => {
+      void refresh();
+    };
+    boot();
+    const id = setInterval(boot, 15000); // keep tabs in sync even when idle
+    window.addEventListener("focus", boot);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", boot);
+    };
+  }, [refresh]);
+
+  const runAction = useCallback(
+    async (action: AdminAction, successToast?: { title: string; description?: string }): Promise<boolean> => {
+      const res = await apiAdminAction(action);
+      if (!res.ok) {
+        const messages: Record<string, string> = {
+          unauthorized: "Your session expired. Sign in again.",
+          taken: "That email is already used by another client.",
+          invalid: "Please check the form — some fields are missing or invalid.",
+          weak: "The password must be at least 6 characters.",
+          "wrong-current": "The current password is incorrect.",
+          "demo-protected": "The demo account cannot be deleted.",
+          self: "You cannot remove your own account.",
+          "client-not-found": "Select a client for this transaction.",
+          amount: "Enter a valid amount greater than zero.",
+          "not-found": "That record no longer exists.",
+          network: "Network error — please try again.",
+        };
+        toastFn("Action failed", messages[res.error ?? ""] ?? "Something went wrong. Please try again.");
+        // still refresh so the UI reflects reality
+        await refresh();
+        return false;
+      }
+      if (res.snapshot) setState(res.snapshot);
+      if (successToast) toastFn(successToast.title, successToast.description);
+      return true;
+    },
+    [refresh, toastFn],
   );
 
   const navigate = useCallback((p: AdminPage, clientId?: string) => {
@@ -108,238 +126,24 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
     window.scrollTo({ top: 0 });
   }, []);
 
-  const unreadCount = useMemo(() => state.notifications.filter((n) => n.unread).length, [state.notifications]);
+  const unreadCount = useMemo(() => state?.notifications.filter((n) => n.unread).length ?? 0, [state]);
 
-  const ctx: AdminCtx = useMemo(
-    () => ({
+  const ctx: AdminCtx | null = useMemo(() => {
+    if (!state) return null;
+    return {
       state,
       page,
       selectedClientId,
       unreadCount,
       navigate,
+      runAction,
+      refresh,
       toast: toastFn,
-      addClient: ({ name, email, password, phone, country, balance }) => {
-        const id = `cnew${Math.random().toString(36).slice(2, 12)}`;
-        // Portal account: the client can sign in on the website right away
-        const portal = createPortalAccount({ name, email, password, phone, country, cash: balance });
-        setState((s) => ({
-          ...s,
-          clients: [
-            {
-              id,
-              name,
-              email,
-              phone: phone || "—",
-              country: country || "—",
-              balance,
-              status: "ACTIVE",
-              transactions: balance > 0 ? 1 : 0,
-              agent: "Super Admin",
-              credits: balance,
-              debits: 0,
-              joinedDaysAgo: 0,
-            },
-            ...s.clients,
-          ],
-          notifications: [
-            {
-              id: `n${Math.random().toString(36).slice(2, 8)}`,
-              title: "New Client Registration",
-              body: `${name} has registered on the platform.`,
-              time: "just now",
-              unread: true,
-              kind: "registration" as const,
-            },
-            ...s.notifications,
-          ],
-          audit: [
-            {
-              id: makeAuditId(),
-              date: nowStamp(),
-              admin: "Super Admin",
-              action: "Create Client" as const,
-              entity: "USER" as const,
-              detailsNew: JSON.stringify({ email, name, country: country || "—", portalAccess: Boolean(portal) }),
-              ip: "—",
-            },
-            ...s.audit,
-          ],
-        }));
-        if (portal) {
-          toastFn("Client created", `${name} was added. Portal access is live — ${email} can sign in and open their dashboard.`);
-        } else {
-          toastFn("Client created", `${name} was added. Note: a portal account with this email already exists.`);
-        }
-      },
-      updateClient: (id, patch) => {
-        setState((s) => ({
-          ...s,
-          clients: s.clients.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-          audit: [
-            {
-              id: makeAuditId(),
-              date: nowStamp(),
-              admin: "Super Admin",
-              action: "Update Client" as const,
-              entity: "USER" as const,
-              detailsNew: JSON.stringify(patch),
-              ip: "—",
-            },
-            ...s.audit,
-          ],
-        }));
-        toastFn("Changes saved", "Client details were updated.");
-      },
-      pushAudit: (action: AuditAction, entity: AuditEntry["entity"], detailsNew: string) => {
-        setState((s) => ({
-          ...s,
-          audit: [
-            {
-              id: makeAuditId(),
-              date: nowStamp(),
-              admin: "Super Admin",
-              action,
-              entity,
-              detailsNew,
-              ip: "—",
-            },
-            ...s.audit,
-          ],
-        }));
-      },
-      createTransaction: ({ clientId, type, amount, method, notes }) => {
-        // Resolve the client outside setState (side-effect-safe) and mirror the
-        // movement into the client portal so the dashboard stays in sync.
-        const client = state.clients.find((c) => c.id === clientId);
-        if (client) {
-          applyAdminTransaction(client.email, {
-            delta: type === "CREDIT" ? amount : -amount,
-            label: `${type === "CREDIT" ? "Credit" : "Debit"} via ${method}${notes && notes !== "—" ? ` — ${notes}` : ""}`,
-          });
-        }
-        setState((s) => {
-          const stateClient = s.clients.find((c) => c.id === clientId);
-          if (!stateClient) return s;
-          const balanceAfter =
-            type === "CREDIT" ? stateClient.balance + amount : Math.max(0, stateClient.balance - amount);
-          const tx = {
-            id: makeTxId(),
-            date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-            dateISO: new Date().toISOString().slice(0, 10),
-            clientId,
-            clientName: stateClient.name,
-            type,
-            amount,
-            status: "COMPLETED" as const,
-            balanceAfter,
-            reference: `TXN-${Date.now().toString().slice(-8)}`,
-            method,
-            notes: notes || "—",
-          };
-          return {
-            ...s,
-            transactions: [tx, ...s.transactions],
-            clients: s.clients.map((c) =>
-              c.id === clientId
-                ? {
-                    ...c,
-                    balance: balanceAfter,
-                    transactions: c.transactions + 1,
-                    credits: type === "CREDIT" ? c.credits + amount : c.credits,
-                    debits: type === "DEBIT" ? c.debits + amount : c.debits,
-                  }
-                : c,
-            ),
-            audit: [
-              {
-                id: makeAuditId(),
-                date: nowStamp(),
-                admin: "Super Admin",
-                action: "Create Transaction" as const,
-                entity: "TRANSACTION" as const,
-                detailsNew: JSON.stringify({ clientId, type, amount, reference: tx.reference }),
-                ip: "—",
-              },
-              ...s.audit,
-            ],
-          };
-        });
-        toastFn("Transaction created", `${type === "CREDIT" ? "Credit" : "Debit"} of $${amount.toLocaleString("en-US")} recorded.`);
-      },
-      updateWithdrawal: (id, status, notes) => {
-        setState((s) => {
-          const w = s.withdrawals.find((x) => x.id === id);
-          return {
-            ...s,
-            withdrawals: s.withdrawals.map((x) => (x.id === id ? { ...x, status, notes } : x)),
-            audit: [
-              {
-                id: makeAuditId(),
-                date: nowStamp(),
-                admin: "Super Admin",
-                action: "Update Withdrawal" as const,
-                entity: "WITHDRAWAL" as const,
-                detailsOld: w ? JSON.stringify({ status: w.status }) : undefined,
-                detailsNew: JSON.stringify({ status, ...(notes ? { notes } : {}) }),
-                ip: "—",
-              },
-              ...s.audit,
-            ],
-          };
-        });
-        toastFn("Withdrawal updated", `Status changed to ${status.toLowerCase()}.`);
-      },
-      addComment: (clientId, body) => {
-        setState((s) => ({
-          ...s,
-          comments: {
-            ...s.comments,
-            [clientId]: [
-              ...(s.comments[clientId] ?? []),
-              { id: `cm${Math.random().toString(36).slice(2, 8)}`, author: "Super Admin", time: "just now", body },
-            ],
-          },
-        }));
-        toastFn("Comment posted");
-      },
-      markRead: (id) => {
-        setState((s) => ({
-          ...s,
-          notifications: s.notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)),
-        }));
-      },
-      markAllRead: () => {
-        setState((s) => ({ ...s, notifications: s.notifications.map((n) => ({ ...n, unread: false })) }));
-        toastFn("All notifications marked as read");
-      },
-      addStaff: (name, email, role) => {
-        setState((s) => ({
-          ...s,
-          staff: [...s.staff, { id: `st${Math.random().toString(36).slice(2, 8)}`, name, email, role, status: "ACTIVE" as const, lastLogin: "—" }],
-          audit: [
-            {
-              id: makeAuditId(),
-              date: nowStamp(),
-              admin: "Super Admin",
-              action: "Update Staff" as const,
-              entity: "STAFF" as const,
-              detailsNew: JSON.stringify({ email, role, status: "ACTIVE" }),
-              ip: "—",
-            },
-            ...s.audit,
-          ],
-        }));
-        toastFn("Staff added", `${email} can now access the admin panel.`);
-      },
-      removeStaff: (id) => {
-        setState((s) => ({ ...s, staff: s.staff.filter((m) => m.id !== id) }));
-        toastFn("Staff removed", "The account no longer has admin access.");
-      },
-    }),
-    [state, page, selectedClientId, unreadCount, navigate, toastFn],
-  );
+    };
+  }, [state, page, selectedClientId, unreadCount, navigate, runAction, refresh, toastFn]);
 
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
+    await apiLogout("admin");
     onSignOut();
   }, [onSignOut]);
 
@@ -350,12 +154,12 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] ring-1 ring-white/10">
           <LogoMark className="h-6 w-6 text-[#00E5A0]" />
         </div>
-        {!collapsed || mobile ? (
+        {(!collapsed || mobile) && (
           <div className="min-w-0">
             <p className="truncate text-[15px] font-bold leading-tight text-white">CryptoWise</p>
             <p className="truncate text-xs text-slate-400">Administration</p>
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Nav */}
@@ -363,6 +167,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
         {NAV.map((item) => {
           const active = page === item.page || (page === "client-detail" && item.page === "clients");
           const Icon = item.icon;
+          const badge = item.page === "withdrawals" && (state?.stats.pendingWithdrawals ?? 0) > 0 ? state!.stats.pendingWithdrawals : null;
           return (
             <button
               key={item.page}
@@ -374,7 +179,14 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
               )}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
-              {(!collapsed || mobile) && <span className="truncate">{item.label}</span>}
+              {(!collapsed || mobile) && (
+                <>
+                  <span className="truncate">{item.label}</span>
+                  {badge !== null && (
+                    <span className="ms-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-[#451a03]">{badge}</span>
+                  )}
+                </>
+              )}
             </button>
           );
         })}
@@ -423,7 +235,6 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden lg:block">
         {sidebarNode(false)}
-        {/* Collapse handle */}
         <button
           onClick={() => setCollapsed((v) => !v)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -524,18 +335,27 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
 
         {/* Page content */}
         <main className="flex-1 px-4 pb-16 sm:px-8">
-          {page === "dashboard" && <DashboardPage ctx={ctx} />}
-          {page === "clients" && <ClientsPage ctx={ctx} />}
-          {page === "client-detail" && <ClientDetailPage ctx={ctx} />}
-          {page === "portal" && <PortalClientsPage ctx={ctx} />}
-          {page === "transactions" && <TransactionsPage ctx={ctx} />}
-          {page === "withdrawals" && <WithdrawalsPage ctx={ctx} />}
-          {page === "financial" && <FinancialPage ctx={ctx} />}
-          {page === "market" && <MarketPage ctx={ctx} />}
-          {page === "audit" && <AuditPage ctx={ctx} />}
-          {page === "notifications" && <NotificationsPage ctx={ctx} />}
-          {page === "staff" && <StaffPage ctx={ctx} />}
-          {page === "profile" && <ProfilePage ctx={ctx} />}
+          {!ctx || loading ? (
+            <div className="flex min-h-[50vh] items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            </div>
+          ) : (
+            <>
+              {page === "dashboard" && <DashboardPage ctx={ctx} />}
+              {page === "clients" && <ClientsPage ctx={ctx} />}
+              {page === "client-detail" && <ClientDetailPage ctx={ctx} />}
+              {page === "transactions" && <TransactionsPage ctx={ctx} />}
+              {page === "deposits" && <DepositsPage ctx={ctx} />}
+              {page === "withdrawals" && <WithdrawalsPage ctx={ctx} />}
+              {page === "balances" && <BalancesPage ctx={ctx} />}
+              {page === "financial" && <FinancialPage ctx={ctx} />}
+              {page === "market" && <MarketPage ctx={ctx} />}
+              {page === "audit" && <AuditPage ctx={ctx} />}
+              {page === "notifications" && <NotificationsPage ctx={ctx} />}
+              {page === "staff" && <StaffPage ctx={ctx} />}
+              {page === "profile" && <ProfilePage ctx={ctx} />}
+            </>
+          )}
         </main>
       </div>
     </div>

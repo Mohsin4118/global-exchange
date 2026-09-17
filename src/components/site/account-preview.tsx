@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Landmark, ReceiptText, ChevronDown, MessageCircle, Send, Phone } from "lucide-react";
+import { Wallet, Landmark, ReceiptText, ChevronDown } from "lucide-react";
+import { ContactButtonsFloat } from "./contact-buttons";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -76,33 +77,9 @@ export function AccountPreview({ t }: { t: (k: StringKey) => string }) {
           >
             <div className="pointer-events-none absolute -inset-5 rounded-[32px] bg-[#00E5A0]/[0.05] blur-2xl" aria-hidden="true" />
 
-            {/* floating contact buttons (like the client's app) */}
-            <div className="absolute -top-3 -end-3 sm:-end-5 z-20 flex flex-col gap-2">
-              <a
-                href="https://wa.me/447591274617"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg hover:scale-105 transition-transform"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </a>
-              <a
-                href="https://t.me/+447591274617"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Telegram"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#37AEE2] text-white shadow-lg hover:scale-105 transition-transform"
-              >
-                <Send className="h-4 w-4 rtl:-scale-x-100" />
-              </a>
-              <a
-                href="tel:+447441909000"
-                aria-label="Phone"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7b5cd6] text-white shadow-lg hover:scale-105 transition-transform"
-              >
-                <Phone className="h-4 w-4" />
-              </a>
+            {/* floating contact buttons (like the client's app) — official WhatsApp / Telegram / imo marks */}
+            <div className="absolute -top-3 -end-3 sm:-end-5 z-20">
+              <ContactButtonsFloat size="sm" />
             </div>
 
             <div className="relative rounded-[28px] bg-[#eef6f1] p-4 sm:p-5 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.75)]">

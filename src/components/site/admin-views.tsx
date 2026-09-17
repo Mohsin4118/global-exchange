@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck, Info, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, Info, ArrowLeft } from "lucide-react";
 import { LogoMark } from "./icons";
 import { useToast } from "@/hooks/use-toast";
 import type { Lang, StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Backoffice } from "@/components/admin/shell";
+import { apiAdminLogin } from "@/lib/api";
 import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/admin-auth";
 
 /* ---------------- Admin login ---------------- */
@@ -26,11 +27,18 @@ export function AdminLoginView({
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if (busy) return;
+    setBusy(true);
+    // Verification happens server-side against the hashed admin record.
+    const res = await apiAdminLogin(email.trim(), password);
+    setBusy(false);
+    if (res.ok) {
       setError(false);
       onSuccess();
     } else {
@@ -87,6 +95,7 @@ export function AdminLoginView({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@cryptowiseuk.com"
                   autoComplete="email"
+                  dir="ltr"
                   className={cn(
                     "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
                     error ? "border-amber-400/50 focus:ring-amber-400/15" : "border-white/10 focus:border-amber-400/40 focus:ring-amber-400/10"
@@ -95,25 +104,37 @@ export function AdminLoginView({
               </div>
               <div>
                 <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">{t("password")}</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••"
-                  autoComplete="current-password"
-                  className={cn(
-                    "h-11 w-full rounded-xl border bg-white/[0.03] px-4 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
-                    error ? "border-amber-400/50 focus:ring-amber-400/15" : "border-white/10 focus:border-amber-400/40 focus:ring-amber-400/10"
-                  )}
-                />
+                <div className="relative">
+                  <input
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••"
+                    autoComplete="current-password"
+                    dir="ltr"
+                    className={cn(
+                      "h-11 w-full rounded-xl border bg-white/[0.03] px-4 pe-11 text-sm text-white placeholder:text-white/25 outline-none focus:ring-2 transition",
+                      error ? "border-amber-400/50 focus:ring-amber-400/15" : "border-white/10 focus:border-amber-400/40 focus:ring-amber-400/10"
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 end-3 flex items-center text-white/30 transition-colors hover:text-white/60"
+                  >
+                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {error && <p className="mt-1.5 text-[12px] font-medium text-amber-400">{t("adminWrong")}</p>}
               </div>
 
               <button
                 type="submit"
-                className="mt-1 h-12 rounded-xl bg-amber-400 text-[15px] font-bold text-[#2a1a02] shadow-[0_8px_32px_-8px_rgba(251,191,36,0.5)] hover:bg-amber-300 active:scale-[0.99] transition-all"
+                disabled={busy}
+                className="mt-1 h-12 rounded-xl bg-amber-400 text-[15px] font-bold text-[#2a1a02] shadow-[0_8px_32px_-8px_rgba(251,191,36,0.5)] hover:bg-amber-300 active:scale-[0.99] transition-all disabled:opacity-60"
               >
-                {t("signIn")}
+                {busy ? "…" : t("signIn")}
               </button>
             </form>
 
@@ -132,7 +153,7 @@ export function AdminLoginView({
   );
 }
 
-/* ---------------- Admin panel (full backoffice replica) ---------------- */
+/* ---------------- Admin panel (full backoffice, server-backed) ---------------- */
 
 export function AdminPanelView({ onSignOut }: { t?: (k: StringKey) => string; onSignOut: () => void }) {
   return <Backoffice onSignOut={onSignOut} />;

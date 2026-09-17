@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Fingerprint, Lock, ScanLine, ServerCog, EyeOff, Mail, MessageCircle, Send, Phone, ShieldCheck } from "lucide-react";
+import { Fingerprint, Lock, ScanLine, ServerCog, EyeOff, Mail, Phone, ShieldCheck, Landmark } from "lucide-react";
 import { CoinBadge, LogoMark } from "./icons";
 import { formatChange, formatPrice, FIAT_CURRENCIES, type ActivityItem, type Coin } from "@/lib/market";
-import { SITE_PHONE_DISPLAY, SITE_PHONE_TEL } from "@/lib/contact";
+import { CONTACT_LINKS, SITE_PHONE_DISPLAY, SITE_PHONE_TEL } from "@/lib/contact";
+import { ContactIcon } from "./contact-buttons";
 import type { StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -281,24 +282,21 @@ export function Footer({
               >
                 <Mail className="h-3.5 w-3.5" /> support@cryptowiseuk.com
               </a>
-              <a
-                href="https://wa.me/447591274617"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </a>
-              <a
-                href="https://t.me/+447591274617"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Telegram"
-                className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
-              >
-                <Send className="h-4 w-4" />
-              </a>
+              {CONTACT_LINKS.map((c) => (
+                <a
+                  key={c.id}
+                  href={c.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={c.label}
+                  title={c.label}
+                  className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-white/70 hover:text-white hover:border-[#00E5A0]/30 transition-colors"
+                >
+                  {c.id === "whatsapp" && <ContactIcon id={c.id} className="h-4 w-4 text-[#25D366]" />}
+                  {c.id === "telegram" && <ContactIcon id={c.id} className="h-4 w-4 text-[#26A5E4]" />}
+                  {c.id === "imo" && <ContactIcon id={c.id} className="h-4 w-4 rounded-[4px]" />}
+                </a>
+              ))}
               <a
                 href={SITE_PHONE_TEL}
                 aria-label={`${t("phone")}: ${SITE_PHONE_DISPLAY}`}
@@ -306,6 +304,25 @@ export function Footer({
               >
                 <Phone className="h-3.5 w-3.5" />
                 <span dir="ltr">{SITE_PHONE_DISPLAY}</span>
+              </a>
+            </div>
+
+            {/* Company registration — official Companies House record */}
+            <div className="mt-6 max-w-md rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00E5A0]/10">
+                  <Landmark className="h-4 w-4 text-[#00E5A0]" />
+                </span>
+                <p className="text-[13px] font-bold text-white/85">{t("licenseTitle")}</p>
+              </div>
+              <p className="mt-2.5 text-[11.5px] leading-relaxed text-white/45">{t("licenseText")}</p>
+              <a
+                href="https://find-and-update.company-information.service.gov.uk/company/16728292"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2.5 inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[#00E5A0]/90 underline decoration-[#00E5A0]/30 underline-offset-2 transition-colors hover:text-[#00E5A0]"
+              >
+                {t("companiesHouse")}
               </a>
             </div>
           </div>

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { AuditAction } from "@/lib/admin-data";
 import type { AdminCtx } from "./types";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Card,
   Modal,
@@ -36,15 +37,20 @@ const PAGE_SIZE = 10;
 
 const ACTIONS: AuditAction[] = [
   "Create Transaction",
+  "Update Transaction",
+  "Delete Transaction",
   "Create Client",
   "Update Client",
-  "Create Withdrawal",
+  "Delete Client",
   "Update Withdrawal",
+  "Create Withdrawal",
   "Create Staff",
   "Update Staff",
   "Create Role",
   "Update Role",
   "Sign In",
+  "Send Notification",
+  "Change Password",
 ];
 
 export function AuditPage({ ctx }: { ctx: AdminCtx }) {
@@ -164,10 +170,10 @@ export function NotificationsPage({ ctx }: { ctx: AdminCtx }) {
     <div>
       <PageHeader
         title="Notifications"
-        subtitle="Recent platform events requiring your attention."
+        subtitle="Client registrations, requests and platform events — synced live from the database."
         right={
           unread > 0 ? (
-            <OutlineButton onClick={ctx.markAllRead}>
+            <OutlineButton onClick={() => ctx.runAction({ action: "mark-all-read" }, { title: "All notifications marked as read" })}>
               <Eye className="h-4 w-4" /> Mark all as read
             </OutlineButton>
           ) : undefined
@@ -178,7 +184,7 @@ export function NotificationsPage({ ctx }: { ctx: AdminCtx }) {
         {notifications.map((n) => (
           <button
             key={n.id}
-            onClick={() => n.unread && ctx.markRead(n.id)}
+            onClick={() => n.unread && ctx.runAction({ action: "mark-read", id: n.id })}
             className={cn(
               "block w-full rounded-xl border p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors",
               n.unread ? "border-emerald-200/60 bg-emerald-50/50 hover:bg-emerald-50" : "border-slate-200/80 bg-white hover:bg-slate-50/60",
@@ -215,14 +221,18 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Agent");
 
-  const add = () => {
+  const add = async () => {
     if (!name.trim() || !email.trim()) {
       ctx.toast("Missing information", "Name and email are required.");
       return;
     }
-    ctx.addStaff(name.trim(), email.trim(), role);
-    setName(""); setEmail(""); setRole("Agent");
-    setAddOpen(false);
+    const ok = await ctx.runAction({ action: "add-staff", name: name.trim(), email: email.trim(), role }, { title: "Staff added", description: `${email.trim()} can now access the admin panel.` });
+    if (ok) {
+      setName("");
+      setEmail("");
+      setRole("Agent");
+      setAddOpen(false);
+    }
   };
 
   return (
@@ -277,7 +287,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
                       <button
                         aria-label="Remove staff member"
                         disabled={m.you}
-                        onClick={() => ctx.removeStaff(m.id)}
+                        onClick={() => ctx.runAction({ action: "remove-staff", id: m.id }, { title: "Staff removed", description: "The account no longer has admin access." })}
                         className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -380,54 +390,14 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
 
 /* ================= ADMIN PROFILE ================= */
 
-function PasswordInput({
-  label,
-  value,
-  onChange,
-  placeholder,
-  filled,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  filled?: boolean;
-}) {
-  const [show, setShow] = useState(false);
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{label}</span>
-      <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={cn(
-            "h-11 w-full rounded-lg border border-slate-200 pr-11 pl-4 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15",
-            filled && !show ? "bg-blue-50/70 tracking-widest" : "bg-white",
-          )}
-        />
-        <button
-          type="button"
-          onClick={() => setShow((s) => !s)}
-          aria-label={show ? "Hide password" : "Show password"}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
-        >
-          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-    </label>
-  );
-}
-
 export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
   const [name, setName] = useState("Super Admin");
-  const [current, setCurrent] = useState("••••••••••");
+  const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const updatePassword = () => {
+  const updatePassword = async () => {
     if (!next || next.length < 8) {
       ctx.toast("Weak password", "New password must be at least 8 characters.");
       return;
@@ -436,10 +406,14 @@ export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
       ctx.toast("Passwords do not match", "Re-enter the confirmation correctly.");
       return;
     }
-    ctx.toast("Password updated", "Your admin password was changed successfully.");
-    setCurrent("••••••••••");
-    setNext("");
-    setConfirm("");
+    setBusy(true);
+    const ok = await ctx.runAction({ action: "change-admin-password", current, next }, { title: "Password updated", description: "Your admin password was changed successfully." });
+    setBusy(false);
+    if (ok) {
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    }
   };
 
   return (
@@ -495,10 +469,10 @@ export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
       <Card className="mt-6 p-6">
         <h2 className="text-lg font-bold text-slate-900">Change Password</h2>
         <div className="mt-5 max-w-xl space-y-4">
-          <PasswordInput label="Current Password" value={current} onChange={setCurrent} placeholder="Enter current password" filled />
-          <PasswordInput label="New Password" value={next} onChange={setNext} placeholder="Enter new password" />
-          <PasswordInput label="Confirm New Password" value={confirm} onChange={setConfirm} placeholder="Confirm new password" />
-          <OutlineButton onClick={updatePassword}>Update Password</OutlineButton>
+          <PasswordInput theme="light" value={current} onChange={setCurrent} placeholder="Enter current password" autoComplete="current-password" />
+          <PasswordInput theme="light" value={next} onChange={setNext} placeholder="Enter new password" autoComplete="new-password" />
+          <PasswordInput theme="light" value={confirm} onChange={setConfirm} placeholder="Confirm new password" autoComplete="new-password" />
+          <OutlineButton onClick={updatePassword} disabled={busy}>Update Password</OutlineButton>
         </div>
       </Card>
     </div>

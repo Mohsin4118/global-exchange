@@ -21,14 +21,14 @@ import { cn } from "@/lib/utils";
 /* ================= DASHBOARD ================= */
 
 export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
-  const { clients, transactions } = ctx.state;
+  const { clients, txs: transactions } = ctx.state as unknown as { clients: Array<{ id: string; name: string; status: string; financials: { balance: number } }>; txs: AdminCtx["state"]["txs"] };
 
-  const totalBalances = useMemo(() => clients.reduce((a, c) => a + c.balance, 0), [clients]);
+  const totalBalances = useMemo(() => clients.reduce((a, c) => a + c.financials.balance, 0), [clients]);
   const volume = useMemo(
     () => transactions.filter((t) => t.status === "COMPLETED").reduce((a, t) => a + t.amount, 0),
     [transactions],
   );
-  const activeCount = useMemo(() => clients.filter((c) => c.status === "ACTIVE").length, [clients]);
+  const activeCount = useMemo(() => clients.filter((c) => c.status === "active").length, [clients]);
   const clientCount = clients.length;
   const recent = transactions.slice(0, 5);
 
@@ -110,7 +110,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
                 {recent.map((t) => (
                   <tr key={t.id} className="border-b border-slate-50 last:border-0">
                     <td className="px-4 py-3.5"><MonoId id={t.id} /></td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{t.date}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{t.dateISO}</td>
                     <td className="px-4 py-3.5">
                       <span className={cn("text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>
                         {t.type}
@@ -197,9 +197,9 @@ function GrowthChart() {
 /* ================= FINANCIAL OVERVIEW ================= */
 
 export function FinancialPage({ ctx }: { ctx: AdminCtx }) {
-  const { clients, transactions } = ctx.state;
+  const { clients, txs: transactions } = ctx.state as unknown as { clients: Array<{ id: string; name: string; financials: { balance: number } }>; txs: AdminCtx["state"]["txs"] };
 
-  const totalValue = useMemo(() => clients.reduce((a, c) => a + c.balance, 0), [clients]);
+  const totalValue = useMemo(() => clients.reduce((a, c) => a + c.financials.balance, 0), [clients]);
   const credits = useMemo(
     () => transactions.filter((t) => t.type === "CREDIT" && t.status === "COMPLETED").reduce((a, t) => a + t.amount, 0),
     [transactions],
@@ -211,18 +211,15 @@ export function FinancialPage({ ctx }: { ctx: AdminCtx }) {
   const creditCount = transactions.filter((t) => t.type === "CREDIT" && t.status === "COMPLETED").length;
   const debitCount = transactions.filter((t) => t.type === "DEBIT" && t.status === "COMPLETED").length;
   const net = credits - debits;
-  // Top clients ranked by their latest completed transaction balance (matches the platform)
-  const top5 = useMemo(() => {
-    const latest = new Map<string, number>();
-    for (const t of transactions) {
-      if (t.status !== "COMPLETED") continue;
-      if (!latest.has(t.clientId)) latest.set(t.clientId, t.balanceAfter);
-    }
-    return [...clients]
-      .map((c) => ({ ...c, rank: latest.get(c.id) ?? c.balance }))
-      .sort((a, b) => b.rank - a.rank)
-      .slice(0, 5);
-  }, [clients, transactions]);
+  // Top clients ranked by their live computed balance
+  const top5 = useMemo(
+    () =>
+      [...clients]
+        .sort((a, b) => b.financials.balance - a.financials.balance)
+        .slice(0, 5)
+        .map((c) => ({ ...c, rank: c.financials.balance })),
+    [clients],
+  );
   const creditPct = credits + debits > 0 ? (credits / (credits + debits)) * 100 : 100;
 
   const months = ["Apr 26", "May 26", "Jun 26", "Jul 26", "Aug 26", "Sep 26"];
