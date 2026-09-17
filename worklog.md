@@ -271,3 +271,20 @@ Stage Summary:
 - Every figure on the client dashboard is now Super Admin-controlled from the CRM "Portal Clients" page: cash, holdings units, statement lines, portal password, email, tier, status, manager note — plus approve/reject of client deposit/withdrawal requests; all changes audited and reflected live on the client side
 - Dashboard upgraded to a professional wealth-portal: live performance chart, 4 KPIs, tier/verified/member-since badges, sparkline holdings, filterable statement + CSV export, request loop with visible statuses, manager note, suspended state
 - Demo access unchanged: demo@cryptowiseuk.com / Demo@2026; admin: super@cryptowiseuk.com / Super@2026
+
+---
+Task ID: 16
+Agent: Main agent (Super Z)
+Task: Replace generic glyph icons in the Bitcoin header (hero) section with official brand logos — Bitcoin, Ethereum, Tether (USDT), Saudi Aramco, Salek (user request; Salek must be the REAL company logo, not a generic "S")
+
+Work Log:
+- Searched official sources online (web-search + image-search + Commons/Wikipedia/TradingView/iTunes APIs): identified and downloaded genuine logo files into public/logos/ — bitcoin.svg (official #F7931A circle + white B, cryptologos mirror), ethereum.svg (official 2014 diamond, authentic facet grays), tether.svg (official #50AF95 shield + white T), aramco.svg (CURRENT official Saudi Aramco brand tile: green-blue gradient + white pixel-starburst, matches aramco.com favicon), salik.svg (official Salik Company PJSC stylized "S" wedge, #4D4E60 + #858994->#C8DEE0 gradient — identity cross-confirmed by 3 independent official sources: salik.ae favicon, TradingView DFM:SALIK symbol logo, official "Salik Investor Relations" app icon)
+- Rejected lookalikes: Salik Development Foundation (wrong org), TradingView placeholder wedge had to be verified via IR app before accepting, old pre-2021 "Saudi Aramco" bilingual logo (aramco_flat.svg) discarded in favor of current brand tile, wv_saudi-aramco old logo discarded
+- salik.svg optimized: cropped viewBox to the wedge mark (11 14 34 28), removed baked background rect for transparent use
+- hero.tsx (ONLY file touched): FloatingCluster CLUSTER_ASSETS satellites swapped from CoinBadge letter glyphs to real logo files rendered in uniform white circular badges (h-8 w-8, ring-1 ring-white/20, same shadow, same positions/labels/float animations); Bitcoin kept EXACTLY as-is per user instruction (mint coin design unchanged); eslint img directive not needed, removed after lint flagged unused
+- Everything else untouched: Live Market/Stocks sections still use CoinBadge, ticker text-only, desktop layout unchanged (cluster remains mobile-only lg:hidden), CRM untouched
+- Verified: mobile 390 EN + AR (real logos visible in cluster, labels Ethereum/USDT-Tether/Aramco/Salek unchanged, no overflow sw=390); desktop 1440 EN + AR unchanged (globe + BTC coin, ticker 2222/SALEK); 0 page errors, 0 console errors/warnings; lint 0 errors (21 pre-existing warnings, 0 new); all 5 logo assets served HTTP 200
+- Zip rebuilt: download/cryptowiseuk-project.zip (109 files, includes public/logos/)
+
+Stage Summary:
+- Header hero section now uses genuine official brand logos: Ethereum diamond, Tether shield, Aramco starburst tile, Salik Company wedge — uniform white circular badges at identical size/spacing; Bitcoin coin design kept untouched; zero changes to any other section

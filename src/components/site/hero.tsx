@@ -187,11 +187,12 @@ export function Hero({
 
 /* ---------------- Mobile floating asset cluster (right of the headline) ---------------- */
 
+// Official brand logo files (public/logos) — real marks, no generic glyphs (client request)
 const CLUSTER_ASSETS = [
-  { glyph: "Ξ", gradient: "from-[#8ea8f5] to-[#4462c8]", label: "Ethereum", pos: "top-[12px] end-[24px]", float: 4.6, delay: 0.55 },
-  { glyph: "₮", gradient: "from-[#4fd1a5] to-[#127a55]", label: "USDT/Tether", pos: "top-[102px] end-[106px]", float: 5.4, delay: 0.75 },
-  { glyph: "A", gradient: "from-[#4fd1a5] to-[#0e7a4f]", label: "Aramco", pos: "top-[150px] end-[60px]", float: 5.0, delay: 0.95 },
-  { glyph: "S", gradient: "from-[#6ec2e0] to-[#1a6a8f]", label: "Salek", pos: "top-[178px] end-[8px]", float: 5.8, delay: 1.15 },
+  { logo: "/logos/ethereum.svg", imgClass: "h-[62%] w-auto", label: "Ethereum", pos: "top-[12px] end-[24px]", float: 4.6, delay: 0.55 },
+  { logo: "/logos/tether.svg", imgClass: "w-[64%] h-auto", label: "USDT/Tether", pos: "top-[102px] end-[106px]", float: 5.4, delay: 0.75 },
+  { logo: "/logos/aramco.svg", imgClass: "h-[76%] w-[76%] rounded-full", label: "Aramco", pos: "top-[150px] end-[60px]", float: 5.0, delay: 0.95 },
+  { logo: "/logos/salik.svg", imgClass: "w-[66%] h-auto", label: "Salek", pos: "top-[178px] end-[8px]", float: 5.8, delay: 1.15 },
 ];
 
 function FloatingCluster() {
@@ -243,11 +244,9 @@ function FloatingCluster() {
             y: { duration: a.float, repeat: Infinity, ease: "easeInOut", delay: a.delay },
           }}
         >
-          <CoinBadge
-            glyph={a.glyph}
-            gradient={a.gradient}
-            className="h-8 w-8 text-[13px] ring-1 ring-white/20 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.75)]"
-          />
+          <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/20 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.75)]">
+            <img src={a.logo} alt="" aria-hidden="true" loading="lazy" className={a.imgClass} />
+          </span>
           <span
             dir="ltr"
             className="mt-0.5 whitespace-nowrap rounded-full border border-white/10 bg-[#04121c]/85 px-1.5 py-px text-[8px] font-semibold leading-tight text-white/65"
