@@ -79,8 +79,9 @@ export function ContactButtonsFloat({ size = "md" }: { size?: "sm" | "md" }) {
   );
 }
 
-/** Full contact card row with labels — used on the client dashboard. */
-export function ContactButtonsCard({ subtitle, className }: { subtitle?: string; className?: string }) {
+/** Full contact card row with labels — used on the client dashboard (light + dark variants). */
+export function ContactButtonsCard({ subtitle, className, variant = "light" }: { subtitle?: string; className?: string; variant?: "light" | "dark" }) {
+  const dark = variant === "dark";
   return (
     <div className={cn("grid grid-cols-1 gap-2.5 sm:grid-cols-3", className)}>
       {CONTACT_LINKS.map((c) => (
@@ -90,17 +91,63 @@ export function ContactButtonsCard({ subtitle, className }: { subtitle?: string;
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${c.label} — ${subtitle ?? "Chat now"}`}
-          className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-md"
+          className={cn(
+            "group flex items-center gap-3 rounded-xl border p-3.5 transition-all hover:-translate-y-0.5",
+            dark
+              ? "border-white/[0.08] bg-white/[0.03] shadow-none hover:border-white/20 hover:bg-white/[0.06]"
+              : "border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:shadow-md",
+          )}
         >
           <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-md", CHANNEL_STYLE[c.id])}>
             <ContactIcon id={c.id} className={cn("h-5 w-5", c.id === "imo" && "h-[68%] w-[68%]")} />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">{c.label}</span>
-            <span className="block truncate text-[11.5px] text-slate-500">{subtitle ?? "Chat now"}</span>
+            <span className={cn("block text-sm font-bold transition-colors", dark ? "text-white group-hover:text-[#00E5A0]" : "text-slate-900 group-hover:text-emerald-600")}>{c.label}</span>
+            <span className={cn("block truncate text-[11.5px]", dark ? "text-white/40" : "text-slate-500")}>{subtitle ?? "Chat now"}</span>
           </span>
         </a>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Viewport-FIXED floating contact dock (WhatsApp · Telegram · imo).
+ * Rendered only on the homepage: stays attached to the viewport while the
+ * user scrolls the entire page (fixed positioning — never scrolls away),
+ * mirrors to the bottom-end corner in RTL, compact enough on mobile not to
+ * cover navigation, forms, CTAs or the footer. Official brand marks only.
+ */
+export function FloatingContactDock() {
+  return (
+    <div
+      className="pointer-events-none fixed bottom-4 end-3.5 z-40 sm:bottom-5 sm:end-5"
+      role="complementary"
+      aria-label="Contact us on WhatsApp, Telegram or imo"
+    >
+      <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-full border border-white/10 bg-[#031019]/85 p-1.5 shadow-[0_18px_48px_-12px_rgba(0,0,0,0.8)] backdrop-blur-md">
+        {CONTACT_LINKS.map((c) => (
+          <a
+            key={c.id}
+            href={c.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${c.label} — chat with us`}
+            title={c.label}
+            className={cn(
+              "group relative flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E5A0] sm:h-11 sm:w-11",
+              CHANNEL_STYLE[c.id],
+              CHANNEL_HOVER[c.id],
+            )}
+          >
+            <ContactIcon id={c.id} className={cn("h-5 w-5", c.id === "imo" && "h-[70%] w-[70%]")} />
+            {/* hover label (desktop) */}
+            <span className="pointer-events-none absolute end-full me-2 hidden whitespace-nowrap rounded-lg bg-[#031019]/95 px-2.5 py-1 text-[11.5px] font-bold text-white opacity-0 shadow-lg ring-1 ring-white/10 transition-opacity duration-200 group-hover:opacity-100 lg:block">
+              {c.label}
+            </span>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }

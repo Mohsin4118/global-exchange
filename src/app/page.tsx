@@ -12,6 +12,7 @@ import { TrustStats, SecurityBadges, Testimonials, Faq } from "@/components/site
 import { LoginView, RegisterView } from "@/components/site/auth-views";
 import { AdminLoginView, AdminPanelView } from "@/components/site/admin-views";
 import { ClientDashboard } from "@/components/site/client-dashboard";
+import { FloatingContactDock } from "@/components/site/contact-buttons";
 import { apiLogout, apiWhoami } from "@/lib/api";
 import { INITIAL_ACTIVITY, INITIAL_COINS, STOCKS, tickCoin, type ActivityItem, type Coin } from "@/lib/market";
 import { STRINGS, type Lang, type StringKey } from "@/lib/i18n";
@@ -172,6 +173,8 @@ export default function Page() {
               <Faq t={t} />
               <FinalCta t={t} onRegister={() => setView("register")} onLogin={() => setView("login")} />
               <Footer t={t} onLogin={() => setView("login")} onRegister={() => setView("register")} onAdmin={goAdmin} />
+              {/* viewport-fixed contact dock — visible across the ENTIRE homepage scroll */}
+              <FloatingContactDock />
             </motion.div>
           ) : view === "login" ? (
             <motion.div

@@ -1,10 +1,11 @@
 "use client";
 
 /* ------------------------------------------------------------------ */
-/*  CryptoWise — client dashboard parts (clean white wealth-portal UI) */
+/*  CryptoWise — client dashboard parts (DARK NAVY / VERY DARK TEAL)   */
 /*  Every figure rendered here comes from the server API — the Super   */
 /*  Admin controls all of it from the CRM. Live crypto/stock prices    */
-/*  come from the shared market ticker.                                */
+/*  come from the shared market ticker. No red anywhere: negatives     */
+/*  use amber. Fully RTL-aware with LTR-wrapped numerics.              */
 /* ------------------------------------------------------------------ */
 
 import { useState } from "react";
@@ -15,6 +16,7 @@ import {
   Bell,
   Check,
   Crown,
+  Lock,
   Pencil,
   Wallet,
   X,
@@ -58,18 +60,20 @@ export function initials(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "C";
 }
 
-/* ---------------- primitives ---------------- */
+/* ---------------- primitives (dark navy surfaces) ---------------- */
 
 export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn("rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]", className)}>{children}</div>
+    <div className={cn("rounded-2xl border border-white/[0.07] bg-[#071923]/85 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_18px_40px_-24px_rgba(0,0,0,0.9)]", className)}>
+      {children}
+    </div>
   );
 }
 
 export function SectionTitle({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 sm:px-6">
-      <h2 className="text-[15px] font-bold tracking-tight text-slate-900">{title}</h2>
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
+      <h2 className="text-[15px] font-bold tracking-tight text-white">{title}</h2>
       {right}
     </div>
   );
@@ -77,13 +81,25 @@ export function SectionTitle({ title, right }: { title: string; right?: React.Re
 
 export function StatusPill({ status, t }: { status: Tx["status"]; t: T }) {
   const map: Record<string, string> = {
-    COMPLETED: "bg-emerald-50 text-emerald-700",
-    PENDING: "bg-amber-50 text-amber-700",
-    PROCESSING: "bg-sky-50 text-sky-700",
-    REJECTED: "bg-slate-100 text-slate-600",
+    COMPLETED: "bg-emerald-500/12 text-emerald-300 ring-1 ring-emerald-500/25",
+    PENDING: "bg-amber-500/12 text-amber-300 ring-1 ring-amber-500/25",
+    PROCESSING: "bg-sky-500/12 text-sky-300 ring-1 ring-sky-500/25",
+    REJECTED: "bg-white/[0.06] text-white/50 ring-1 ring-white/10",
   };
   const label = status === "COMPLETED" ? t("statusCompleted") : status === "PENDING" ? t("reqPending") : status === "PROCESSING" ? t("statusProcessing") : t("reqRejected");
   return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide", map[status])}>{label}</span>;
+}
+
+export function LiveChip({ t }: { t: T }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E5A0]/10 px-2.5 py-1 text-[11px] font-bold text-[#00E5A0] ring-1 ring-[#00E5A0]/25">
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00E5A0] opacity-60" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00E5A0]" />
+      </span>
+      {t("live")}
+    </span>
+  );
 }
 
 export function KpiCard({
@@ -100,19 +116,19 @@ export function KpiCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[12.5px] font-semibold text-slate-500">{label}</p>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">{icon}</span>
+        <p className="text-[12px] font-semibold uppercase tracking-wide text-white/45 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{label}</p>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#00E5A0]/10 text-[#00E5A0] ring-1 ring-[#00E5A0]/20">{icon}</span>
       </div>
-      <p className="mt-2.5 font-mono text-[24px] font-bold leading-none tracking-tight text-slate-900" dir="ltr">
+      <p className="mt-2.5 font-mono text-[21px] font-bold leading-none tracking-tight text-white sm:text-[24px]" dir="ltr">
         {value}
       </p>
       {sub && (
         <p
           className={cn(
             "mt-2 text-[12px] font-semibold",
-            subTone === "up" ? "text-emerald-600" : subTone === "down" ? "text-amber-600" : "text-slate-400",
+            subTone === "up" ? "text-emerald-400" : subTone === "down" ? "text-amber-400" : "text-white/40",
           )}
           dir="ltr"
         >
@@ -123,7 +139,7 @@ export function KpiCard({
   );
 }
 
-/* ---------------- performance chart (white style) ---------------- */
+/* ---------------- performance chart (dark style) ---------------- */
 
 export function PerformanceChart({ history, t }: { history: number[]; t: T }) {
   const pts = history.length > 1 ? history : [1, 1];
@@ -146,36 +162,25 @@ export function PerformanceChart({ history, t }: { history: number[]; t: T }) {
 
   return (
     <Card className="overflow-hidden">
-      <SectionTitle
-        title={t("performance")}
-        right={
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            {t("live")}
-          </span>
-        }
-      />
+      <SectionTitle title={t("performance")} right={<LiveChip t={t} />} />
       <div className="px-2 pb-3 pt-4">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-44 w-full" preserveAspectRatio="none" role="img" aria-label="Portfolio performance chart">
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-40 w-full sm:h-44" preserveAspectRatio="none" role="img" aria-label="Portfolio performance chart">
           <defs>
             <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0.01" />
+              <stop offset="0%" stopColor="#00E5A0" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#00E5A0" stopOpacity="0.01" />
             </linearGradient>
           </defs>
           {[0.25, 0.5, 0.75].map((f) => (
-            <line key={f} x1="0" x2={W} y1={26 + f * (H - 52)} y2={26 + f * (H - 52)} stroke="#eef2f7" strokeWidth="1" />
+            <line key={f} x1="0" x2={W} y1={26 + f * (H - 52)} y2={26 + f * (H - 52)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
           ))}
           <path d={area} fill="url(#perfFill)" />
-          <path d={path} fill="none" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx={last[0]} cy={last[1]} r="3.5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
-          <text x={8} y={16} fontSize="11" className="fill-slate-400 font-mono" direction="ltr">
+          <path d={path} fill="none" stroke="#00E5A0" strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx={last[0]} cy={last[1]} r="3.5" fill="#00E5A0" stroke="#04121c" strokeWidth="1.5" />
+          <text x={8} y={16} fontSize="11" fill="rgba(255,255,255,0.35)" className="font-mono" direction="ltr">
             {usd(max)}
           </text>
-          <text x={8} y={H - 6} fontSize="11" className="fill-slate-400 font-mono" direction="ltr">
+          <text x={8} y={H - 6} fontSize="11" fill="rgba(255,255,255,0.35)" className="font-mono" direction="ltr">
             {usd(min)}
           </text>
         </svg>
@@ -212,17 +217,18 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
   if (rows.length === 0) {
     return (
       <Card className="p-10 text-center">
-        <p className="text-[15px] font-bold text-slate-900">{t("noAssets")}</p>
-        <p className="mx-auto mt-1.5 max-w-sm text-[13px] text-slate-500">{t("noAssetsSub")}</p>
+        <p className="text-[15px] font-bold text-white">{t("noAssets")}</p>
+        <p className="mx-auto mt-1.5 max-w-sm text-[13px] text-white/50">{t("noAssetsSub")}</p>
       </Card>
     );
   }
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[680px] text-sm">
+      {/* desktop table (md+) */}
+      <div className="hidden md:block">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-start text-[12px] font-semibold uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-white/[0.06] text-[12px] font-semibold uppercase tracking-wide text-white/35">
               <th className="px-6 py-3.5 text-start font-semibold">{t("holdings")}</th>
               <th className="px-4 py-3.5 text-end font-semibold">{t("units")}</th>
               <th className="px-4 py-3.5 text-end font-semibold">{t("price")}</th>
@@ -233,30 +239,30 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.coin.id} className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60">
+              <tr key={r.coin.id} className="border-b border-white/[0.04] transition-colors last:border-0 hover:bg-white/[0.02]">
                 <td className="px-6 py-3.5">
                   <div className="flex items-center gap-3">
                     <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 text-[13px]" />
                     <div className="min-w-0">
-                      <p className="truncate font-bold text-slate-900">{r.coin.name}</p>
-                      <p className="truncate text-[11.5px] text-slate-400" dir="ltr">
+                      <p className="truncate font-bold text-white">{r.coin.name}</p>
+                      <p className="truncate text-[11.5px] text-white/35" dir="ltr">
                         {r.coin.symbol}
                       </p>
                     </div>
                   </div>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-end font-semibold tabular-nums text-slate-700" dir="ltr">
+                <td className="whitespace-nowrap px-4 py-3.5 text-end font-semibold tabular-nums text-white/80" dir="ltr">
                   {fmtUnits(r.units)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-end tabular-nums text-slate-500" dir="ltr">
+                <td className="whitespace-nowrap px-4 py-3.5 text-end tabular-nums text-white/45" dir="ltr">
                   {formatPrice(r.coin.price)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-end font-bold tabular-nums text-slate-900" dir="ltr">
+                <td className="whitespace-nowrap px-4 py-3.5 text-end font-bold tabular-nums text-white" dir="ltr">
                   {usd(r.value)}
                 </td>
                 <td className="px-4 py-3.5 text-end">
                   <span
-                    className={cn("inline-block rounded-md px-2 py-1 text-[12px] font-bold tabular-nums", r.coin.change24h >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}
+                    className={cn("inline-block rounded-md px-2 py-1 text-[12px] font-bold tabular-nums", r.coin.change24h >= 0 ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300")}
                     dir="ltr"
                   >
                     {formatChange(r.coin.change24h)}
@@ -264,10 +270,10 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
                 </td>
                 <td className="px-6 py-3.5 text-end">
                   <div className="flex items-center justify-end gap-2.5">
-                    <svg viewBox="0 0 72 28" className="hidden h-7 w-16 sm:block" preserveAspectRatio="none" aria-hidden="true">
-                      <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#10b981" : "#f59e0b"} strokeWidth="1.8" strokeLinecap="round" />
+                    <svg viewBox="0 0 72 28" className="h-7 w-16" preserveAspectRatio="none" aria-hidden="true">
+                      <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#00E5A0" : "#fbbf24"} strokeWidth="1.8" strokeLinecap="round" />
                     </svg>
-                    <span className="w-12 text-end font-semibold tabular-nums text-slate-500" dir="ltr">
+                    <span className="w-12 text-end font-semibold tabular-nums text-white/45" dir="ltr">
                       {((r.value / total) * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -277,6 +283,43 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
           </tbody>
         </table>
       </div>
+      {/* mobile stacked cards (<md) — never scrolls horizontally */}
+      <ul className="divide-y divide-white/[0.05] md:hidden">
+        {rows.map((r) => (
+          <li key={r.coin.id} className="p-4">
+            <div className="flex items-center gap-3">
+              <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 shrink-0 text-[13px]" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13.5px] font-bold text-white">{r.coin.name}</p>
+                <p className="truncate text-[11px] text-white/35" dir="ltr">
+                  {r.coin.symbol} · {fmtUnits(r.units)} {t("units").toLowerCase()}
+                </p>
+              </div>
+              <div className="shrink-0 text-end">
+                <p className="whitespace-nowrap text-[13.5px] font-bold tabular-nums text-white" dir="ltr">
+                  {usd(r.value)}
+                </p>
+                <p className={cn("text-[11.5px] font-bold tabular-nums", r.coin.change24h >= 0 ? "text-emerald-400" : "text-amber-400")} dir="ltr">
+                  {formatChange(r.coin.change24h)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-white/[0.05] pt-2.5">
+              <span className="text-[11px] text-white/35" dir="ltr">
+                {t("price")}: {formatPrice(r.coin.price)}
+              </span>
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 72 28" className="h-6 w-14" preserveAspectRatio="none" aria-hidden="true">
+                  <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#00E5A0" : "#fbbf24"} strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+                <span className="text-[11px] font-semibold tabular-nums text-white/45" dir="ltr">
+                  {((r.value / total) * 100).toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
       {lang === "ar" && <span className="hidden">{t("allocation")}</span>}
     </Card>
   );
@@ -285,19 +328,19 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
 export function AllocationBar({ segments, t }: { segments: Array<{ label: string; value: number; color: string }>; t: T }) {
   const sum = segments.reduce((s, x) => s + x.value, 0) || 1;
   return (
-    <Card className="p-5 sm:p-6">
-      <p className="text-[15px] font-bold tracking-tight text-slate-900">{t("allocation")}</p>
-      <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-slate-100" role="img" aria-label={t("allocation")}>
+    <Card className="p-4 sm:p-5">
+      <p className="text-[15px] font-bold tracking-tight text-white">{t("allocation")}</p>
+      <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-white/[0.06]" role="img" aria-label={t("allocation")}>
         {segments.map((s, i) => (
           <div key={i} style={{ width: `${(s.value / sum) * 100}%`, backgroundColor: s.color }} />
         ))}
       </div>
       <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
         {segments.map((s, i) => (
-          <li key={i} className="flex items-center gap-2 text-[12.5px] font-medium text-slate-600">
+          <li key={i} className="flex items-center gap-2 text-[12.5px] font-medium text-white/60">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
             {s.label}
-            <span className="font-bold tabular-nums text-slate-900" dir="ltr">
+            <span className="font-bold tabular-nums text-white" dir="ltr">
               {((s.value / sum) * 100).toFixed(1)}%
             </span>
           </li>
@@ -312,21 +355,21 @@ export function AllocationBar({ segments, t }: { segments: Array<{ label: string
 export function TxRowItem({ tx, t, lang }: { tx: Tx; t: T; lang: Lang }) {
   const credit = tx.type === "CREDIT";
   return (
-    <li className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/60 sm:px-6">
-      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", credit ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+    <li className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.02] sm:px-5">
+      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", credit ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20" : "bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20")}>
         {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13.5px] font-semibold text-slate-900">
+        <p className="truncate text-[13.5px] font-semibold text-white">
           {tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}
-          {tx.asset ? <span className="font-normal text-slate-500"> · {tx.asset}</span> : null}
+          {tx.asset ? <span className="font-normal text-white/45"> · {tx.asset}</span> : null}
         </p>
-        <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
+        <p className="mt-0.5 text-[11.5px] text-white/35" dir="ltr">
           {fmtDate(tx.dateISO, lang)} · {tx.method}
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+        <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-400" : "text-amber-400")} dir="ltr">
           {credit ? "+" : "−"}
           {usd(tx.amount)}
         </span>
@@ -336,7 +379,7 @@ export function TxRowItem({ tx, t, lang }: { tx: Tx; t: T; lang: Lang }) {
   );
 }
 
-/* ---------------- request modal (deposit / withdrawal) ---------------- */
+/* ---------------- request modal (deposit / withdrawal, dark) ---------------- */
 
 export function RequestModal({
   kind,
@@ -374,18 +417,18 @@ export function RequestModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="absolute inset-0 bg-[#020b12]/70 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#071923] shadow-2xl">
         <div className="flex items-center justify-between p-5 pb-0">
-          <h3 className="text-lg font-bold text-slate-900">{kind === "deposit" ? t("requestTitleDeposit") : t("requestTitleWithdraw")}</h3>
-          <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+          <h3 className="text-lg font-bold text-white">{kind === "deposit" ? t("requestTitleDeposit") : t("requestTitleWithdraw")}</h3>
+          <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="space-y-4 p-5">
-          <p className="rounded-lg bg-slate-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-500">{t("requestHint")}</p>
+          <p className="rounded-lg bg-white/[0.04] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white/50">{t("requestHint")}</p>
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAmount")}</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("requestAmount")}</span>
             <input
               type="number"
               min="0"
@@ -395,27 +438,27 @@ export function RequestModal({
               placeholder="0.00"
               dir="ltr"
               aria-label={t("requestAmount")}
-              className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+              className="h-11 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3.5 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15"
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestNote")}</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("requestNote")}</span>
             <textarea
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full resize-y rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+              className="w-full resize-y rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15"
             />
           </label>
-          {error && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-700">{error}</p>}
+          {error && <p className="rounded-lg bg-amber-500/10 px-3.5 py-2 text-[12.5px] font-semibold text-amber-300 ring-1 ring-amber-500/20">{error}</p>}
           <div className="flex justify-end gap-2.5 pt-1">
-            <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+            <button onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/70 transition-colors hover:bg-white/[0.05]">
               {t("cancel")}
             </button>
             <button
               onClick={submit}
               disabled={busy}
-              className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-[#00E5A0] px-4 py-2.5 text-sm font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:opacity-50"
             >
               {t("requestSubmit")}
             </button>
@@ -447,7 +490,7 @@ export function NotificationsCard({
         title={t("notificationsTitle")}
         right={
           unread > 0 ? (
-            <button onClick={onMarkAll} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50">
+            <button onClick={onMarkAll} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[12px] font-semibold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white">
               <Check className="h-3.5 w-3.5" /> {t("markAllRead")}
             </button>
           ) : undefined
@@ -455,21 +498,21 @@ export function NotificationsCard({
       />
       <ul className="mt-3 max-h-80 space-y-0 overflow-y-auto">
         {list.map((n) => (
-          <li key={n.id} className={cn("flex items-start gap-3 border-b border-slate-50 px-5 py-3.5 last:border-0 sm:px-6", n.unread && "bg-emerald-50/40")}>
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
-              <Bell className="h-3.5 w-3.5 text-slate-500" />
+          <li key={n.id} className={cn("flex items-start gap-3 border-b border-white/[0.05] px-4 py-3.5 last:border-0 sm:px-5", n.unread && "bg-[#00E5A0]/[0.05]")}>
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06]">
+              <Bell className="h-3.5 w-3.5 text-white/50" />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="truncate text-[13px] font-bold text-slate-900">{n.title}</p>
-                {n.unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />}
+                <p className="truncate text-[13px] font-bold text-white">{n.title}</p>
+                {n.unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#00E5A0]" />}
               </div>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{n.body}</p>
+              <p className="mt-0.5 text-[12px] leading-relaxed text-white/45">{n.body}</p>
             </div>
-            <span className="shrink-0 text-[11px] text-slate-400">{n.time}</span>
+            <span className="shrink-0 text-[11px] text-white/30">{n.time}</span>
           </li>
         ))}
-        {list.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-slate-500">{t("noNotifications")}</li>}
+        {list.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-white/45">{t("noNotifications")}</li>}
       </ul>
     </Card>
   );
@@ -523,18 +566,21 @@ export function ProfileCard({
     setPwError(null);
   };
 
-  const rows: Array<[string, string]> = [
-    [t("emailAddress"), c.email],
-    [t("phone"), c.phone || "—"],
+  const rows: Array<[string, string, boolean?]> = [
+    [t("emailAddress"), c.email, true],
+    [t("phone"), c.phone || "—", true],
     [t("address"), [c.address, c.city, c.postcode].filter(Boolean).join(", ") || "—"],
     [t("country"), c.country || "—"],
-    [t("accountNo"), c.accountNo],
-    [t("openingBalance"), usd(c.openingBalance)],
-    [t("creditsLabel"), usd(fin.credits)],
-    [t("debitsLabel"), usd(fin.debits)],
+    [t("accountNo"), c.accountNo, true],
+    [t("openingBalance"), usd(c.openingBalance), true],
+    [t("creditsLabel"), usd(fin.credits), true],
+    [t("debitsLabel"), usd(fin.debits), true],
     [t("statusLabel"), c.status === "active" ? t("active") : t("suspended")],
     [t("tierLabel"), c.tier === "Private" ? t("tierPrivate") : c.tier === "Premium" ? t("tierPremium") : t("tierStandard")],
   ];
+
+  const inputCls =
+    "h-11 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3.5 text-sm text-white outline-none transition-colors placeholder:text-white/25 focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15";
 
   return (
     <Card className="overflow-hidden">
@@ -547,51 +593,51 @@ export function ProfileCard({
                 setForm({ phone: c.phone, country: c.country, address: c.address, city: c.city, postcode: c.postcode });
                 setEditing(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[12px] font-semibold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white"
             >
               <Pencil className="h-3.5 w-3.5" /> {t("editProfile")}
             </button>
           ) : undefined
         }
       />
-      <div className="px-5 pb-5 pt-3 sm:px-6">
+      <div className="px-4 pb-5 pt-3 sm:px-5">
         {editing ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("phone")}</span>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15" />
+              <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("phone")}</span>
+              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("country")}</span>
-              <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15" />
+              <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("country")}</span>
+              <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={inputCls} />
             </label>
             <label className="block sm:col-span-2">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("address")}</span>
-              <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15" />
+              <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("address")}</span>
+              <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("city")}</span>
-              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15" />
+              <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("city")}</span>
+              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("postcode")}</span>
-              <input value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15" />
+              <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("postcode")}</span>
+              <input value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} className={inputCls} />
             </label>
             <div className="flex justify-end gap-2.5 sm:col-span-2">
-              <button onClick={() => setEditing(false)} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+              <button onClick={() => setEditing(false)} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/70 transition-colors hover:bg-white/[0.05]">
                 {t("cancel")}
               </button>
-              <button onClick={save} disabled={busy} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50">
+              <button onClick={save} disabled={busy} className="rounded-lg bg-[#00E5A0] px-4 py-2.5 text-sm font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:opacity-50">
                 {t("saveProfile")}
               </button>
             </div>
           </div>
         ) : (
           <dl className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
-            {rows.map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between gap-4 border-b border-slate-50 py-2.5 last:border-0">
-                <dt className="shrink-0 text-[12.5px] font-medium text-slate-400">{k}</dt>
-                <dd className="truncate text-[13px] font-semibold text-slate-900" dir={k === t("emailAddress") || k === t("phone") || k === t("accountNo") || v.match(/^[+$\d]/) ? "ltr" : undefined}>
+            {rows.map(([k, v, ltr]) => (
+              <div key={k} className="flex items-center justify-between gap-4 border-b border-white/[0.05] py-2.5 last:border-0">
+                <dt className="shrink-0 text-[12.5px] font-medium text-white/40">{k}</dt>
+                <dd className="truncate text-[13px] font-semibold text-white" dir={ltr || /^[+$\d]/.test(v) ? "ltr" : undefined}>
                   {v}
                 </dd>
               </div>
@@ -599,37 +645,37 @@ export function ProfileCard({
           </dl>
         )}
 
-        <div className="mt-5 border-t border-slate-100 pt-4">
+        <div className="mt-5 border-t border-white/[0.06] pt-4">
           {!pwOpen ? (
-            <button onClick={() => setPwOpen(true)} className="text-[13px] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
+            <button onClick={() => setPwOpen(true)} className="text-[13px] font-bold text-[#00E5A0] transition-colors hover:text-[#2cf0b5]">
               {t("changePassword")}
             </button>
           ) : (
             <div className="max-w-sm space-y-3">
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("currentPassword")}</span>
-                <PasswordInput theme="light" value={pw.current} onChange={(v) => setPw({ ...pw, current: v })} autoComplete="current-password" />
+                <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("currentPassword")}</span>
+                <PasswordInput theme="dark" value={pw.current} onChange={(v) => setPw({ ...pw, current: v })} autoComplete="current-password" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("newPassword")}</span>
-                <PasswordInput theme="light" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} autoComplete="new-password" />
+                <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("newPassword")}</span>
+                <PasswordInput theme="dark" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} autoComplete="new-password" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("confirmNewPassword")}</span>
-                <PasswordInput theme="light" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} autoComplete="new-password" />
+                <span className="mb-1.5 block text-[13px] font-medium text-white/60">{t("confirmNewPassword")}</span>
+                <PasswordInput theme="dark" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} autoComplete="new-password" />
               </label>
-              {pwError && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-700">{pwError}</p>}
+              {pwError && <p className="rounded-lg bg-amber-500/10 px-3.5 py-2 text-[12.5px] font-semibold text-amber-300 ring-1 ring-amber-500/20">{pwError}</p>}
               <div className="flex justify-end gap-2.5">
                 <button
                   onClick={() => {
                     setPwOpen(false);
                     setPwError(null);
                   }}
-                  className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                  className="rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/70 transition-colors hover:bg-white/[0.05]"
                 >
                   {t("cancel")}
                 </button>
-                <button onClick={changePassword} disabled={busy} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50">
+                <button onClick={changePassword} disabled={busy} className="rounded-lg bg-[#00E5A0] px-4 py-2.5 text-sm font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:opacity-50">
                   {t("changePassword")}
                 </button>
               </div>
@@ -648,9 +694,9 @@ export function ContactCard({ t }: { t: T }) {
   return (
     <Card className="overflow-hidden">
       <SectionTitle title={t("contactTitle")} />
-      <div className="px-5 pb-5 pt-3 sm:px-6">
-        <p className="mb-3.5 text-[12.5px] text-slate-500">{t("contactSub")}</p>
-        <ContactButtonsCard />
+      <div className="px-4 pb-5 pt-3 sm:px-5">
+        <p className="mb-3.5 text-[12.5px] text-white/45">{t("contactSub")}</p>
+        <ContactButtonsCard variant="dark" />
       </div>
     </Card>
   );
@@ -662,36 +708,25 @@ export function MarketStrip({ coins, stocks, t }: { coins: Coin[]; stocks: Coin[
   const top = [...coins, ...stocks].slice(0, 6);
   return (
     <Card className="overflow-hidden">
-      <SectionTitle
-        title={t("marketOverview")}
-        right={
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            {t("live")}
-          </span>
-        }
-      />
-      <div className="grid grid-cols-1 gap-2.5 p-5 sm:grid-cols-2 xl:grid-cols-3">
+      <SectionTitle title={t("marketOverview")} right={<LiveChip t={t} />} />
+      <div className="grid grid-cols-1 gap-2.5 p-4 sm:grid-cols-2 sm:p-5">
         {top.map((c) => (
-          <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-3.5 py-3">
+          <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <CoinBadge glyph={c.glyph} gradient={c.gradient} className="h-8 w-8 text-[12px]" />
               <div className="min-w-0">
-                <p className="truncate text-[13px] font-bold text-slate-900">{c.name}</p>
-                <p className="truncate text-[11px] text-slate-400" dir="ltr">
+                <p className="truncate text-[13px] font-bold text-white">{c.name}</p>
+                <p className="truncate text-[11px] text-white/35" dir="ltr">
                   {c.symbol}
                   {c.exchange ? ` · ${c.exchange}` : ""}
                 </p>
               </div>
             </div>
             <div className="shrink-0 text-end">
-              <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-slate-900" dir="ltr">
+              <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-white" dir="ltr">
                 {formatPrice(c.price)}
               </p>
-              <p className={cn("text-[11px] font-bold tabular-nums", c.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+              <p className={cn("text-[11px] font-bold tabular-nums", c.change24h >= 0 ? "text-emerald-400" : "text-amber-400")} dir="ltr">
                 {formatChange(c.change24h)}
               </p>
             </div>
@@ -702,27 +737,43 @@ export function MarketStrip({ coins, stocks, t }: { coins: Coin[]; stocks: Coin[
   );
 }
 
-/* ---------------- tier badge ---------------- */
+/* ---------------- badges ---------------- */
 
 export function TierBadge({ tier, t }: { tier: string; t: T }) {
   if (tier === "Private") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11.5px] font-bold text-amber-700 ring-1 ring-amber-200/70">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-2.5 py-1 text-[11.5px] font-bold text-amber-300 ring-1 ring-amber-400/25">
         <Crown className="h-3.5 w-3.5" /> {t("tierPrivate")}
       </span>
     );
   }
   if (tier === "Premium") {
-    return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11.5px] font-bold text-emerald-700 ring-1 ring-emerald-200/70">{t("tierPremium")}</span>;
+    return <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E5A0]/10 px-2.5 py-1 text-[11.5px] font-bold text-[#00E5A0] ring-1 ring-[#00E5A0]/25">{t("tierPremium")}</span>;
   }
-  return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-bold text-slate-600">{t("tierStandard")}</span>;
+  return <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11.5px] font-bold text-white/60 ring-1 ring-white/10">{t("tierStandard")}</span>;
 }
 
+/** Green Verified badge with a check icon — rendered NEXT TO the client name. */
 export function VerifiedBadge({ verified, t }: { verified: boolean; t: T }) {
-  if (!verified) return null;
+  if (!verified) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-2.5 py-1 text-[11.5px] font-bold text-amber-300 ring-1 ring-amber-400/25">
+        <BadgeCheck className="h-3.5 w-3.5" /> {t("kycPendingBadge")}
+      </span>
+    );
+  }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-[11.5px] font-bold text-sky-700 ring-1 ring-sky-200/70">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11.5px] font-bold text-emerald-300 ring-1 ring-emerald-500/30">
       <BadgeCheck className="h-3.5 w-3.5" /> {t("verifiedBadge")}
+    </span>
+  );
+}
+
+/** "Private" privacy badge — rendered UNDER the client name. */
+export function PrivateBadge({ t }: { t: T }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-2.5 py-1 text-[11.5px] font-bold text-white/70 ring-1 ring-white/15">
+      <Lock className="h-3 w-3" /> {t("privateBadge")}
     </span>
   );
 }

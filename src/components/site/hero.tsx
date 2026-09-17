@@ -198,9 +198,11 @@ const CLUSTER_ASSETS = [
 function FloatingCluster() {
   return (
     <div className="lg:hidden pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-      {/* main Bitcoin coin — kept exactly where the client pointed */}
+      {/* main Bitcoin coin — kept exactly where the client pointed.
+          No dir override here: `end-0` must resolve against the page
+          direction so the coin mirrors to the LEFT in the Arabic RTL
+          header (client requirement) and stays on the right in EN. */}
       <motion.div
-        dir="ltr"
         className="absolute end-0 top-12"
         initial={{ opacity: 0, scale: 0.7 }}
         animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}

@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Trash2,
 } from "lucide-react";
-import type { AuditAction } from "@/lib/admin-data";
+import type { AuditAction } from "@/lib/shared-types";
 import type { AdminCtx } from "./types";
 import { PasswordInput } from "@/components/ui/password-input";
 import {

@@ -282,7 +282,7 @@ function seed(): DbData {
     createdAtISO: daysAgoISO(26),
     isDemo: true,
   });
-  const demoTrades: Array<[number, string, string]> = [
+  const demoTrades: Array<[number, number, string]> = [
     [18, 27088.95, "0.35 BTC"],
     [17, 10448.05, "4.2 ETH"],
     [16, 1818.36, "18 SOL"],
