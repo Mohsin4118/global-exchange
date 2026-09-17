@@ -216,3 +216,19 @@ Work Log:
 
 Stage Summary:
 - Mobile hero top now presents the 5 requested assets around the kept Bitcoin coin with exact client naming; everything else (CRM, palette, desktop) untouched
+
+---
+Task ID: 13
+Agent: Main agent (Super Z)
+Task: Full client-side verification pass (desktop + mobile, EN + AR, all flows) requested by user
+
+Work Log:
+- Browser-verified desktop 1440 EN top-to-bottom: header (nav+phone+EN+Login/Get Started), hero globe+BTC, chart card 1D/1W/1M/1Y/ALL (1W click re-renders chart), ticker (SALEK visible), trust bar, tagline strip, features row, Live Market cards, Stocks section (Salek SALEK-DFM, Aramco 2222-Tadawul), swap widget (2.5 ETH flip = 0.0806 BTC, fiat SAR/QAR/AED/GBP in pools), wallet preview, why-us, security badges, supported cryptos + activity, testimonials, FAQ accordion (aria-expanded toggles), footer (Stocks link, support@cryptowiseuk.com, +44 744190 9000, Super Admin pill)
+- Auth flows: client login demo toast; admin creds on client login -> full backoffice (CRM style/colors identical: navy sidebar, light theme, emerald accents, stats $6,710,092.00); Sign Out; #admin gate amber w/ wrong-password rejection "Invalid credentials. Access denied."; register form renders all fields
+- Arabic RTL desktop: full mirror (header, hero, chart card dir=ltr minus signs correct), market + stocks cards show -0.32%/+0.45% correctly, features/trust/swap/footer RTL
+- Mobile 390x844: hero cluster (BTC coin + Ethereum, USDT/Tether, Aramco, Salek chips) EN + AR mirrored; no horizontal overflow (scrollWidth 390 = innerWidth 390); hamburger drawer (5 links + tel link + EN + Login/Get Started); stocks cards stacked; footer RTL; FAB links tel:+447441909000, wa.me/447591274617, t.me
+- 0 page errors, 0 console errors/warnings, lint 0 errors (21 pre-existing warnings)
+- Zip rebuilt: download/cryptowiseuk-project.zip (100 files)
+
+Stage Summary:
+- Whole client-facing site verified end-to-end on 2 viewports x 2 languages, all interactive flows pass, CRM untouched, no code changes needed
