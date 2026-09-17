@@ -171,17 +171,22 @@ function ArrowRight() {
 function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => void; ctx: AdminCtx }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
   const [balance, setBalance] = useState("0.00");
 
   const submit = () => {
-    if (!name.trim() || !email.trim()) {
-      ctx.toast("Missing information", "Name and email are required.");
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      ctx.toast("Missing information", "Name, email and portal password are required.");
       return;
     }
-    ctx.addClient({ name: name.trim(), email: email.trim(), phone: phone.trim(), country: country.trim(), balance: parseFloat(balance) || 0 });
-    setName(""); setEmail(""); setPhone(""); setCountry(""); setBalance("0.00");
+    if (password.trim().length < 6) {
+      ctx.toast("Weak password", "The portal password must be at least 6 characters.");
+      return;
+    }
+    ctx.addClient({ name: name.trim(), email: email.trim(), password: password.trim(), phone: phone.trim(), country: country.trim(), balance: parseFloat(balance) || 0 });
+    setName(""); setEmail(""); setPassword(""); setPhone(""); setCountry(""); setBalance("0.00");
     onClose();
   };
 
@@ -190,6 +195,10 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
       <div className="space-y-4">
         <TextInput label="Full Name *" value={name} onChange={setName} placeholder="e.g. Charlie Williams" />
         <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="client@email.com" />
+        <TextInput label="Portal Password *" type="text" value={password} onChange={setPassword} placeholder="Client sign-in password (min. 6 chars)" />
+        <p className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-500">
+          The client signs in on the website with this email and password — their dashboard opens with the opening balance below.
+        </p>
         <div className="grid grid-cols-2 gap-4">
           <TextInput label="Phone" value={phone} onChange={setPhone} placeholder="Optional" />
           <TextInput label="Country" value={country} onChange={setCountry} placeholder="Optional" />

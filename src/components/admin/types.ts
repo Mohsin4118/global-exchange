@@ -41,7 +41,7 @@ export interface AdminCtx {
   selectedClientId: string | null;
   unreadCount: number;
   navigate: (page: AdminPage, clientId?: string) => void;
-  addClient: (c: { name: string; email: string; phone: string; country: string; balance: number }) => void;
+  addClient: (c: { name: string; email: string; password: string; phone: string; country: string; balance: number }) => void;
   updateClient: (id: string, patch: Partial<AdminClient>) => void;
   createTransaction: (args: { clientId: string; type: TxType; amount: number; method: string; notes: string }) => void;
   updateWithdrawal: (id: string, status: WithdrawalStatus, notes: string) => void;

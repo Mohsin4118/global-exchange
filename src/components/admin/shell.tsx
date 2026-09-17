@@ -22,6 +22,7 @@ import {
 import { LogoMark } from "@/components/site/icons";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { applyAdminTransaction, createPortalAccount } from "@/lib/client-auth";
 import {
   AUDIT_ENTRIES,
   CLIENTS,
@@ -112,8 +113,10 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
       unreadCount,
       navigate,
       toast: toastFn,
-      addClient: ({ name, email, phone, country, balance }) => {
+      addClient: ({ name, email, password, phone, country, balance }) => {
         const id = `cnew${Math.random().toString(36).slice(2, 12)}`;
+        // Portal account: the client can sign in on the website right away
+        const portal = createPortalAccount({ name, email, password, phone, country, cash: balance });
         setState((s) => ({
           ...s,
           clients: [
@@ -151,13 +154,17 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
               admin: "Super Admin",
               action: "Create Client" as const,
               entity: "USER" as const,
-              detailsNew: JSON.stringify({ email, name, country: country || "—" }),
+              detailsNew: JSON.stringify({ email, name, country: country || "—", portalAccess: Boolean(portal) }),
               ip: "—",
             },
             ...s.audit,
           ],
         }));
-        toastFn("Client created", `${name} was added to the platform.`);
+        if (portal) {
+          toastFn("Client created", `${name} was added. Portal access is live — ${email} can sign in and open their dashboard.`);
+        } else {
+          toastFn("Client created", `${name} was added. Note: a portal account with this email already exists.`);
+        }
       },
       updateClient: (id, patch) => {
         setState((s) => ({
@@ -179,17 +186,26 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
         toastFn("Changes saved", "Client details were updated.");
       },
       createTransaction: ({ clientId, type, amount, method, notes }) => {
+        // Resolve the client outside setState (side-effect-safe) and mirror the
+        // movement into the client portal so the dashboard stays in sync.
+        const client = state.clients.find((c) => c.id === clientId);
+        if (client) {
+          applyAdminTransaction(client.email, {
+            delta: type === "CREDIT" ? amount : -amount,
+            label: `${type === "CREDIT" ? "Credit" : "Debit"} via ${method}${notes && notes !== "—" ? ` — ${notes}` : ""}`,
+          });
+        }
         setState((s) => {
-          const client = s.clients.find((c) => c.id === clientId);
-          if (!client) return s;
+          const stateClient = s.clients.find((c) => c.id === clientId);
+          if (!stateClient) return s;
           const balanceAfter =
-            type === "CREDIT" ? client.balance + amount : Math.max(0, client.balance - amount);
+            type === "CREDIT" ? stateClient.balance + amount : Math.max(0, stateClient.balance - amount);
           const tx = {
             id: makeTxId(),
             date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
             dateISO: new Date().toISOString().slice(0, 10),
             clientId,
-            clientName: client.name,
+            clientName: stateClient.name,
             type,
             amount,
             status: "COMPLETED" as const,

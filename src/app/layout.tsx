@@ -14,7 +14,6 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CryptoWise | Private Financial Platform",
   description:
     "Securely access your account information, monitor financial activity, and follow global cryptocurrency market data.",
   keywords: ["CryptoWise", "crypto", "bitcoin", "ethereum", "trading", "exchange"],

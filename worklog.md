@@ -232,3 +232,22 @@ Work Log:
 
 Stage Summary:
 - Whole client-facing site verified end-to-end on 2 viewports x 2 languages, all interactive flows pass, CRM untouched, no code changes needed
+
+---
+Task ID: 14
+Agent: Main agent (Super Z)
+Task: Client dashboard + demo access + full cycle "Super Admin creates account -> account opens -> client sees his dashboard" (user request)
+
+Work Log:
+- NEW src/lib/client-auth.ts: ClientAccount/ClientHolding/ClientTx types; hardcoded demo account (demo@cryptowiseuk.com / Demo@2026, Alex Morgan, CW-102394, $12,480 cash + holdings BTC/ETH/USDT/SOL/Aramco/Salek + 9 mock txs); localStorage store (cw_portal_accounts / cw_portal_session); createPortalAccount (rejects duplicate emails, generates CW-XXXXXX account number, seeds "Account opening deposit" tx); registerSelfAccount (public form); applyAdminTransaction (CRM credit/debit -> portal cash + statement); session helpers (stays signed in across reloads)
+- NEW src/components/site/client-dashboard.tsx: dark navy/mint/gold portal — sticky topbar (LogoMark brand, Client Portal badge, AR/EN toggle, avatar+name+Private Client, Sign Out w/ aria-label); welcome + Verified badge + account no; 3 stat cards (Total Balance LIVE w/ weighted 24h, Cash Available, Invested); holdings table (CoinBadge, units, LIVE price, value, 24h, empty state); transactions list (kind icons, in=emerald/out=amber, Processing pill, labelKey translated or raw CRM label); allocation stacked bar + legend; quick actions (Deposit/Withdraw/Trade -> toast requests); market watch (5 cryptos + Aramco + Salek live); support card (+44 744190 9000, support@cryptowiseuk.com); full RTL (logical props, dir=ltr on all numbers)
+- auth-views.tsx: LoginView gains onClientSuccess — admin creds unchanged; client creds authenticate() -> dashboard; else "Invalid email or password." (amber toast, no red); DEMO ACCESS box with one-click "Use demo account" fill; RegisterView actually creates the portal account (min 6 chars, duplicate email rejected) and auto-signs in
+- page.tsx: view "client-dashboard" + session state; restoreSession on mount (signed-in reload stays in portal); document.title now a React 19 hoisted <title> in the tree (imperative effect was clobbered by Next metadata re-sync on the restore transition); signOutClient clears session
+- CRM (style untouched): NewClientModal adds "Portal Password *" field + emerald hint (client signs in with email+password, dashboard opens with opening balance); addClient now calls createPortalAccount (toast "Portal access is live — <email> can sign in and open their dashboard"); createTransaction mirrors CREDIT/DEBIT into the portal (applyAdminTransaction outside setState, StrictMode-safe)
+- i18n.ts: 37 new EN/AR keys (portal, holdings, allocation, quick actions, tx labels, errors...)
+- Fixed during verification: react-hooks/set-state-in-effect lint error (restoreSession local fn pattern); gold-400 -> amber-400 (no gold token); mobile logo tagline wrap (compact brand); Sign Out aria-label on mobile
+- Verified browser 1440 + 390, EN + AR: demo login -> live dashboard (total $76,4xx ticking, BTC $77,1xx, Salek/Aramco live); reload keeps session + title; Deposit toast; sign out; Super Admin -> New Client (Sarah $25,000) -> toast "Portal access is live" -> sign out -> login sarah.johnson@example.com/Sarah@2026 -> dashboard $25,000 + opening deposit tx; CRM credit $2,500 (Omar Hassan) -> client dashboard shows $12,500 + "Credit via Bank Transfer — Initial funding bonus +$2,500" (FULL SYNC); invalid creds amber toast; self-register -> $0 dashboard; AR RTL mirror w/ LTR numbers; mobile 390 no overflow (sw=390); 0 page errors, 0 console errors; lint 0 errors (21 pre-existing warnings)
+- Zip rebuilt: download/cryptowiseuk-project.zip (102 files)
+
+Stage Summary:
+- Client portal is live: demo@cryptowiseuk.com / Demo@2026 shows a fully live portfolio (crypto + Aramco/Salek, transactions, allocation, market watch); Super Admin creates client accounts with portal passwords that sign in immediately; CRM credits/debits sync to the client dashboard in real time; self-registration works; EN/AR RTL complete

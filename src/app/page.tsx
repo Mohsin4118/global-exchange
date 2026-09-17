@@ -11,10 +11,12 @@ import { SupportedCryptos, SecuritySection, FinalCta, Footer } from "@/component
 import { TrustStats, SecurityBadges, Testimonials, Faq } from "@/components/site/trust-sections";
 import { LoginView, RegisterView } from "@/components/site/auth-views";
 import { AdminLoginView, AdminPanelView } from "@/components/site/admin-views";
+import { ClientDashboard } from "@/components/site/client-dashboard";
+import { clearSession, getSession, setSession, type ClientAccount } from "@/lib/client-auth";
 import { INITIAL_ACTIVITY, INITIAL_COINS, STOCKS, tickCoin, type ActivityItem, type Coin } from "@/lib/market";
 import { STRINGS, type Lang, type StringKey } from "@/lib/i18n";
 
-type View = "home" | "login" | "register" | "admin-login" | "admin-panel";
+type View = "home" | "login" | "register" | "client-dashboard" | "admin-login" | "admin-panel";
 
 export default function Page() {
   const [view, setView] = useState<View>("home");
@@ -22,6 +24,7 @@ export default function Page() {
   const [coins, setCoins] = useState<Coin[]>(INITIAL_COINS);
   const [stocks, setStocks] = useState<Coin[]>(STOCKS);
   const [activity] = useState<ActivityItem[]>(INITIAL_ACTIVITY);
+  const [session, setSessionState] = useState<ClientAccount | null>(null);
 
   const t = useCallback((k: StringKey) => STRINGS[lang][k] ?? STRINGS.en[k], [lang]);
 
@@ -34,17 +37,30 @@ export default function Page() {
     return () => clearInterval(id);
   }, []);
 
-  // Keep document title in sync with view
+  // Restore an existing client portal session (stays signed in across reloads)
   useEffect(() => {
-    document.title =
-      view === "login"
-        ? `${t("signIn")} — CryptoWise`
-        : view === "register"
-          ? `${t("createAccount")} — CryptoWise`
+    const restoreSession = () => {
+      const saved = getSession();
+      if (saved) {
+        setSessionState(saved);
+        setView("client-dashboard");
+      }
+    };
+    restoreSession();
+  }, []);
+
+  // Keep document title in sync with view (rendered as a hoisted <title> —
+  // React 19 owns it, so it also survives the session-restore transition)
+  const pageTitle =
+    view === "login"
+      ? `${t("signIn")} — CryptoWise`
+      : view === "register"
+        ? `${t("createAccount")} — CryptoWise`
+        : view === "client-dashboard"
+          ? `${t("clientPortal")} — CryptoWise`
           : view === "admin-login" || view === "admin-panel"
             ? `${t("adminBadge")} — CryptoWise`
             : "CryptoWise | Private Financial Platform";
-  }, [view, t]);
 
   // Direct admin access via URL hash (#admin) — also survives reload
   useEffect(() => {
@@ -63,6 +79,19 @@ export default function Page() {
     setView("home");
   }, []);
 
+  const goClientDashboard = useCallback((account: ClientAccount) => {
+    setSession(account);
+    setSessionState(account);
+    window.scrollTo({ top: 0 });
+    setView("client-dashboard");
+  }, []);
+
+  const signOutClient = useCallback(() => {
+    clearSession();
+    setSessionState(null);
+    setView("home");
+  }, []);
+
   const goAdmin = useCallback(() => {
     window.location.hash = "admin";
     setView("admin-login");
@@ -77,6 +106,7 @@ export default function Page() {
 
   return (
     <div dir={dir} className="min-h-screen flex flex-col bg-[#04121c] text-white [color-scheme:dark]">
+      <title>{pageTitle}</title>
       <AnimatePresence mode="wait">
         {view === "home" ? (
           <motion.div
@@ -128,7 +158,15 @@ export default function Page() {
             transition={{ duration: 0.35 }}
             className="flex min-h-screen flex-col"
           >
-            <LoginView t={t} lang={lang} onBack={goHome} onSwitchToRegister={() => setView("register")} onAdminSuccess={goAdminPanel} onAdminGate={goAdmin} />
+            <LoginView
+              t={t}
+              lang={lang}
+              onBack={goHome}
+              onSwitchToRegister={() => setView("register")}
+              onAdminSuccess={goAdminPanel}
+              onAdminGate={goAdmin}
+              onClientSuccess={goClientDashboard}
+            />
           </motion.div>
         ) : view === "register" ? (
           <motion.div
@@ -139,7 +177,26 @@ export default function Page() {
             transition={{ duration: 0.35 }}
             className="flex min-h-screen flex-col"
           >
-            <RegisterView t={t} lang={lang} onBack={goHome} onSwitchToLogin={() => setView("login")} />
+            <RegisterView t={t} lang={lang} onBack={goHome} onSwitchToLogin={() => setView("login")} onClientSuccess={goClientDashboard} />
+          </motion.div>
+        ) : view === "client-dashboard" && session ? (
+          <motion.div
+            key="client-dashboard"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35 }}
+            className="flex min-h-screen flex-col"
+          >
+            <ClientDashboard
+              t={t}
+              lang={lang}
+              account={session}
+              coins={coins}
+              stocks={stocks}
+              onLangToggle={() => setLang((l) => (l === "en" ? "ar" : "en"))}
+              onSignOut={signOutClient}
+            />
           </motion.div>
         ) : view === "admin-login" ? (
           <motion.div

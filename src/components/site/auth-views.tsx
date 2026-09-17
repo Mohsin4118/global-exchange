@@ -2,10 +2,18 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, User } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
 import { Logo } from "./icons";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAIL, isAdminCredentials } from "@/lib/admin-auth";
+import {
+  authenticate,
+  DEMO_EMAIL,
+  DEMO_PASSWORD,
+  findAccountByEmail,
+  registerSelfAccount,
+  type ClientAccount,
+} from "@/lib/client-auth";
 import type { Lang, StringKey } from "@/lib/i18n";
 
 export function LoginView({
@@ -15,6 +23,7 @@ export function LoginView({
   onSwitchToRegister,
   onAdminSuccess,
   onAdminGate,
+  onClientSuccess,
 }: {
   t: (k: StringKey) => string;
   lang: Lang;
@@ -22,6 +31,7 @@ export function LoginView({
   onSwitchToRegister: () => void;
   onAdminSuccess?: () => void;
   onAdminGate?: () => void;
+  onClientSuccess?: (account: ClientAccount) => void;
 }) {
   const title = t("welcomeBack");
   const subtitle = t("signInToAccess");
@@ -46,7 +56,13 @@ export function LoginView({
       toast({ title: t("adminWrong"), variant: "destructive" });
       return;
     }
-    toast({ title: t("signedInToast") });
+    // Client portal account (demo or created by the Super Admin in the CRM)
+    const account = authenticate(email, password);
+    if (account) {
+      onClientSuccess?.(account);
+      return;
+    }
+    toast({ title: t("invalidCredentials"), variant: "destructive" });
   };
 
   return (
@@ -108,6 +124,30 @@ export function LoginView({
           {t("signIn")}
         </button>
 
+        {onClientSuccess && (
+          <div className="rounded-xl border border-[#00E5A0]/20 bg-[#00E5A0]/[0.05] p-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-[#00E5A0]">
+                <Sparkles className="h-3.5 w-3.5" />
+                {t("demoAccess")}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail(DEMO_EMAIL);
+                  setPassword(DEMO_PASSWORD);
+                }}
+                className="rounded-lg bg-[#00E5A0]/15 px-2.5 py-1 text-[11.5px] font-bold text-[#00E5A0] hover:bg-[#00E5A0]/25 transition-colors"
+              >
+                {t("demoUse")}
+              </button>
+            </div>
+            <p className="mt-2 font-mono text-[11.5px] leading-relaxed text-white/55" dir="ltr">
+              {DEMO_EMAIL} · {DEMO_PASSWORD}
+            </p>
+          </div>
+        )}
+
         <p className="text-center text-[13.5px] text-white/50">
           {t("noAccount")}{" "}
           <button type="button" onClick={onSwitchToRegister} className="font-semibold text-[#00E5A0] hover:underline">
@@ -135,11 +175,13 @@ export function RegisterView({
   lang,
   onBack,
   onSwitchToLogin,
+  onClientSuccess,
 }: {
   t: (k: StringKey) => string;
   lang: Lang;
   onBack: () => void;
   onSwitchToLogin: () => void;
+  onClientSuccess?: (account: ClientAccount) => void;
 }) {
   const title = t("createYourAccount");
   const subtitle = t("fillDetails");
@@ -161,7 +203,26 @@ export function RegisterView({
       toast({ title: t("passwordsMismatch"), variant: "destructive" });
       return;
     }
-    toast({ title: t("registeredToast") });
+    if (password.length < 6) {
+      toast({ title: t("weakPassword"), variant: "destructive" });
+      return;
+    }
+    if (findAccountByEmail(email)) {
+      toast({ title: t("emailAlreadyUsed"), variant: "destructive" });
+      return;
+    }
+    const account = registerSelfAccount({
+      name: `${first.trim()} ${last.trim()}`,
+      email: email.trim(),
+      password,
+      phone: phone.trim(),
+    });
+    if (!account) {
+      toast({ title: t("emailAlreadyUsed"), variant: "destructive" });
+      return;
+    }
+    toast({ title: t("accountCreatedToast") });
+    onClientSuccess?.(account);
   };
 
   return (
