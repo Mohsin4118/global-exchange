@@ -590,3 +590,22 @@ Work Log:
 
 Stage Summary:
 - The Client Dashboard is now a genuine mobile-first financial dashboard: compact proportional cards (~113px KPI height vs 358px container before), responsive typography (20/24/28 welcome, 20/24 values), the complete top section always visible below the sticky header with one normal page scroll, and Source of Funds promoted to a proper dashboard card identical to the Total Balance design system — admin-controlled, live-synced within seconds, EN+AR, wrap-safe at every width 375→1440.
+
+---
+Task ID: 42
+Agent: Main agent (Super Z)
+Task: User-reported "Source of Funds card not done" — full re-verification of the SOF client dashboard card + data flow on the LIVE PREVIEW, with screenshot evidence
+
+Work Log:
+- Suspected stale UI; verified live state instead of re-coding (code was already correct from Task 41: SourceOfFundsCard at dashboard-parts.tsx:199, mounted at client-dashboard.tsx:775; old ProfileCard SOF paragraph confirmed removed — only 1 SOF label in DOM)
+- Public preview URL (not just localhost) reproduced end-to-end: logged in as demo@cryptowiseuk.com → card renders "SOURCE OF FUNDS | Salary, savings and long-term investments." at 358×91 (390 viewport)
+- Computed-style proof "EXACT SAME DESIGN SYSTEM as Total Balance": borderRadius/backgroundColor/borderColor/borderWidth/boxShadow/all paddings → ZERO diffs; same grid width (358=358); label typography (fontSize/fontWeight/textTransform/color/letterSpacing) → ZERO diffs; icon chip (size/bg/radius) → ZERO diffs; no <button> inside card (read-only)
+- Full admin→client flow re-proven ON THE PREVIEW via real UI: Super Admin login (super@cryptowiseuk.com) → Clients → Alex Morgan → Edit → "Source of Funds (free text, shown on the client dashboard)" textarea pre-filled → changed to "Business income and personal savings — verified against bank statements Sep 2026." → Save Access & Portal → data/db.json confirmed updated → client login → card shows the NEW text immediately (358×112, wraps to 2 lines, no overflow)
+- 5-viewport sweep 375/390/393/414/430: overflow=false everywhere; SOF card present, same width as Total Balance at every width; fresh reload @390 → scrollY=0, h1 at y=73 fully visible below 57px sticky header
+- Desktop 1440: SOF full-width 990px card between Portfolio Performance and Your Holdings, identical surface (screenshot 04); Arabic toggle: label مصدر الأموال, dir=rtl, card 990×111 (screenshot 05)
+- Restored demo value to "Salary, savings and long-term investments." via admin API (update-client path also confirmed working)
+- Investigated user-visible breakage candidates: found stale console parse error from mid-edit state of client-dashboard.tsx (line 633 "}: { {") — current file correct, fresh reload console 100% clean; lint 0 errors / 46 warnings = baseline; tsc clean for project src/
+- Screenshots: scripts/verify42/01-05 (preview mobile card, mobile top, mobile SOF card, desktop, Arabic)
+
+Stage Summary:
+- Confirmed with hard evidence that the Source of Funds IS a separate first-class client dashboard card using the EXACT same design system as Total Balance, admin-editable with instant client sync, read-only for clients, responsive 375→1440, EN+AR. The user's report most likely stemmed from a stale tab (pre-fix bundle), an empty-SOF client (placeholder state), or testing before the Task 41 fix landed — a hard refresh of the preview shows the correct UI.

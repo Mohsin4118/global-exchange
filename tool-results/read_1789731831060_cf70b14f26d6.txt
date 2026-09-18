@@ -1,0 +1,924 @@
+     1→"use client";
+     2→
+     3→/* ------------------------------------------------------------------ */
+     4→/*  CryptoWise — Client Portal (WHITE / LIGHT banking dashboard)       */
+     5→/*  Clients land here right after signing in. Everything is served by  */
+     6→/*  /api/client for the signed-in token only — the Super Admin curates */
+     7→/*  every figure from the CRM and this dashboard re-reads it every few  */
+     8→/*  seconds. Left menu (desktop) + drawer menu (mobile) switch between */
+     9→/*  fully functional client sections. Strictly self-scoped data.       */
+    10→/* ------------------------------------------------------------------ */
+    11→
+    12→import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+    13→import { AnimatePresence, motion } from "framer-motion";
+    14→import {
+    15→  ArrowDownLeft,
+    16→  ArrowLeftRight,
+    17→  ArrowUpRight,
+    18→  Bell,
+    19→  Download,
+    20→  LayoutDashboard,
+    21→  LogOut,
+    22→  Menu,
+    23→  PieChart,
+    24→  Plus,
+    25→  ShieldAlert,
+    26→  UserRoundCog,
+    27→  Wallet,
+    28→  X,
+    29→} from "lucide-react";
+    30→import { LogoMark } from "./icons";
+    31→import {
+    32→  AllocationBar,
+    33→  ContactCard,
+    34→  HoldingsTable,
+    35→  KpiCard,
+    36→  MarketStrip,
+    37→  NotificationsCard,
+    38→  PerformanceChart,
+    39→  PrivateBadge,
+    40→  ProfileCard,
+    41→  RequestModal,
+    42→  SectionTitle,
+    43→  SourceOfFundsCard,
+    44→  TierBadge,
+    45→  TxRowItem,
+    46→  VerifiedBadge,
+    47→  buildHoldingRows,
+    48→  initials,
+    49→  makeMoney,
+    50→  usd,
+    51→  type RequestKind,
+    52→  type T,
+    53→} from "./dashboard-parts";
+    54→import { useToast } from "@/hooks/use-toast";
+    55→import { apiClientAction, apiClientGet, apiLogout } from "@/lib/api";
+    56→import { SITE_EMAIL, SITE_PHONE_DISPLAY, SITE_PHONE_TEL } from "@/lib/contact";
+    57→import type { Coin } from "@/lib/market";
+    58→import { CURRENCIES } from "@/lib/shared-types";
+    59→import type { ClientView, CurrencyCode, Tx } from "@/lib/shared-types";
+    60→import { CURRENCY_META } from "./dashboard-parts";
+    61→import type { Lang, StringKey } from "@/lib/i18n";
+    62→import { cn } from "@/lib/utils";
+    63→
+    64→type Section = "overview" | "portfolio" | "transactions" | "deposits" | "withdrawals" | "notifications" | "account";
+    65→type TxFilter = "all" | "in" | "out";
+    66→
+    67→export function ClientDashboard({
+    68→  t,
+    69→  lang,
+    70→  coins,
+    71→  stocks,
+    72→  onLangToggle,
+    73→  onSignOut,
+    74→}: {
+    75→  t: (k: StringKey) => string;
+    76→  lang: Lang;
+    77→  coins: Coin[];
+    78→  stocks: Coin[];
+    79→  onLangToggle: () => void;
+    80→  onSignOut: () => void;
+    81→}) {
+    82→  const { toast } = useToast();
+    83→  const [view, setView] = useState<ClientView | null>(null);
+    84→  const [ready, setReady] = useState(false);
+    85→  const [section, setSection] = useState<Section>("overview");
+    86→  const [drawer, setDrawer] = useState(false);
+    87→  const [txFilter, setTxFilter] = useState<TxFilter>("all");
+    88→  const [reqModal, setReqModal] = useState<null | RequestKind>(null);
+    89→  const [showAllTxs, setShowAllTxs] = useState(false);
+    90→
+    91→  /* ---- live self-refresh: re-read the authorized API snapshot ---- */
+    92→  const load = useCallback(async () => {
+    93→    const res = await apiClientGet();
+    94→    if (!res.ok) {
+    95→      if (res.error === "unauthorized" || res.error === "gone") {
+    96→        toast({ title: t("accountClosedToast") });
+    97→        onSignOut();
+    98→      }
+    99→      return;
+   100→    }
+   101→    setView({ client: res.client!, financials: res.financials!, txs: res.txs!, notifications: res.notifications!, fx: res.fx! });
+   102→    setReady(true);
+   103→  }, [onSignOut, t, toast]);
+   104→
+   105→  useEffect(() => {
+   106→    const boot = () => {
+   107→      void load();
+   108→    };
+   109→    boot();
+   110→    const id = setInterval(boot, 4000);
+   111→    window.addEventListener("focus", boot);
+   112→    return () => {
+   113→      clearInterval(id);
+   114→      window.removeEventListener("focus", boot);
+   115→    };
+   116→  }, [load]);
+   117→
+   118→  /* The dashboard ALWAYS opens at the very top: session restore / browser
+   119→     scroll restoration must never land the client mid-page with the welcome
+   120→     section hidden above the viewport ("top cut off") — one normal page
+   121→     scroll starting at the welcome header, below the sticky topbar. */
+   122→  useEffect(() => {
+   123→    window.scrollTo({ top: 0 });
+   124→  }, []);
+   125→
+   126→  /* ---- live portfolio math (server balance + live market prices) ---- */
+   127→  const markets = useMemo(() => [...coins, ...stocks], [coins, stocks]);
+   128→  const holdingRows = useMemo(() => (view ? buildHoldingRows(view.client.holdings, markets) : []), [view, markets]);
+   129→  const invested = holdingRows.reduce((s, r) => s + r.value, 0);
+   130→  const cash = view?.financials.balance ?? 0;
+   131→  const available = view?.financials.available ?? 0;
+   132→  const total = cash + invested;
+   133→  const portfolioChange = invested > 0 ? holdingRows.reduce((s, r) => s + r.coin.change24h * r.value, 0) / invested : 0;
+   134→  const totalDeposits = view?.financials.credits ?? 0;
+   135→  const totalWithdrawn = useMemo(() => (view ? view.txs.filter((x) => x.kind === "withdrawal" && x.status === "COMPLETED").reduce((s, x) => s + x.amount, 0) : 0), [view]);
+   136→
+   137→  const suspended = view?.client.status === "suspended";
+   138→  const unread = view?.notifications.filter((n) => n.unread).length ?? 0;
+   139→
+   140→  /* ---- display currency: one formatter drives every figure (#10) ---- */
+   141→  const cur = view?.client.currency ?? "USD";
+   142→  const fx = view?.fx ?? { USD: 1 };
+   143→  const money = useMemo(() => makeMoney(cur, fx), [cur, fx]);
+   144→  const setCurrency = async (code: CurrencyCode) => {
+   145→    if (!CURRENCIES.includes(code)) return;
+   146→    const res = await apiClientAction({ action: "set-currency", currency: code });
+   147→    if (res.ok && res.client && res.txs) {
+   148→      setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
+   149→    }
+   150→  };
+   151→
+   152→  /* ---- session performance chart ---- */
+   153→  const [history, setHistory] = useState<number[]>([]);
+   154→  const lastTotalRef = useRef(total);
+   155→  useEffect(() => {
+   156→    setHistory((h) => {
+   157→      if (h.length > 0 || total <= 0) return h;
+   158→      const pts: number[] = [];
+   159→      let v = total * 0.982;
+   160→      let s = Math.max(1, Math.floor(total)) % 233280 || 13;
+   161→      const rand = () => {
+   162→        s = (s * 9301 + 49297) % 233280;
+   163→        return s / 233280;
+   164→      };
+   165→      for (let i = 0; i < 42; i++) {
+   166→        v += total * (rand() - 0.47) * 0.004;
+   167→        pts.push(Math.max(total * 0.9, v));
+   168→      }
+   169→      pts[pts.length - 1] = total;
+   170→      lastTotalRef.current = total;
+   171→      return pts;
+   172→    });
+   173→  }, [total]);
+   174→
+   175→  useEffect(() => {
+   176→    const append = () => {
+   177→      if (history.length === 0) return;
+   178→      if (Math.abs(total - lastTotalRef.current) < 0.005) return;
+   179→      lastTotalRef.current = total;
+   180→      setHistory((h) => [...h.slice(-79), total]);
+   181→    };
+   182→    append();
+   183→  }, [total, history.length]);
+   184→
+   185→  /* ---- actions ---- */
+   186→  const submitRequest = async (payload: { kind: RequestKind; amount: number; asset: string; destination: string; note: string }): Promise<string | null> => {
+   187→    const res = await apiClientAction({ action: "request-transaction", ...payload });
+   188→    if (!res.ok) {
+   189→      return res.error === "funds" ? "requestTooMuch" : res.error === "duplicate" ? "requestDuplicate" : "requestInvalid";
+   190→    }
+   191→    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
+   192→    toast({ title: t("requestSent"), description: t("requestSentSub") });
+   193→    setReqModal(null);
+   194→    return null;
+   195→  };
+   196→
+   197→  /* the ONLY mutation a client may make on a request: cancelling their own PENDING one */
+   198→  const cancelRequest = async (tx: { id: string; reference: string }) => {
+   199→    const res = await apiClientAction({ action: "cancel-request", id: tx.id });
+   200→    if (!res.ok) {
+   201→      toast({ title: t("requestInvalid") });
+   202→      return;
+   203→    }
+   204→    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
+   205→    toast({ title: t("requestCancelledToast"), description: t("requestCancelledSub") });
+   206→  };
+   207→
+   208→  const markAllRead = async () => {
+   209→    const res = await apiClientAction({ action: "mark-read", ids: "all" });
+   210→    if (res.ok && res.client && res.txs) {
+   211→      setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
+   212→    }
+   213→  };
+   214→
+   215→  const saveProfile = async (patch: { phone: string; country: string; address: string; city: string; postcode: string }): Promise<string | null> => {
+   216→    const res = await apiClientAction({ action: "update-profile", ...patch });
+   217→    if (!res.ok) return "requestInvalid";
+   218→    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
+   219→    toast({ title: t("profileSaved") });
+   220→    return null;
+   221→  };
+   222→
+   223→  const savePassword = async (current: string, next: string): Promise<string | null> => {
+   224→    const res = await apiClientAction({ action: "change-password", current, next });
+   225→    if (!res.ok) return res.error === "wrong-current" ? "wrongCurrentPassword" : res.error === "weak" ? "weakPassword" : "requestInvalid";
+   226→    toast({ title: t("passwordChangedToast") });
+   227→    return null;
+   228→  };
+   229→
+   230→  const signOut = async () => {
+   231→    await apiLogout("client");
+   232→    onSignOut();
+   233→  };
+   234→
+   235→  const downloadCsv = () => {
+   236→    if (!view) return;
+   237→    const header = "Date,Description,Asset,Method,Type,Amount USD,Status,Reference\n";
+   238→    const lines = view.txs.map((tx) =>
+   239→      [tx.dateISO, `"${(tx.labelKey ? t(tx.labelKey as StringKey) : tx.label).replace(/"/g, '""')}"`, tx.asset ?? "", `"${tx.method}"`, tx.type, tx.amount.toFixed(2), tx.status, tx.reference].join(","),
+   240→    );
+   241→    const blob = new Blob([header + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+   242→    const url = URL.createObjectURL(blob);
+   243→    const a = document.createElement("a");
+   244→    a.href = url;
+   245→    a.download = `cryptowise-statement-${view.client.accountNo}.csv`;
+   246→    a.click();
+   247→    URL.revokeObjectURL(url);
+   248→    toast({ title: t("statementToast") });
+   249→  };
+   250→
+   251→  /* ---- derived lists ---- */
+   252→  const txs = view?.txs ?? [];
+   253→  const filteredTxs = useMemo(() => txs.filter((tx) => txFilter === "all" || (txFilter === "in" ? tx.type === "CREDIT" : tx.type === "DEBIT")), [txs, txFilter]);
+   254→  const deposits = useMemo(() => txs.filter((tx) => tx.kind === "deposit"), [txs]);
+   255→  const withdrawals = useMemo(() => txs.filter((tx) => tx.kind === "withdrawal"), [txs]);
+   256→  const pendingWithdrawalTotal = withdrawals.filter((w) => w.status === "PENDING" || w.status === "PROCESSING").reduce((s, w) => s + w.amount, 0);
+   257→
+   258→  const allocation = useMemo(() => {
+   259→    const segs = holdingRows.map((r) => ({ label: r.coin.name, value: r.value, color: r.coin.color }));
+   260→    if (cash > 0) segs.unshift({ label: t("cash"), value: cash, color: "#10b981" });
+   261→    return segs;
+   262→  }, [holdingRows, cash, t]);
+   263→
+   264→  /* ---- menu definition (every item works — switches sections) ---- */
+   265→  const NAV: Array<{ id: Section; label: string; icon: React.ReactNode; badge?: number }> = [
+   266→    { id: "overview", label: t("menuOverview"), icon: <LayoutDashboard className="h-4 w-4" /> },
+   267→    { id: "portfolio", label: t("menuPortfolio"), icon: <PieChart className="h-4 w-4" /> },
+   268→    { id: "transactions", label: t("menuTransactions"), icon: <ArrowLeftRight className="h-4 w-4" /> },
+   269→    { id: "deposits", label: t("menuDeposits"), icon: <ArrowDownLeft className="h-4 w-4" /> },
+   270→    { id: "withdrawals", label: t("menuWithdrawals"), icon: <ArrowUpRight className="h-4 w-4" /> },
+   271→    { id: "notifications", label: t("menuNotifications"), icon: <Bell className="h-4 w-4" />, badge: unread },
+   272→    { id: "account", label: t("menuAccount"), icon: <UserRoundCog className="h-4 w-4" /> },
+   273→  ];
+   274→
+   275→  const go = (s: Section) => {
+   276→    setSection(s);
+   277→    setDrawer(false);
+   278→    window.scrollTo({ top: 0 });
+   279→  };
+   280→
+   281→  if (!ready || !view) {
+   282→    return (
+   283→      <div className="flex min-h-screen items-center justify-center bg-[#f5f7fa]">
+   284→        <div className="flex flex-col items-center gap-3">
+   285→          <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-emerald-200 border-t-emerald-600" />
+   286→          <p className="text-sm font-semibold text-slate-400">CryptoWise</p>
+   287→        </div>
+   288→      </div>
+   289→    );
+   290→  }
+   291→
+   292→  const c = view.client;
+   293→
+   294→  return (
+   295→    <div className="min-h-screen overflow-x-clip bg-[#f5f7fa] text-slate-900 [color-scheme:light]">
+   296→
+   297→      {/* ---------- topbar ---------- */}
+   298→      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+   299→        <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
+   300→          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+   301→            <button
+   302→              onClick={() => setDrawer(true)}
+   303→              aria-label="Open menu"
+   304→              aria-expanded={drawer}
+   305→              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+   306→            >
+   307→              <Menu className="h-4.5 w-4.5" />
+   308→            </button>
+   309→            <LogoMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
+   310→            <div className="min-w-0">
+   311→              <p className="truncate text-[13.5px] font-bold leading-tight text-slate-900 sm:text-[14px]">CryptoWise</p>
+   312→              <p className="truncate text-[10.5px] font-semibold text-emerald-600 sm:text-[11px]">{t("clientArea")}</p>
+   313→            </div>
+   314→            <span className="ms-1 hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-white/10 md:inline-block" dir="ltr">
+   315→              {t("accountNo")} {c.accountNo}
+   316→            </span>
+   317→          </div>
+   318→          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+   319→            <button
+   320→              onClick={onLangToggle}
+   321→              className="flex h-9 items-center rounded-lg border border-slate-200 px-2.5 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3 sm:text-[12px]"
+   322→              aria-label="Toggle language"
+   323→            >
+   324→              {lang === "en" ? "العربية" : "EN"}
+   325→            </button>
+   326→            <button
+   327→              onClick={() => go("notifications")}
+   328→              aria-label={t("notificationsTitle")}
+   329→              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+   330→            >
+   331→              <Bell className="h-4 w-4" />
+   332→              {unread > 0 && (
+   333→                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9.5px] font-bold text-[#022c20]">{unread}</span>
+   334→              )}
+   335→            </button>
+   336→            <div className="hidden items-center gap-2.5 rounded-full border border-slate-200 py-1 pe-3 ps-1 sm:flex">
+   337→              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00E5A0] text-[11px] font-bold text-[#022c20]">{initials(c.name)}</span>
+   338→              <span className="hidden text-left leading-tight md:block" dir="auto">
+   339→                <span className="block max-w-[120px] truncate text-[12px] font-bold text-slate-900">{c.name}</span>
+   340→                <span className="block text-[10.5px] font-semibold text-slate-500">{t("privateClient")}</span>
+   341→              </span>
+   342→            </div>
+   343→            <button
+   344→              onClick={signOut}
+   345→              aria-label={t("signOut")}
+   346→              className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3"
+   347→            >
+   348→              <LogOut className="h-3.5 w-3.5" />
+   349→              <span className="hidden md:inline">{t("signOut")}</span>
+   350→            </button>
+   351→          </div>
+   352→        </div>
+   353→      </header>
+   354→
+   355→      {/* ---------- body: sidebar + content ---------- */}
+   356→      <div className="relative mx-auto flex w-full max-w-[1280px] items-start gap-6 px-4 sm:px-6">
+   357→        {/* desktop sidebar */}
+   358→        <aside className="sticky top-[72px] hidden w-[218px] shrink-0 py-6 lg:block" aria-label="Client menu">
+   359→          <nav className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm p-2">
+   360→            {NAV.map((item) => (
+   361→              <button
+   362→                key={item.id}
+   363→                onClick={() => go(item.id)}
+   364→                aria-current={section === item.id ? "page" : undefined}
+   365→                className={cn(
+   366→                  "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors",
+   367→                  section === item.id ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+   368→                )}
+   369→              >
+   370→                {item.icon}
+   371→                <span className="flex-1 text-start">{item.label}</span>
+   372→                {!!item.badge && item.badge > 0 && (
+   373→                  <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#022c20]">{item.badge}</span>
+   374→                )}
+   375→              </button>
+   376→            ))}
+   377→            <div className="my-2 h-px bg-slate-100" />
+   378→            <button
+   379→              onClick={signOut}
+   380→              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+   381→            >
+   382→              <LogOut className="h-4 w-4" />
+   383→              <span className="flex-1 text-start">{t("signOut")}</span>
+   384→            </button>
+   385→          </nav>
+   386→          <p className="mt-3 px-3 text-[10.5px] leading-relaxed text-slate-400" dir="ltr">
+   387→            {t("accountNo")} {c.accountNo}
+   388→          </p>
+   389→        </aside>
+   390→
+   391→        {/* content */}
+   392→        <main className="min-w-0 flex-1 py-4 sm:py-6">
+   393→          {section === "overview" && (
+   394→            <OverviewSection
+   395→              view={view}
+   396→              t={t}
+   397→              lang={lang}
+   398→              coins={coins}
+   399→              stocks={stocks}
+   400→              holdingRows={holdingRows}
+   401→              invested={invested}
+   402→              cash={cash}
+   403→              total={total}
+   404→              available={available}
+   405→              portfolioChange={portfolioChange}
+   406→              totalDeposits={totalDeposits}
+   407→              history={history}
+   408→              allocation={allocation}
+   409→              suspended={!!suspended}
+   410→              money={money}
+   411→              cur={cur}
+   412→              onCurrency={setCurrency}
+   413→              onDeposit={() => !suspended && setReqModal("deposit")}
+   414→              onWithdraw={() => !suspended && setReqModal("withdrawal")}
+   415→              onGo={go}
+   416→            />
+   417→          )}
+   418→
+   419→          {section === "portfolio" && (
+   420→            <div className="grid grid-cols-1 gap-5">
+   421→              <SectionHeading title={t("menuPortfolio")} sub={t("welcomeSub")} />
+   422→              <HoldingsTable rows={holdingRows} t={t} lang={lang} />
+   423→              <AllocationBar segments={allocation} t={t} />
+   424→              <MarketStrip coins={coins} stocks={stocks} t={t} />
+   425→            </div>
+   426→          )}
+   427→
+   428→          {section === "transactions" && (
+   429→            <div className="grid grid-cols-1 gap-5">
+   430→              <SectionHeading title={t("txHistory")} sub={`${txs.length} · ${t("allTime")}`} />
+   431→              <div className="flex flex-wrap items-center justify-between gap-2.5">
+   432→                <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+   433→                  {(
+   434→                    [
+   435→                      ["all", t("filterAll")],
+   436→                      ["in", t("filterIn")],
+   437→                      ["out", t("filterOut")],
+   438→                    ] as const
+   439→                  ).map(([key, label]) => (
+   440→                    <button
+   441→                      key={key}
+   442→                      onClick={() => setTxFilter(key)}
+   443→                      className={cn("rounded-md px-2.5 py-1.5 text-[11.5px] font-bold transition-colors", txFilter === key ? "bg-emerald-100 text-emerald-600" : "text-slate-500 hover:text-slate-900")}
+   444→                    >
+   445→                      {label}
+   446→                    </button>
+   447→                  ))}
+   448→                </div>
+   449→                <div className="flex items-center gap-2">
+   450→                  <button
+   451→                    onClick={() => !suspended && setReqModal("deposit")}
+   452→                    disabled={suspended}
+   453→                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#00E5A0] px-3 py-2 text-[11.5px] font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
+   454→                  >
+   455→                    <Plus className="h-3.5 w-3.5" /> {t("newRequest")}
+   456→                  </button>
+   457→                  <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+   458→                    <Download className="h-3.5 w-3.5" /> CSV
+   459→                  </button>
+   460→                </div>
+   461→              </div>
+   462→              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+   463→                <ul className="divide-y divide-slate-100">
+   464→                  {(showAllTxs ? filteredTxs : filteredTxs.slice(0, 12)).map((tx) => (
+   465→                    <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : cancelRequest} />
+   466→                  ))}
+   467→                  {filteredTxs.length === 0 && (
+   468→                    <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noTx")}</li>
+   469→                  )}
+   470→                </ul>
+   471→                {filteredTxs.length > 12 && (
+   472→                  <button onClick={() => setShowAllTxs((v) => !v)} className="w-full border-t border-slate-200/70 py-3 text-[12.5px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
+   473→                    {showAllTxs ? "−" : "+"} {t("viewAllTx")} ({filteredTxs.length})
+   474→                  </button>
+   475→                )}
+   476→              </div>
+   477→            </div>
+   478→          )}
+   479→
+   480→          {section === "deposits" && (
+   481→            <DepositsSection t={t} lang={lang} deposits={deposits} totalDeposits={totalDeposits} suspended={!!suspended} money={money} onDeposit={() => !suspended && setReqModal("deposit")} onCancel={suspended ? undefined : cancelRequest} />
+   482→          )}
+   483→
+   484→          {section === "withdrawals" && (
+   485→            <WithdrawalsSection t={t} lang={lang} withdrawals={withdrawals} available={available} pendingTotal={pendingWithdrawalTotal} totalWithdrawn={totalWithdrawn} suspended={!!suspended} money={money} onWithdraw={() => !suspended && setReqModal("withdrawal")} onCancel={suspended ? undefined : cancelRequest} />
+   486→          )}
+   487→
+   488→          {section === "notifications" && (
+   489→            <div className="grid grid-cols-1 gap-5">
+   490→              <SectionHeading title={t("notificationsTitle")} sub={t("contactSub")} />
+   491→              <NotificationsCard notifications={view.notifications} t={t} onMarkAll={markAllRead} />
+   492→            </div>
+   493→          )}
+   494→
+   495→          {section === "account" && (
+   496→            <div className="grid grid-cols-1 gap-5">
+   497→              <SectionHeading title={t("menuAccount")} sub={`${t("accountNo")} ${c.accountNo}`} />
+   498→              <ProfileCard view={view} t={t} lang={lang} money={money} onProfileSave={saveProfile} onPasswordSave={savePassword} onCurrencyChange={setCurrency} />
+   499→              <ContactCard t={t} />
+   500→            </div>
+   501→          )}
+   502→
+   503→          {/* support footer */}
+   504→          <p className="mb-2 mt-8 text-center text-[11.5px] text-slate-400">
+   505→            {t("supportTitle")} ·{" "}
+   506→            <a href={SITE_PHONE_TEL} className="font-semibold text-slate-500 hover:text-emerald-600" dir="ltr">
+   507→              {SITE_PHONE_DISPLAY}
+   508→            </a>{" "}
+   509→            ·{" "}
+   510→            <a href={`mailto:${SITE_EMAIL}`} className="font-semibold text-slate-500 hover:text-emerald-600">
+   511→              {SITE_EMAIL}
+   512→            </a>
+   513→          </p>
+   514→        </main>
+   515→      </div>
+   516→
+   517→      {/* ---------- mobile drawer menu ---------- */}
+   518→      <AnimatePresence>
+   519→        {drawer && (
+   520→          <div className="fixed inset-0 z-50 lg:hidden">
+   521→            <motion.div
+   522→              initial={{ opacity: 0 }}
+   523→              animate={{ opacity: 1 }}
+   524→              exit={{ opacity: 0 }}
+   525→              transition={{ duration: 0.2 }}
+   526→              className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+   527→              onClick={() => setDrawer(false)}
+   528→            />
+   529→            <motion.nav
+   530→              initial={{ x: lang === "ar" ? "100%" : "-100%" }}
+   531→              animate={{ x: 0 }}
+   532→              exit={{ x: lang === "ar" ? "100%" : "-100%" }}
+   533→              transition={{ duration: 0.26, ease: "easeOut" }}
+   534→              className="absolute bottom-0 start-0 top-0 flex w-[272px] max-w-[82vw] flex-col border-e border-slate-200 bg-white shadow-2xl"
+   535→              aria-label="Client menu"
+   536→            >
+   537→              <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-4">
+   538→                <div className="flex items-center gap-2.5">
+   539→                  <LogoMark className="h-8 w-8" />
+   540→                  <div>
+   541→                    <p className="text-[13.5px] font-bold leading-tight text-slate-900">CryptoWise</p>
+   542→                    <p className="text-[10.5px] font-semibold text-emerald-600">{t("clientArea")}</p>
+   543→                  </div>
+   544→                </div>
+   545→                <button onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">
+   546→                  <X className="h-5 w-5" />
+   547→                </button>
+   548→              </div>
+   549→              <div className="border-b border-slate-200/80 px-4 py-3.5">
+   550→                <div className="flex items-center gap-2.5">
+   551→                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00E5A0] text-[12px] font-bold text-[#022c20]">{initials(c.name)}</span>
+   552→                  <div className="min-w-0" dir="auto">
+   553→                    <p className="truncate text-[13px] font-bold text-slate-900">{c.name}</p>
+   554→                    <p className="text-[10.5px] font-semibold text-slate-400" dir="ltr">
+   555→                      {t("accountNo")} {c.accountNo}
+   556→                    </p>
+   557→                  </div>
+   558→                </div>
+   559→              </div>
+   560→              <div className="flex-1 overflow-y-auto p-2">
+   561→                {NAV.map((item) => (
+   562→                  <button
+   563→                    key={item.id}
+   564→                    onClick={() => go(item.id)}
+   565→                    aria-current={section === item.id ? "page" : undefined}
+   566→                    className={cn(
+   567→                      "flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold transition-colors",
+   568→                      section === item.id ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+   569→                    )}
+   570→                  >
+   571→                    {item.icon}
+   572→                    <span className="flex-1 text-start">{item.label}</span>
+   573→                    {!!item.badge && item.badge > 0 && (
+   574→                      <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#022c20]">{item.badge}</span>
+   575→                    )}
+   576→                  </button>
+   577→                ))}
+   578→              </div>
+   579→              <div className="border-t border-slate-200/80 p-2">
+   580→                <button
+   581→                  onClick={signOut}
+   582→                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+   583→                >
+   584→                  <LogOut className="h-4 w-4" />
+   585→                  <span className="flex-1 text-start">{t("signOut")}</span>
+   586→                </button>
+   587→              </div>
+   588→            </motion.nav>
+   589→          </div>
+   590→        )}
+   591→      </AnimatePresence>
+   592→
+   593→      {reqModal && <RequestModal initialKind={reqModal} t={t} available={available} onClose={() => setReqModal(null)} onSubmit={submitRequest} />}
+   594→    </div>
+   595→  );
+   596→}
+   597→
+   598→/* ---------------- section heading ---------------- */
+   599→
+   600→function SectionHeading({ title, sub }: { title: string; sub?: string }) {
+   601→  return (
+   602→    <div>
+   603→      <h1 className="text-[20px] font-bold tracking-tight text-slate-900 sm:text-[24px]">{title}</h1>
+   604→      {sub && <p className="mt-1 text-[13px] text-slate-500">{sub}</p>}
+   605→    </div>
+   606→  );
+   607→}
+   608→
+   609→/* ---------------- overview (landing) section ---------------- */
+   610→
+   611→function OverviewSection({
+   612→  view,
+   613→  t,
+   614→  lang,
+   615→  coins,
+   616→  stocks,
+   617→  holdingRows,
+   618→  invested,
+   619→  cash,
+   620→  total,
+   621→  available,
+   622→  portfolioChange,
+   623→  totalDeposits,
+   624→  history,
+   625→  allocation,
+   626→  suspended,
+   627→  money,
+   628→  cur,
+   629→  onCurrency,
+   630→  onDeposit,
+   631→  onWithdraw,
+   632→  onGo,
+   633→}: {
+   634→  view: ClientView;
+   635→  t: T;
+   636→  lang: Lang;
+   637→  coins: Coin[];
+   638→  stocks: Coin[];
+   639→  holdingRows: ReturnType<typeof buildHoldingRows>;
+   640→  invested: number;
+   641→  cash: number;
+   642→  total: number;
+   643→  available: number;
+   644→  portfolioChange: number;
+   645→  totalDeposits: number;
+   646→  history: number[];
+   647→  allocation: Array<{ label: string; value: number; color: string }>;
+   648→  suspended: boolean;
+   649→  money: (n: number) => string;
+   650→  cur: string;
+   651→  onCurrency: (code: CurrencyCode) => void;
+   652→  onDeposit: () => void;
+   653→  onWithdraw: () => void;
+   654→  onGo: (s: Section) => void;
+   655→}) {
+   656→  const c = view.client;
+   657→  const recent = view.txs.slice(0, 5);
+   658→
+   659→  return (
+   660→    <div className="grid grid-cols-1 gap-4 sm:gap-5">
+   661→      {/* welcome header — real client identity from the authenticated session */}
+   662→      <div className="flex flex-wrap items-end justify-between gap-3 sm:gap-4">
+   663→        <div className="min-w-0">
+   664→          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+   665→            <h1 className="min-w-0 text-[20px] font-bold leading-snug tracking-tight text-slate-900 sm:text-[24px] sm:leading-tight lg:text-[28px]">
+   666→              {t("welcomeTitle")}{" "}
+   667→              <span className="whitespace-normal break-words" dir="auto">
+   668→                {c.name}
+   669→              </span>
+   670→            </h1>
+   671→            {/* green Verified badge with a check icon — next to the client name */}
+   672→            <VerifiedBadge verified={c.kycStatus === "verified"} t={t} />
+   673→          </div>
+   674→          {/* "Private" badge — under the name (tier chip only when not already Private) */}
+   675→          <div className="mt-2 flex flex-wrap items-center gap-2">
+   676→            <PrivateBadge t={t} />
+   677→            {c.tier !== "Private" && <TierBadge tier={c.tier} t={t} />}
+   678→          </div>
+   679→          <p className="mt-2.5 text-[13px] text-slate-500 sm:text-[13.5px]">{t("welcomeSub")}</p>
+   680→          <p className="mt-1 text-[12px] font-semibold text-slate-500 sm:text-[12.5px]">
+   681→            {t("accountNo")}{" "}
+   682→            <span dir="ltr" className="font-mono text-slate-600">
+   683→              {c.accountNo}
+   684→            </span>
+   685→          </p>
+   686→        </div>
+   687→        <div className="flex flex-wrap gap-2.5">
+   688→          <button
+   689→            onClick={onDeposit}
+   690→            disabled={suspended}
+   691→            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[13px] font-bold text-[#022c20] shadow-[0_8px_24px_-10px_rgba(0,229,160,0.7)] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+   692→          >
+   693→            <ArrowDownLeft className="h-4 w-4" /> {t("deposit")}
+   694→          </button>
+   695→          <button
+   696→            onClick={onWithdraw}
+   697→            disabled={suspended}
+   698→            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+   699→          >
+   700→            <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
+   701→          </button>
+   702→        </div>
+   703→      </div>
+   704→
+   705→      {c.managerNote && !suspended && (
+   706→        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 sm:px-5 sm:py-3.5">
+   707→          <p className="text-[12px] font-bold text-emerald-600 sm:text-[12.5px]">{t("managerNoteTitle")}</p>
+   708→          <p className="mt-1 text-[12.5px] leading-relaxed text-slate-600 sm:text-[13px]">{c.managerNote}</p>
+   709→        </div>
+   710→      )}
+   711→
+   712→      {suspended && (
+   713→        <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3.5 sm:px-5">
+   714→          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+   715→          <div>
+   716→            <p className="text-[13px] font-bold text-amber-800">{t("suspendedBanner")}</p>
+   717→            <p className="mt-0.5 text-[12.5px] text-amber-700">{t("suspendedSub")}</p>
+   718→          </div>
+   719→        </div>
+   720→      )}
+   721→
+   722→      {/* three financial cards — every value is real, from the server ledger.
+   723→          Mobile: full-width compact stack (2.5 gap); sm+: 3-across grid. */}
+   724→      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+   725→        <KpiCard
+   726→          label={t("totalBalance")}
+   727→          value={money(total)}
+   728→          sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
+   729→          subTone={portfolioChange >= 0 ? "up" : "down"}
+   730→          icon={<Wallet className="h-4 w-4" />}
+   731→        />
+   732→        <KpiCard
+   733→          label={t("cashAvailable")}
+   734→          value={money(cash)}
+   735→          sub={`${t("availableFunds")}: ${money(available)}`}
+   736→          icon={<ArrowDownLeft className="h-4 w-4" />}
+   737→        />
+   738→        <KpiCard
+   739→          label={t("invested")}
+   740→          value={money(invested)}
+   741→          sub={`${t("totalDeposits")}: ${money(totalDeposits)}`}
+   742→          icon={<PieChart className="h-4 w-4" />}
+   743→        />
+   744→      </div>
+   745→
+   746→      {/* display currency — switching it re-formats every figure from ONE source (#10) */}
+   747→      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2 shadow-sm sm:px-3.5 sm:py-2.5">
+   748→        <label className="flex min-w-0 flex-wrap items-center gap-2">
+   749→          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 sm:text-[12px]">{t("displayCurrency")}</span>
+   750→          <select
+   751→            value={cur}
+   752→            onChange={(e) => onCurrency(e.target.value as CurrencyCode)}
+   753→            aria-label={t("displayCurrency")}
+   754→            dir="ltr"
+   755→            className="h-9 max-w-[190px] rounded-lg border border-slate-200 bg-white px-2.5 text-[16px] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-[13px]"
+   756→          >
+   757→            {CURRENCIES.map((code) => (
+   758→              <option key={code} value={code}>
+   759→                {code} · {CURRENCY_META[code]?.label ?? code}
+   760→              </option>
+   761→            ))}
+   762→          </select>
+   763→        </label>
+   764→        <p className="hidden text-[10.5px] leading-snug text-slate-400 sm:block">{t("currencyNote")}</p>
+   765→      </div>
+   766→
+   767→      {/* chart + market */}
+   768→      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
+   769→        <PerformanceChart history={history} t={t} money={money} />
+   770→        <MarketStrip coins={coins} stocks={stocks} t={t} singleColumn money={money} />
+   771→      </div>
+   772→
+   773→      {/* Source of Funds — its own proper dashboard card (#9), same design
+   774→          system as the KPI cards, placed right after Portfolio Performance */}
+   775→      <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
+   776→
+   777→      {/* holdings preview + allocation + contacts */}
+   778→      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
+   779→        <div className="min-w-0">
+   780→          <HoldingsTable rows={holdingRows} t={t} lang={lang} money={money} />
+   781→        </div>
+   782→        <div className="grid grid-cols-1 content-start gap-4 xl:gap-5">
+   783→          <AllocationBar segments={allocation} t={t} />
+   784→          {/* recent activity preview */}
+   785→          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+   786→            <SectionTitle
+   787→              title={t("recentTransactions")}
+   788→              right={
+   789→                <button onClick={() => onGo("transactions")} className="rounded-lg px-2 py-1 text-[11.5px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
+   790→                  {t("viewAll")}
+   791→                </button>
+   792→              }
+   793→            />
+   794→            <ul className="mt-3 divide-y divide-slate-100">
+   795→              {recent.map((tx) => (
+   796→                <li key={tx.id} className="flex items-center gap-3 px-4 py-3">
+   797→                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", tx.type === "CREDIT" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800")}>
+   798→                    {tx.type === "CREDIT" ? <ArrowDownLeft className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
+   799→                  </span>
+   800→                  <div className="min-w-0 flex-1">
+   801→                    <p className="truncate text-[12.5px] font-semibold text-slate-900">{tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}</p>
+   802→                    <p className="text-[10.5px] text-slate-400" dir="ltr">
+   803→                      {tx.dateISO}
+   804→                    </p>
+   805→                  </div>
+   806→                  <span className={cn("shrink-0 whitespace-nowrap text-[12.5px] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+   807→                    {tx.type === "CREDIT" ? "+" : "−"}
+   808→                    {money(tx.amount)}
+   809→                  </span>
+   810→                </li>
+   811→              ))}
+   812→              {recent.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-slate-500">{t("noTx")}</li>}
+   813→            </ul>
+   814→          </div>
+   815→          <ContactCard t={t} />
+   816→        </div>
+   817→      </div>
+   818→    </div>
+   819→  );
+   820→}
+   821→
+   822→/* ---------------- deposits section ---------------- */
+   823→
+   824→function DepositsSection({
+   825→  t,
+   826→  lang,
+   827→  deposits,
+   828→  totalDeposits,
+   829→  suspended,
+   830→  money = usd,
+   831→  onDeposit,
+   832→  onCancel,
+   833→}: {
+   834→  t: T;
+   835→  lang: Lang;
+   836→  deposits: Tx[];
+   837→  totalDeposits: number;
+   838→  suspended: boolean;
+   839→  money?: (n: number) => string;
+   840→  onDeposit: () => void;
+   841→  onCancel?: (tx: Tx) => void;
+   842→}) {
+   843→  return (
+   844→    <div className="grid grid-cols-1 gap-5">
+   845→      <div className="flex flex-wrap items-end justify-between gap-3">
+   846→        <SectionHeading title={t("menuDeposits")} sub={t("requestHint")} />
+   847→        <button
+   848→          onClick={onDeposit}
+   849→          disabled={suspended}
+   850→          className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[13px] font-bold text-[#022c20] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
+   851→        >
+   852→          <ArrowDownLeft className="h-4 w-4" /> {t("deposit")}
+   853→        </button>
+   854→      </div>
+   855→      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+   856→        <KpiCard label={t("depositsTotal")} value={money(totalDeposits)} icon={<ArrowDownLeft className="h-4 w-4" />} />
+   857→        <KpiCard label={t("menuDeposits")} value={String(deposits.length)} sub={t("allTime")} icon={<ArrowLeftRight className="h-4 w-4" />} />
+   858→      </div>
+   859→      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+   860→        <ul className="divide-y divide-slate-100">
+   861→          {deposits.map((tx) => (
+   862→            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : onCancel} />
+   863→          ))}
+   864→          {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noDeposits")}</li>}
+   865→        </ul>
+   866→      </div>
+   867→    </div>
+   868→  );
+   869→}
+   870→
+   871→/* ---------------- withdrawals section ---------------- */
+   872→
+   873→function WithdrawalsSection({
+   874→  t,
+   875→  lang,
+   876→  withdrawals,
+   877→  available,
+   878→  pendingTotal,
+   879→  totalWithdrawn,
+   880→  suspended,
+   881→  money = usd,
+   882→  onWithdraw,
+   883→  onCancel,
+   884→}: {
+   885→  t: T;
+   886→  lang: Lang;
+   887→  withdrawals: Tx[];
+   888→  available: number;
+   889→  pendingTotal: number;
+   890→  totalWithdrawn: number;
+   891→  suspended: boolean;
+   892→  money?: (n: number) => string;
+   893→  onWithdraw: () => void;
+   894→  onCancel?: (tx: Tx) => void;
+   895→}) {
+   896→  return (
+   897→    <div className="grid grid-cols-1 gap-5">
+   898→      <div className="flex flex-wrap items-end justify-between gap-3">
+   899→        <SectionHeading title={t("menuWithdrawals")} sub={t("requestHint")} />
+   900→        <button
+   901→          onClick={onWithdraw}
+   902→          disabled={suspended}
+   903→          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+   904→        >
+   905→          <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
+   906→        </button>
+   907→      </div>
+   908→      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+   909→        <KpiCard label={t("availableFunds")} value={money(available)} icon={<Wallet className="h-4 w-4" />} />
+   910→        <KpiCard label={t("reqPending")} value={money(pendingTotal)} icon={<ArrowUpRight className="h-4 w-4" />} />
+   911→        <KpiCard label={t("withdrawalsTotal")} value={money(totalWithdrawn)} icon={<ArrowLeftRight className="h-4 w-4" />} />
+   912→      </div>
+   913→      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+   914→        <ul className="divide-y divide-slate-100">
+   915→          {withdrawals.map((tx) => (
+   916→            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : onCancel} />
+   917→          ))}
+   918→          {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("withdrawalsEmpty")}</li>}
+   919→        </ul>
+   920→      </div>
+   921→    </div>
+   922→  );
+   923→}
+   924→
