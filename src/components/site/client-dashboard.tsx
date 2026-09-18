@@ -21,6 +21,7 @@ import {
   LogOut,
   Menu,
   PieChart,
+  Plus,
   ShieldAlert,
   UserRoundCog,
   Wallet,
@@ -39,13 +40,13 @@ import {
   ProfileCard,
   RequestModal,
   SectionTitle,
-  StatusPill,
   TierBadge,
   TxRowItem,
   VerifiedBadge,
   buildHoldingRows,
   initials,
   usd,
+  type RequestKind,
   type T,
 } from "./dashboard-parts";
 import { useToast } from "@/hooks/use-toast";
@@ -80,7 +81,7 @@ export function ClientDashboard({
   const [section, setSection] = useState<Section>("overview");
   const [drawer, setDrawer] = useState(false);
   const [txFilter, setTxFilter] = useState<TxFilter>("all");
-  const [reqModal, setReqModal] = useState<null | "deposit" | "withdrawal">(null);
+  const [reqModal, setReqModal] = useState<null | RequestKind>(null);
   const [showAllTxs, setShowAllTxs] = useState(false);
 
   /* ---- live self-refresh: re-read the authorized API snapshot ---- */
@@ -158,15 +159,26 @@ export function ClientDashboard({
   }, [total, history.length]);
 
   /* ---- actions ---- */
-  const submitRequest = async (kind: "deposit" | "withdrawal", amount: number, note: string): Promise<string | null> => {
-    const res = await apiClientAction({ action: "request-transaction", kind, amount, note });
+  const submitRequest = async (payload: { kind: RequestKind; amount: number; asset: string; destination: string; note: string }): Promise<string | null> => {
+    const res = await apiClientAction({ action: "request-transaction", ...payload });
     if (!res.ok) {
-      return res.error === "funds" ? "requestTooMuch" : "requestInvalid";
+      return res.error === "funds" ? "requestTooMuch" : res.error === "duplicate" ? "requestDuplicate" : "requestInvalid";
     }
     if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
     toast({ title: t("requestSent"), description: t("requestSentSub") });
     setReqModal(null);
     return null;
+  };
+
+  /* the ONLY mutation a client may make on a request: cancelling their own PENDING one */
+  const cancelRequest = async (tx: { id: string; reference: string }) => {
+    const res = await apiClientAction({ action: "cancel-request", id: tx.id });
+    if (!res.ok) {
+      toast({ title: t("requestInvalid") });
+      return;
+    }
+    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+    toast({ title: t("requestCancelledToast"), description: t("requestCancelledSub") });
   };
 
   const markAllRead = async () => {
@@ -408,14 +420,23 @@ export function ClientDashboard({
                     </button>
                   ))}
                 </div>
-                <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
-                  <Download className="h-3.5 w-3.5" /> CSV
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => !suspended && setReqModal("deposit")}
+                    disabled={suspended}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#00E5A0] px-3 py-2 text-[11.5px] font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> {t("newRequest")}
+                  </button>
+                  <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+                    <Download className="h-3.5 w-3.5" /> CSV
+                  </button>
+                </div>
               </div>
               <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
                 <ul className="divide-y divide-slate-100">
                   {(showAllTxs ? filteredTxs : filteredTxs.slice(0, 12)).map((tx) => (
-                    <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} />
+                    <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} onCancel={suspended ? undefined : cancelRequest} />
                   ))}
                   {filteredTxs.length === 0 && (
                     <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noTx")}</li>
@@ -431,11 +452,11 @@ export function ClientDashboard({
           )}
 
           {section === "deposits" && (
-            <DepositsSection t={t} lang={lang} deposits={deposits} totalDeposits={totalDeposits} suspended={!!suspended} onDeposit={() => !suspended && setReqModal("deposit")} />
+            <DepositsSection t={t} lang={lang} deposits={deposits} totalDeposits={totalDeposits} suspended={!!suspended} onDeposit={() => !suspended && setReqModal("deposit")} onCancel={suspended ? undefined : cancelRequest} />
           )}
 
           {section === "withdrawals" && (
-            <WithdrawalsSection t={t} lang={lang} withdrawals={withdrawals} available={available} pendingTotal={pendingWithdrawalTotal} totalWithdrawn={totalWithdrawn} suspended={!!suspended} onWithdraw={() => !suspended && setReqModal("withdrawal")} />
+            <WithdrawalsSection t={t} lang={lang} withdrawals={withdrawals} available={available} pendingTotal={pendingWithdrawalTotal} totalWithdrawn={totalWithdrawn} suspended={!!suspended} onWithdraw={() => !suspended && setReqModal("withdrawal")} onCancel={suspended ? undefined : cancelRequest} />
           )}
 
           {section === "notifications" && (
@@ -543,7 +564,7 @@ export function ClientDashboard({
         )}
       </AnimatePresence>
 
-      {reqModal && <RequestModal kind={reqModal} t={t} available={available} onClose={() => setReqModal(null)} onSubmit={(amount, note) => submitRequest(reqModal, amount, note)} />}
+      {reqModal && <RequestModal initialKind={reqModal} t={t} available={available} onClose={() => setReqModal(null)} onSubmit={submitRequest} />}
     </div>
   );
 }
@@ -751,6 +772,7 @@ function DepositsSection({
   totalDeposits,
   suspended,
   onDeposit,
+  onCancel,
 }: {
   t: T;
   lang: Lang;
@@ -758,6 +780,7 @@ function DepositsSection({
   totalDeposits: number;
   suspended: boolean;
   onDeposit: () => void;
+  onCancel?: (tx: Tx) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-5">
@@ -778,7 +801,7 @@ function DepositsSection({
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <ul className="divide-y divide-slate-100">
           {deposits.map((tx) => (
-            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} />
+            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} onCancel={suspended ? undefined : onCancel} />
           ))}
           {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noDeposits")}</li>}
         </ul>
@@ -798,6 +821,7 @@ function WithdrawalsSection({
   totalWithdrawn,
   suspended,
   onWithdraw,
+  onCancel,
 }: {
   t: T;
   lang: Lang;
@@ -807,6 +831,7 @@ function WithdrawalsSection({
   totalWithdrawn: number;
   suspended: boolean;
   onWithdraw: () => void;
+  onCancel?: (tx: Tx) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-5">
@@ -828,23 +853,7 @@ function WithdrawalsSection({
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <ul className="divide-y divide-slate-100">
           {withdrawals.map((tx) => (
-            <li key={tx.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-800 ring-1 ring-amber-600/15">
-                <ArrowUpRight className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-slate-900">{tx.label}</p>
-                <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
-                  {tx.dateISO} · {tx.method}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="whitespace-nowrap text-[13px] font-bold tabular-nums text-amber-600" dir="ltr">
-                  −{usd(tx.amount)}
-                </span>
-                <StatusPill status={tx.status} t={t} />
-              </div>
-            </li>
+            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} onCancel={suspended ? undefined : onCancel} />
           ))}
           {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("withdrawalsEmpty")}</li>}
         </ul>

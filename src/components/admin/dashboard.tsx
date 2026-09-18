@@ -15,10 +15,12 @@ import {
 import { sparkline, sparklinePath } from "@/lib/market";
 import { ADMIN_MARKET_COINS, GROWTH_MONTHS, GROWTH_VALUES, usd } from "@/lib/admin-data";
 import type { AdminCtx } from "./types";
-import { Card, MonoId, PageHeader, StatCard } from "./ui";
+import { Card, MonoId, PageHeader, StatCard, StatusBadge, statusLabel } from "./ui";
 import { cn } from "@/lib/utils";
 
 /* ================= DASHBOARD ================= */
+
+const IN_FLIGHT: string[] = ["PENDING", "UNDER_REVIEW", "APPROVED", "PROCESSING"];
 
 export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
   const { clients, txs: transactions } = ctx.state as unknown as { clients: Array<{ id: string; name: string; status: string; financials: { balance: number } }>; txs: AdminCtx["state"]["txs"] };
@@ -31,6 +33,8 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
   const activeCount = useMemo(() => clients.filter((c) => c.status === "active").length, [clients]);
   const clientCount = clients.length;
   const recent = transactions.slice(0, 5);
+  const pendingRequests = useMemo(() => transactions.filter((t) => IN_FLIGHT.includes(t.status)), [transactions]);
+  const countStatus = (s: string) => transactions.filter((t) => t.status === s).length;
 
   return (
     <div>
@@ -68,6 +72,74 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
           icon={<UserCheck className="h-5 w-5" />}
           iconBg="bg-emerald-500"
         />
+      </div>
+
+      {/* REQUEST PIPELINE — the client-submitted work queue (#35) */}
+      <div className="mt-6">
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
+          {(
+            [
+              ["PENDING", "Pending Requests", "Awaiting first review"],
+              ["UNDER_REVIEW", "Under Review", "Being examined by staff"],
+              ["APPROVED", "Approved", "Cleared for processing"],
+              ["PROCESSING", "Processing", "Executing on the rails"],
+            ] as const
+          ).map(([status, label, sub]) => (
+            <button key={status} className="text-left" onClick={() => ctx.navigate("transactions")}>
+              <StatCard
+                label={label}
+                value={String(countStatus(status))}
+                sub={sub}
+                tint={countStatus(status) > 0 && status === "PENDING"}
+                iconBg={countStatus(status) > 0 ? "bg-amber-500" : "bg-slate-400"}
+                icon={<ArrowDownRight className="h-5 w-5" />}
+              />
+            </button>
+          ))}
+        </div>
+
+        <Card className="mt-5">
+          <div className="flex items-center justify-between px-6 pt-5">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Requests awaiting action</h2>
+              <p className="text-[13px] text-slate-500">Submitted by clients from their portals — open Transactions to review, decide and add notes.</p>
+            </div>
+            <button onClick={() => ctx.navigate("transactions")} className="shrink-0 text-sm font-medium text-emerald-600 transition-colors hover:text-emerald-700">
+              Open requests
+            </button>
+          </div>
+          <div className="mt-4 overflow-x-auto px-2 pb-4">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+                  <th className="px-4 py-2.5 font-medium">Reference</th>
+                  <th className="px-4 py-2.5 font-medium">Client</th>
+                  <th className="px-4 py-2.5 font-medium">Kind</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Amount</th>
+                  <th className="px-4 py-2.5 font-medium">Submitted</th>
+                  <th className="px-6 py-2.5 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingRequests.slice(0, 6).map((t) => (
+                  <tr key={t.id} className="cursor-pointer border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60" onClick={() => ctx.navigate("transactions")}>
+                    <td className="px-4 py-3.5 font-mono text-[13px] text-slate-600">{t.reference}</td>
+                    <td className="max-w-[200px] truncate px-4 py-3.5 font-semibold text-slate-900">{t.clientName}</td>
+                    <td className="px-4 py-3.5 capitalize text-slate-600">{t.kind}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold tabular-nums text-slate-900" dir="ltr">{usd(t.amount)}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-500">{t.dateISO}</td>
+                    <td className="px-6 py-3.5"><StatusBadge status={t.status} /></td>
+                  </tr>
+                ))}
+                {pendingRequests.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">No open requests — every client request has been decided.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.55fr_1fr]">

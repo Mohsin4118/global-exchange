@@ -71,11 +71,19 @@ const badgeStyles: Record<string, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-600",
   SUSPENDED: "bg-slate-100 text-slate-600",
   PENDING: "bg-amber-50 text-amber-600",
+  UNDER_REVIEW: "bg-indigo-50 text-indigo-600",
+  APPROVED: "bg-teal-50 text-teal-600",
   PROCESSING: "bg-blue-50 text-blue-600",
   COMPLETED: "bg-emerald-50 text-emerald-600",
   FAILED: "bg-slate-100 text-slate-600",
   REJECTED: "bg-slate-100 text-slate-600",
+  CANCELLED: "bg-slate-100 text-slate-500",
 };
+
+/** "UNDER_REVIEW" -> "Under Review" */
+export function statusLabel(status: string): string {
+  return status.charAt(0) + status.slice(1).toLowerCase().replace(/_/g, " ");
+}
 
 export function StatusBadge({ status }: { status: string }) {
   return (
@@ -85,7 +93,7 @@ export function StatusBadge({ status }: { status: string }) {
         badgeStyles[status] ?? "bg-slate-100 text-slate-600",
       )}
     >
-      {status}
+      {statusLabel(status)}
     </span>
   );
 }

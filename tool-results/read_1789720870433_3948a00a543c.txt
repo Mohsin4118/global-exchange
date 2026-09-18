@@ -1,0 +1,784 @@
+     1→"use client";
+     2→
+     3→/* ------------------------------------------------------------------ */
+     4→/*  CryptoWise — client dashboard parts (WHITE / LIGHT banking)   */
+     5→/*  Every figure rendered here comes from the server API — the Super   */
+     6→/*  Admin controls all of it from the CRM. Live crypto/stock prices    */
+     7→/*  come from the shared market ticker. No red anywhere: negatives     */
+     8→/*  use amber. Fully RTL-aware with LTR-wrapped numerics.              */
+     9→/* ------------------------------------------------------------------ */
+    10→
+    11→import { useState } from "react";
+    12→import {
+    13→  ArrowDownLeft,
+    14→  ArrowUpRight,
+    15→  BadgeCheck,
+    16→  Bell,
+    17→  Check,
+    18→  Crown,
+    19→  Lock,
+    20→  Pencil,
+    21→  Wallet,
+    22→  X,
+    23→} from "lucide-react";
+    24→import { CoinBadge } from "./icons";
+    25→import { formatChange, formatPrice, sparkline, sparklinePath, type Coin } from "@/lib/market";
+    26→import { ContactButtonsCard } from "./contact-buttons";
+    27→import { PasswordInput } from "@/components/ui/password-input";
+    28→import type { ClientView, Notification, Tx } from "@/lib/shared-types";
+    29→import type { Lang, StringKey } from "@/lib/i18n";
+    30→import { cn } from "@/lib/utils";
+    31→
+    32→export type T = (k: StringKey) => string;
+    33→
+    34→export function usd(n: number): string {
+    35→  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    36→}
+    37→
+    38→export function fmtUnits(units: number): string {
+    39→  return units.toLocaleString("en-US", { maximumFractionDigits: units >= 1 ? 2 : 4 });
+    40→}
+    41→
+    42→export function fmtDate(iso: string, lang: Lang = "en"): string {
+    43→  const d = new Date(`${iso}T00:00:00`);
+    44→  if (Number.isNaN(d.getTime())) return iso;
+    45→  try {
+    46→    return d.toLocaleDateString(lang === "ar" ? "ar" : "en-US", { month: "short", day: "numeric", year: "numeric" });
+    47→  } catch {
+    48→    return iso;
+    49→  }
+    50→}
+    51→
+    52→export function seedFor(id: string): number {
+    53→  let s = 0;
+    54→  for (let i = 0; i < id.length; i++) s = (s * 31 + id.charCodeAt(i)) % 233280;
+    55→  return s || 7;
+    56→}
+    57→
+    58→export function initials(name: string): string {
+    59→  const parts = name.trim().split(/\s+/).slice(0, 2);
+    60→  return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "C";
+    61→}
+    62→
+    63→/* ---------------- primitives (light banking surfaces) ---------------- */
+    64→
+    65→export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
+    66→  return (
+    67→    <div className={cn("rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_40px_-28px_rgba(15,23,42,0.35)]", className)}>
+    68→      {children}
+    69→    </div>
+    70→  );
+    71→}
+    72→
+    73→export function SectionTitle({ title, right }: { title: string; right?: React.ReactNode }) {
+    74→  return (
+    75→    <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
+    76→      <h2 className="text-[15px] font-bold tracking-tight text-slate-900">{title}</h2>
+    77→      {right}
+    78→    </div>
+    79→  );
+    80→}
+    81→
+    82→export function StatusPill({ status, t }: { status: Tx["status"]; t: T }) {
+    83→  const map: Record<string, string> = {
+    84→    COMPLETED: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
+    85→    PENDING: "bg-amber-50 text-amber-800 ring-1 ring-amber-600/20",
+    86→    PROCESSING: "bg-sky-50 text-sky-700 ring-1 ring-sky-600/20",
+    87→    REJECTED: "bg-slate-100 text-slate-500 ring-1 ring-white/10",
+    88→  };
+    89→  const label = status === "COMPLETED" ? t("statusCompleted") : status === "PENDING" ? t("reqPending") : status === "PROCESSING" ? t("statusProcessing") : t("reqRejected");
+    90→  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide", map[status])}>{label}</span>;
+    91→}
+    92→
+    93→export function LiveChip({ t }: { t: T }) {
+    94→  return (
+    95→    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600 ring-1 ring-emerald-600/20">
+    96→      <span className="relative flex h-1.5 w-1.5">
+    97→        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+    98→        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
+    99→      </span>
+   100→      {t("live")}
+   101→    </span>
+   102→  );
+   103→}
+   104→
+   105→export function KpiCard({
+   106→  label,
+   107→  value,
+   108→  sub,
+   109→  subTone = "muted",
+   110→  icon,
+   111→}: {
+   112→  label: string;
+   113→  value: string;
+   114→  sub?: string;
+   115→  subTone?: "muted" | "up" | "down";
+   116→  icon: React.ReactNode;
+   117→}) {
+   118→  return (
+   119→    <Card className="p-4 sm:p-5">
+   120→      <div className="flex items-start justify-between gap-3">
+   121→        <p className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{label}</p>
+   122→        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/15">{icon}</span>
+   123→      </div>
+   124→      <p className="mt-2.5 font-mono text-[21px] font-bold leading-none tracking-tight text-slate-900 sm:text-[24px]" dir="ltr">
+   125→        {value}
+   126→      </p>
+   127→      {sub && (
+   128→        <p
+   129→          className={cn(
+   130→            "mt-2 text-[12px] font-semibold",
+   131→            subTone === "up" ? "text-emerald-600" : subTone === "down" ? "text-amber-600" : "text-slate-500",
+   132→          )}
+   133→          dir="ltr"
+   134→        >
+   135→          {sub}
+   136→        </p>
+   137→      )}
+   138→    </Card>
+   139→  );
+   140→}
+   141→
+   142→/* ---------------- performance chart (dark style) ---------------- */
+   143→
+   144→export function PerformanceChart({ history, t }: { history: number[]; t: T }) {
+   145→  const pts = history.length > 1 ? history : [1, 1];
+   146→  const max = Math.max(...pts);
+   147→  const min = Math.min(...pts);
+   148→  const range = max - min || Math.max(1, max * 0.002);
+   149→  const W = 560;
+   150→  const H = 190;
+   151→  const step = W / (pts.length - 1);
+   152→  const coords = pts.map((p, i) => [i * step, H - 26 - ((p - min) / range) * (H - 52)] as const);
+   153→  let path = `M${coords[0][0]},${coords[0][1]}`;
+   154→  for (let i = 1; i < coords.length; i++) {
+   155→    const [x0, y0] = coords[i - 1];
+   156→    const [x1, y1] = coords[i];
+   157→    const cx = (x0 + x1) / 2;
+   158→    path += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
+   159→  }
+   160→  const area = `${path} L${W},${H} L0,${H} Z`;
+   161→  const last = coords[coords.length - 1];
+   162→
+   163→  return (
+   164→    <Card className="overflow-hidden">
+   165→      <SectionTitle title={t("performance")} right={<LiveChip t={t} />} />
+   166→      <div className="px-2 pb-3 pt-4">
+   167→        <svg viewBox={`0 0 ${W} ${H}`} className="h-40 w-full sm:h-44" preserveAspectRatio="none" role="img" aria-label="Portfolio performance chart">
+   168→          <defs>
+   169→            <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
+   170→              <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
+   171→              <stop offset="100%" stopColor="#059669" stopOpacity="0.01" />
+   172→            </linearGradient>
+   173→          </defs>
+   174→          {[0.25, 0.5, 0.75].map((f) => (
+   175→            <line key={f} x1="0" x2={W} y1={26 + f * (H - 52)} y2={26 + f * (H - 52)} stroke="rgba(15,23,42,0.07)" strokeWidth="1" />
+   176→          ))}
+   177→          <path d={area} fill="url(#perfFill)" />
+   178→          <path d={path} fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" />
+   179→          <circle cx={last[0]} cy={last[1]} r="3.5" fill="#059669" stroke="#ffffff" strokeWidth="1.5" />
+   180→          <text x={8} y={16} fontSize="11" fill="rgba(100,116,139,0.9)" className="font-mono" direction="ltr">
+   181→            {usd(max)}
+   182→          </text>
+   183→          <text x={8} y={H - 6} fontSize="11" fill="rgba(100,116,139,0.9)" className="font-mono" direction="ltr">
+   184→            {usd(min)}
+   185→          </text>
+   186→        </svg>
+   187→      </div>
+   188→    </Card>
+   189→  );
+   190→}
+   191→
+   192→/* ---------------- holdings ---------------- */
+   193→
+   194→export interface HoldingRow {
+   195→  units: number;
+   196→  coin: Coin;
+   197→  value: number;
+   198→  sparkPath: string;
+   199→}
+   200→
+   201→export function buildHoldingRows(holdings: ClientView["client"]["holdings"], markets: Coin[]): HoldingRow[] {
+   202→  return holdings
+   203→    .map((h) => {
+   204→      const coin = markets.find((m) => m.id === h.assetId);
+   205→      if (!coin) return null;
+   206→      const base = sparkline(seedFor(coin.id), 24, 1.15);
+   207→      const trend = coin.change24h >= 0 ? 7 : -7;
+   208→      const series = base.map((v, i) => v + (i / (base.length - 1)) * trend);
+   209→      return { units: h.units, coin, value: coin.price * h.units, sparkPath: sparklinePath(series, 72, 28) };
+   210→    })
+   211→    .filter((r): r is HoldingRow => r !== null)
+   212→    .sort((a, b) => b.value - a.value);
+   213→}
+   214→
+   215→export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lang: Lang }) {
+   216→  const total = rows.reduce((s, r) => s + r.value, 0) || 1;
+   217→  if (rows.length === 0) {
+   218→    return (
+   219→      <Card className="p-10 text-center">
+   220→        <p className="text-[15px] font-bold text-slate-900">{t("noAssets")}</p>
+   221→        <p className="mx-auto mt-1.5 max-w-sm text-[13px] text-slate-500">{t("noAssetsSub")}</p>
+   222→      </Card>
+   223→    );
+   224→  }
+   225→  return (
+   226→    <Card className="overflow-hidden">
+   227→      {/* desktop table (md+) */}
+   228→      <div className="hidden md:block">
+   229→        <table className="w-full text-sm">
+   230→          <thead>
+   231→            <tr className="border-b border-slate-200/70 text-[12px] font-semibold uppercase tracking-wide text-slate-400">
+   232→              <th className="px-6 py-3.5 text-start font-semibold">{t("holdings")}</th>
+   233→              <th className="px-4 py-3.5 text-end font-semibold">{t("units")}</th>
+   234→              <th className="px-4 py-3.5 text-end font-semibold">{t("price")}</th>
+   235→              <th className="px-4 py-3.5 text-end font-semibold">{t("value")}</th>
+   236→              <th className="px-4 py-3.5 text-end font-semibold">{t("change24h")}</th>
+   237→              <th className="px-6 py-3.5 text-end font-semibold">%</th>
+   238→            </tr>
+   239→          </thead>
+   240→          <tbody>
+   241→            {rows.map((r) => (
+   242→              <tr key={r.coin.id} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/60">
+   243→                <td className="px-6 py-3.5">
+   244→                  <div className="flex items-center gap-3">
+   245→                    <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 text-[13px]" />
+   246→                    <div className="min-w-0">
+   247→                      <p className="truncate font-bold text-slate-900">{r.coin.name}</p>
+   248→                      <p className="truncate text-[11.5px] text-slate-400" dir="ltr">
+   249→                        {r.coin.symbol}
+   250→                      </p>
+   251→                    </div>
+   252→                  </div>
+   253→                </td>
+   254→                <td className="whitespace-nowrap px-4 py-3.5 text-end font-semibold tabular-nums text-slate-500" dir="ltr">
+   255→                  {fmtUnits(r.units)}
+   256→                </td>
+   257→                <td className="whitespace-nowrap px-4 py-3.5 text-end tabular-nums text-slate-500" dir="ltr">
+   258→                  {formatPrice(r.coin.price)}
+   259→                </td>
+   260→                <td className="whitespace-nowrap px-4 py-3.5 text-end font-bold tabular-nums text-slate-900" dir="ltr">
+   261→                  {usd(r.value)}
+   262→                </td>
+   263→                <td className="px-4 py-3.5 text-end">
+   264→                  <span
+   265→                    className={cn("inline-block rounded-md px-2 py-1 text-[12px] font-bold tabular-nums", r.coin.change24h >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800")}
+   266→                    dir="ltr"
+   267→                  >
+   268→                    {formatChange(r.coin.change24h)}
+   269→                  </span>
+   270→                </td>
+   271→                <td className="px-6 py-3.5 text-end">
+   272→                  <div className="flex items-center justify-end gap-2.5">
+   273→                    <svg viewBox="0 0 72 28" className="h-7 w-16" preserveAspectRatio="none" aria-hidden="true">
+   274→                      <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#059669" : "#fbbf24"} strokeWidth="1.8" strokeLinecap="round" />
+   275→                    </svg>
+   276→                    <span className="w-12 text-end font-semibold tabular-nums text-slate-500" dir="ltr">
+   277→                      {((r.value / total) * 100).toFixed(1)}%
+   278→                    </span>
+   279→                  </div>
+   280→                </td>
+   281→              </tr>
+   282→            ))}
+   283→          </tbody>
+   284→        </table>
+   285→      </div>
+   286→      {/* mobile stacked cards (<md) — never scrolls horizontally */}
+   287→      <ul className="divide-y divide-slate-100 md:hidden">
+   288→        {rows.map((r) => (
+   289→          <li key={r.coin.id} className="p-4">
+   290→            <div className="flex items-center gap-3">
+   291→              <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 shrink-0 text-[13px]" />
+   292→              <div className="min-w-0 flex-1">
+   293→                <p className="truncate text-[13.5px] font-bold text-slate-900">{r.coin.name}</p>
+   294→                <p className="truncate text-[11px] text-slate-400" dir="ltr">
+   295→                  {r.coin.symbol} · {fmtUnits(r.units)} {t("units").toLowerCase()}
+   296→                </p>
+   297→              </div>
+   298→              <div className="shrink-0 text-end">
+   299→                <p className="whitespace-nowrap text-[13.5px] font-bold tabular-nums text-slate-900" dir="ltr">
+   300→                  {usd(r.value)}
+   301→                </p>
+   302→                <p className={cn("text-[11.5px] font-bold tabular-nums", r.coin.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+   303→                  {formatChange(r.coin.change24h)}
+   304→                </p>
+   305→              </div>
+   306→            </div>
+   307→            <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
+   308→              <span className="text-[11px] text-slate-400" dir="ltr">
+   309→                {t("price")}: {formatPrice(r.coin.price)}
+   310→              </span>
+   311→              <div className="flex items-center gap-2">
+   312→                <svg viewBox="0 0 72 28" className="h-6 w-14" preserveAspectRatio="none" aria-hidden="true">
+   313→                  <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#059669" : "#fbbf24"} strokeWidth="1.8" strokeLinecap="round" />
+   314→                </svg>
+   315→                <span className="text-[11px] font-semibold tabular-nums text-slate-500" dir="ltr">
+   316→                  {((r.value / total) * 100).toFixed(1)}%
+   317→                </span>
+   318→              </div>
+   319→            </div>
+   320→          </li>
+   321→        ))}
+   322→      </ul>
+   323→      {lang === "ar" && <span className="hidden">{t("allocation")}</span>}
+   324→    </Card>
+   325→  );
+   326→}
+   327→
+   328→export function AllocationBar({ segments, t }: { segments: Array<{ label: string; value: number; color: string }>; t: T }) {
+   329→  const sum = segments.reduce((s, x) => s + x.value, 0) || 1;
+   330→  return (
+   331→    <Card className="p-4 sm:p-5">
+   332→      <p className="text-[15px] font-bold tracking-tight text-slate-900">{t("allocation")}</p>
+   333→      <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-slate-100" role="img" aria-label={t("allocation")}>
+   334→        {segments.map((s, i) => (
+   335→          <div key={i} style={{ width: `${(s.value / sum) * 100}%`, backgroundColor: s.color }} />
+   336→        ))}
+   337→      </div>
+   338→      <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+   339→        {segments.map((s, i) => (
+   340→          <li key={i} className="flex items-center gap-2 text-[12.5px] font-medium text-slate-600">
+   341→            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+   342→            {s.label}
+   343→            <span className="font-bold tabular-nums text-slate-900" dir="ltr">
+   344→              {((s.value / sum) * 100).toFixed(1)}%
+   345→            </span>
+   346→          </li>
+   347→        ))}
+   348→      </ul>
+   349→    </Card>
+   350→  );
+   351→}
+   352→
+   353→/* ---------------- transactions ---------------- */
+   354→
+   355→export function TxRowItem({ tx, t, lang }: { tx: Tx; t: T; lang: Lang }) {
+   356→  const credit = tx.type === "CREDIT";
+   357→  return (
+   358→    <li className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50/60 sm:px-5">
+   359→      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", credit ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15" : "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15")}>
+   360→        {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+   361→      </span>
+   362→      <div className="min-w-0 flex-1">
+   363→        <p className="truncate text-[13.5px] font-semibold text-slate-900">
+   364→          {tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}
+   365→          {tx.asset ? <span className="font-normal text-slate-500"> · {tx.asset}</span> : null}
+   366→        </p>
+   367→        <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
+   368→          {fmtDate(tx.dateISO, lang)} · {tx.method}
+   369→        </p>
+   370→      </div>
+   371→      <div className="flex shrink-0 flex-col items-end gap-1">
+   372→        <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+   373→          {credit ? "+" : "−"}
+   374→          {usd(tx.amount)}
+   375→        </span>
+   376→        <StatusPill status={tx.status} t={t} />
+   377→      </div>
+   378→    </li>
+   379→  );
+   380→}
+   381→
+   382→/* ---------------- request modal (deposit / withdrawal, dark) ---------------- */
+   383→
+   384→export function RequestModal({
+   385→  kind,
+   386→  t,
+   387→  available,
+   388→  onClose,
+   389→  onSubmit,
+   390→}: {
+   391→  kind: "deposit" | "withdrawal";
+   392→  t: T;
+   393→  available: number;
+   394→  onClose: () => void;
+   395→  onSubmit: (amount: number, note: string) => Promise<string | null>; // returns error key or null
+   396→}) {
+   397→  const [amount, setAmount] = useState("");
+   398→  const [note, setNote] = useState("");
+   399→  const [error, setError] = useState<string | null>(null);
+   400→  const [busy, setBusy] = useState(false);
+   401→
+   402→  const submit = async () => {
+   403→    const value = parseFloat(amount);
+   404→    if (!Number.isFinite(value) || value <= 0) {
+   405→      setError(t("requestInvalid"));
+   406→      return;
+   407→    }
+   408→    if (kind === "withdrawal" && value > available) {
+   409→      setError(t("requestTooMuch"));
+   410→      return;
+   411→    }
+   412→    setBusy(true);
+   413→    const err = await onSubmit(value, note.trim());
+   414→    setBusy(false);
+   415→    if (err) setError(t(err as StringKey));
+   416→  };
+   417→
+   418→  return (
+   419→    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+   420→      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} />
+   421→      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+   422→        <div className="flex items-center justify-between p-5 pb-0">
+   423→          <h3 className="text-lg font-bold text-slate-900">{kind === "deposit" ? t("requestTitleDeposit") : t("requestTitleWithdraw")}</h3>
+   424→          <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">
+   425→            <X className="h-5 w-5" />
+   426→          </button>
+   427→        </div>
+   428→        <div className="space-y-4 p-5">
+   429→          <p className="rounded-lg bg-white px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-500">{t("requestHint")}</p>
+   430→          <label className="block">
+   431→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAmount")}</span>
+   432→            <input
+   433→              type="number"
+   434→              min="0"
+   435→              step="any"
+   436→              value={amount}
+   437→              onChange={(e) => setAmount(e.target.value)}
+   438→              placeholder="0.00"
+   439→              dir="ltr"
+   440→              aria-label={t("requestAmount")}
+   441→              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   442→            />
+   443→          </label>
+   444→          <label className="block">
+   445→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestNote")}</span>
+   446→            <textarea
+   447→              rows={2}
+   448→              value={note}
+   449→              onChange={(e) => setNote(e.target.value)}
+   450→              className="w-full resize-y rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   451→            />
+   452→          </label>
+   453→          {error && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-600/15">{error}</p>}
+   454→          <div className="flex justify-end gap-2.5 pt-1">
+   455→            <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">
+   456→              {t("cancel")}
+   457→            </button>
+   458→            <button
+   459→              onClick={submit}
+   460→              disabled={busy}
+   461→              className="rounded-lg bg-[#00E5A0] px-4 py-2.5 text-sm font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:opacity-50"
+   462→            >
+   463→              {t("requestSubmit")}
+   464→            </button>
+   465→          </div>
+   466→        </div>
+   467→      </div>
+   468→    </div>
+   469→  );
+   470→}
+   471→
+   472→/* ---------------- notifications ---------------- */
+   473→
+   474→export function NotificationsCard({
+   475→  notifications,
+   476→  t,
+   477→  onMarkAll,
+   478→  limit,
+   479→}: {
+   480→  notifications: Notification[];
+   481→  t: T;
+   482→  onMarkAll: () => void;
+   483→  limit?: number;
+   484→}) {
+   485→  const unread = notifications.filter((n) => n.unread).length;
+   486→  const list = limit ? notifications.slice(0, limit) : notifications;
+   487→  return (
+   488→    <Card className="overflow-hidden">
+   489→      <SectionTitle
+   490→        title={t("notificationsTitle")}
+   491→        right={
+   492→          unread > 0 ? (
+   493→            <button onClick={onMarkAll} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+   494→              <Check className="h-3.5 w-3.5" /> {t("markAllRead")}
+   495→            </button>
+   496→          ) : undefined
+   497→        }
+   498→      />
+   499→      <ul className="mt-3 max-h-80 space-y-0 overflow-y-auto">
+   500→        {list.map((n) => (
+   501→          <li key={n.id} className={cn("flex items-start gap-3 border-b border-slate-100 px-4 py-3.5 last:border-0 sm:px-5", n.unread && "bg-emerald-50/60")}>
+   502→            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
+   503→              <Bell className="h-3.5 w-3.5 text-slate-500" />
+   504→            </span>
+   505→            <div className="min-w-0 flex-1">
+   506→              <div className="flex items-center gap-2">
+   507→                <p className="truncate text-[13px] font-bold text-slate-900">{n.title}</p>
+   508→                {n.unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" />}
+   509→              </div>
+   510→              <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{n.body}</p>
+   511→            </div>
+   512→            <span className="shrink-0 text-[11px] text-slate-400">{n.time}</span>
+   513→          </li>
+   514→        ))}
+   515→        {list.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-slate-500">{t("noNotifications")}</li>}
+   516→      </ul>
+   517→    </Card>
+   518→  );
+   519→}
+   520→
+   521→/* ---------------- profile & account ---------------- */
+   522→
+   523→export function ProfileCard({
+   524→  view,
+   525→  t,
+   526→  onProfileSave,
+   527→  onPasswordSave,
+   528→  lang,
+   529→}: {
+   530→  view: ClientView;
+   531→  t: T;
+   532→  onProfileSave: (patch: { phone: string; country: string; address: string; city: string; postcode: string }) => Promise<string | null>;
+   533→  onPasswordSave: (current: string, next: string) => Promise<string | null>;
+   534→  lang: Lang;
+   535→}) {
+   536→  const c = view.client;
+   537→  const fin = view.financials;
+   538→  const [editing, setEditing] = useState(false);
+   539→  const [form, setForm] = useState({ phone: c.phone, country: c.country, address: c.address, city: c.city, postcode: c.postcode });
+   540→  const [busy, setBusy] = useState(false);
+   541→  const [pwOpen, setPwOpen] = useState(false);
+   542→  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+   543→  const [pwError, setPwError] = useState<string | null>(null);
+   544→
+   545→  const save = async () => {
+   546→    setBusy(true);
+   547→    const err = await onProfileSave(form);
+   548→    setBusy(false);
+   549→    if (!err) setEditing(false);
+   550→  };
+   551→
+   552→  const changePassword = async () => {
+   553→    if (pw.next !== pw.confirm) {
+   554→      setPwError(t("passwordsMismatch"));
+   555→      return;
+   556→    }
+   557→    setBusy(true);
+   558→    const err = await onPasswordSave(pw.current, pw.next);
+   559→    setBusy(false);
+   560→    if (err) {
+   561→      setPwError(t(err as StringKey));
+   562→      return;
+   563→    }
+   564→    setPwOpen(false);
+   565→    setPw({ current: "", next: "", confirm: "" });
+   566→    setPwError(null);
+   567→  };
+   568→
+   569→  const rows: Array<[string, string, boolean?]> = [
+   570→    [t("emailAddress"), c.email, true],
+   571→    [t("phone"), c.phone || "—", true],
+   572→    [t("address"), [c.address, c.city, c.postcode].filter(Boolean).join(", ") || "—"],
+   573→    [t("country"), c.country || "—"],
+   574→    [t("accountNo"), c.accountNo, true],
+   575→    [t("openingBalance"), usd(c.openingBalance), true],
+   576→    [t("creditsLabel"), usd(fin.credits), true],
+   577→    [t("debitsLabel"), usd(fin.debits), true],
+   578→    [t("statusLabel"), c.status === "active" ? t("active") : t("suspended")],
+   579→    [t("tierLabel"), c.tier === "Private" ? t("tierPrivate") : c.tier === "Premium" ? t("tierPremium") : t("tierStandard")],
+   580→  ];
+   581→
+   582→  const inputCls =
+   583→    "h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15";
+   584→
+   585→  return (
+   586→    <Card className="overflow-hidden">
+   587→      <SectionTitle
+   588→        title={t("profileTitle")}
+   589→        right={
+   590→          !editing ? (
+   591→            <button
+   592→              onClick={() => {
+   593→                setForm({ phone: c.phone, country: c.country, address: c.address, city: c.city, postcode: c.postcode });
+   594→                setEditing(true);
+   595→              }}
+   596→              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+   597→            >
+   598→              <Pencil className="h-3.5 w-3.5" /> {t("editProfile")}
+   599→            </button>
+   600→          ) : undefined
+   601→        }
+   602→      />
+   603→      <div className="px-4 pb-5 pt-3 sm:px-5">
+   604→        {editing ? (
+   605→          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+   606→            <label className="block">
+   607→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("phone")}</span>
+   608→              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" className={inputCls} />
+   609→            </label>
+   610→            <label className="block">
+   611→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("country")}</span>
+   612→              <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={inputCls} />
+   613→            </label>
+   614→            <label className="block sm:col-span-2">
+   615→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("address")}</span>
+   616→              <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputCls} />
+   617→            </label>
+   618→            <label className="block">
+   619→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("city")}</span>
+   620→              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputCls} />
+   621→            </label>
+   622→            <label className="block">
+   623→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("postcode")}</span>
+   624→              <input value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} className={inputCls} />
+   625→            </label>
+   626→            <div className="flex justify-end gap-2.5 sm:col-span-2">
+   627→              <button onClick={() => setEditing(false)} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">
+   628→                {t("cancel")}
+   629→              </button>
+   630→              <button onClick={save} disabled={busy} className="rounded-lg bg-[#00E5A0] px-4 py-2.5 text-sm font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:opacity-50">
+   631→                {t("saveProfile")}
+   632→              </button>
+   633→            </div>
+   634→          </div>
+   635→        ) : (
+   636→          <dl className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+   637→            {rows.map(([k, v, ltr]) => (
+   638→              <div key={k} className="flex items-center justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0">
+   639→                <dt className="shrink-0 text-[12.5px] font-medium text-slate-500">{k}</dt>
+   640→                <dd className="truncate text-[13px] font-semibold text-slate-900" dir={ltr || /^[+$\d]/.test(v) ? "ltr" : undefined}>
+   641→                  {v}
+   642→                </dd>
+   643→              </div>
+   644→            ))}
+   645→          </dl>
+   646→        )}
+   647→
+   648→        <div className="mt-5 border-t border-slate-200/70 pt-4">
+   649→          {!pwOpen ? (
+   650→            <button onClick={() => setPwOpen(true)} className="text-[13px] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
+   651→              {t("changePassword")}
+   652→            </button>
+   653→          ) : (
+   654→            <div className="max-w-sm space-y-3">
+   655→              <label className="block">
+   656→                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("currentPassword")}</span>
+   657→                <PasswordInput theme="light" value={pw.current} onChange={(v) => setPw({ ...pw, current: v })} autoComplete="current-password" />
+   658→              </label>
+   659→              <label className="block">
+   660→                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("newPassword")}</span>
+   661→                <PasswordInput theme="light" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} autoComplete="new-password" />
+   662→              </label>
+   663→              <label className="block">
+   664→                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("confirmNewPassword")}</span>
+   665→                <PasswordInput theme="light" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} autoComplete="new-password" />
+   666→              </label>
+   667→              {pwError && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-600/15">{pwError}</p>}
+   668→              <div className="flex justify-end gap-2.5">
+   669→                <button
+   670→                  onClick={() => {
+   671→                    setPwOpen(false);
+   672→                    setPwError(null);
+   673→                  }}
+   674→                  className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+   675→                >
+   676→                  {t("cancel")}
+   677→                </button>
+   678→                <button onClick={changePassword} disabled={busy} className="rounded-lg bg-[#00E5A0] px-4 py-2.5 text-sm font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:opacity-50">
+   679→                  {t("changePassword")}
+   680→                </button>
+   681→              </div>
+   682→            </div>
+   683→          )}
+   684→        </div>
+   685→      </div>
+   686→      {lang === "ar" && <span className="hidden">{c.name}</span>}
+   687→    </Card>
+   688→  );
+   689→}
+   690→
+   691→/* ---------------- contact ---------------- */
+   692→
+   693→export function ContactCard({ t }: { t: T }) {
+   694→  return (
+   695→    <Card className="overflow-hidden">
+   696→      <SectionTitle title={t("contactTitle")} />
+   697→      <div className="px-4 pb-5 pt-3 sm:px-5">
+   698→        <p className="mb-3.5 text-[12.5px] text-slate-500">{t("contactSub")}</p>
+   699→        <ContactButtonsCard variant="light" />
+   700→      </div>
+   701→    </Card>
+   702→  );
+   703→}
+   704→
+   705→/* ---------------- market overview ---------------- */
+   706→
+   707→export function MarketStrip({ coins, stocks, t, singleColumn }: { coins: Coin[]; stocks: Coin[]; t: T; singleColumn?: boolean }) {
+   708→  const top = [...coins, ...stocks].slice(0, 6);
+   709→  return (
+   710→    <Card className="overflow-hidden">
+   711→      <SectionTitle title={t("marketOverview")} right={<LiveChip t={t} />} />
+   712→      <div className={cn("grid grid-cols-1 gap-2.5 p-4 sm:p-5", !singleColumn && "sm:grid-cols-2")}>
+   713→        {top.map((c) => (
+   714→          <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white px-3.5 py-3">
+   715→            <div className="flex min-w-0 items-center gap-2.5">
+   716→              <CoinBadge glyph={c.glyph} gradient={c.gradient} className="h-8 w-8 text-[12px]" />
+   717→              <div className="min-w-0">
+   718→                <p className="truncate text-[13px] font-bold text-slate-900">{c.name}</p>
+   719→                <p className="truncate text-[11px] text-slate-400" dir="ltr">
+   720→                  {c.symbol}
+   721→                  {c.exchange ? ` · ${c.exchange}` : ""}
+   722→                </p>
+   723→              </div>
+   724→            </div>
+   725→            <div className="shrink-0 text-end">
+   726→              <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-slate-900" dir="ltr">
+   727→                {formatPrice(c.price)}
+   728→              </p>
+   729→              <p className={cn("text-[11px] font-bold tabular-nums", c.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+   730→                {formatChange(c.change24h)}
+   731→              </p>
+   732→            </div>
+   733→          </div>
+   734→        ))}
+   735→      </div>
+   736→    </Card>
+   737→  );
+   738→}
+   739→
+   740→/* ---------------- badges ---------------- */
+   741→
+   742→export function TierBadge({ tier, t }: { tier: string; t: T }) {
+   743→  if (tier === "Private") {
+   744→    return (
+   745→      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11.5px] font-bold text-amber-800 ring-1 ring-amber-600/20">
+   746→        <Crown className="h-3.5 w-3.5" /> {t("tierPrivate")}
+   747→      </span>
+   748→    );
+   749→  }
+   750→  if (tier === "Premium") {
+   751→    return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11.5px] font-bold text-emerald-600 ring-1 ring-emerald-600/20">{t("tierPremium")}</span>;
+   752→  }
+   753→  return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-bold text-slate-600 ring-1 ring-white/10">{t("tierStandard")}</span>;
+   754→}
+   755→
+   756→/** Green Verified badge with a check icon — rendered NEXT TO the client name. */
+   757→export function VerifiedBadge({ verified, t }: { verified: boolean; t: T }) {
+   758→  if (!verified) {
+   759→    return (
+   760→      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11.5px] font-bold text-amber-800 ring-1 ring-amber-600/20">
+   761→        <BadgeCheck className="h-3.5 w-3.5" /> {t("kycPendingBadge")}
+   762→      </span>
+   763→    );
+   764→  }
+   765→  return (
+   766→    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11.5px] font-bold text-emerald-700 ring-1 ring-emerald-600/25">
+   767→      <BadgeCheck className="h-3.5 w-3.5" /> {t("verifiedBadge")}
+   768→    </span>
+   769→  );
+   770→}
+   771→
+   772→/** "Private" privacy badge — rendered UNDER the client name. */
+   773→export function PrivateBadge({ t }: { t: T }) {
+   774→  return (
+   775→    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-bold text-slate-600 ring-1 ring-white/15">
+   776→      <Lock className="h-3 w-3" /> {t("privateBadge")}
+   777→    </span>
+   778→  );
+   779→}
+   780→
+   781→export function WalletGlyph() {
+   782→  return <Wallet className="h-4 w-4" />;
+   783→}
+   784→

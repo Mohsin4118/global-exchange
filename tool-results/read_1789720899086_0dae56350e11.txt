@@ -1,0 +1,837 @@
+     1→"use client";
+     2→
+     3→import { Fragment, useMemo, useState } from "react";
+     4→import { ArrowLeft, Check, ChevronDown, Download, Pencil, Plus, Trash2, X } from "lucide-react";
+     5→import { usd, type TxType, type WithdrawalStatus } from "@/lib/admin-data";
+     6→import type { AdminCtx } from "./types";
+     7→import type { TxKind, TxStatus } from "@/lib/shared-types";
+     8→import { Card, Modal, MonoId, OutlineButton, PageHeader, PrimaryButton, SearchInput, Select, StatusBadge, TextInput } from "./ui";
+     9→import { cn } from "@/lib/utils";
+    10→
+    11→const PAGE_SIZE = 10;
+    12→
+    13→const KIND_OPTIONS: { value: TxKind; label: string }[] = [
+    14→  { value: "deposit", label: "Deposit" },
+    15→  { value: "withdrawal", label: "Withdrawal" },
+    16→  { value: "trade", label: "Trade" },
+    17→  { value: "adjustment", label: "Admin adjustment" },
+    18→  { value: "opening", label: "Opening deposit" },
+    19→];
+    20→const TX_STATUS_OPTIONS: { value: TxStatus; label: string }[] = [
+    21→  { value: "COMPLETED", label: "Completed" },
+    22→  { value: "PENDING", label: "Pending" },
+    23→  { value: "PROCESSING", label: "Processing" },
+    24→  { value: "REJECTED", label: "Rejected" },
+    25→];
+    26→
+    27→function todayISO(): string {
+    28→  return new Date().toISOString().slice(0, 10);
+    29→}
+    30→
+    31→function downloadCsv(filename: string, rows: string[][]) {
+    32→  const blob = new Blob([rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    33→  const url = URL.createObjectURL(blob);
+    34→  const a = document.createElement("a");
+    35→  a.href = url;
+    36→  a.download = filename;
+    37→  a.click();
+    38→  URL.revokeObjectURL(url);
+    39→}
+    40→
+    41→/* ================= SHARED TX TABLE ================= */
+    42→
+    43→type TxRow = AdminCtx["state"]["txs"][number];
+    44→
+    45→function TxActions({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCtx; onEdit: () => void; onDelete: () => void }) {
+    46→  const pending = tx.status === "PENDING" || tx.status === "PROCESSING";
+    47→  return (
+    48→    <div className="inline-flex items-center gap-1">
+    49→      {pending && (
+    50→        <>
+    51→          <button
+    52→            onClick={() => ctx.runAction({ action: "set-transaction-status", id: tx.id, status: "COMPLETED" }, { title: "Approved", description: `${tx.clientName}'s ${tx.kind} of ${usd(tx.amount)} was applied — balances updated everywhere.` })}
+    53→            className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-emerald-700"
+    54→          >
+    55→            <Check className="h-3.5 w-3.5" /> Approve
+    56→          </button>
+    57→          <button
+    58→            onClick={() => ctx.runAction({ action: "set-transaction-status", id: tx.id, status: "REJECTED" }, { title: "Rejected", description: `${tx.clientName} will see the decision on their dashboard.` })}
+    59→            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+    60→          >
+    61→            <X className="h-3.5 w-3.5" /> Reject
+    62→          </button>
+    63→        </>
+    64→      )}
+    65→      <button onClick={onEdit} aria-label="Edit transaction" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+    66→        <Pencil className="h-4 w-4" />
+    67→      </button>
+    68→      <button onClick={onDelete} aria-label="Delete transaction" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600">
+    69→        <Trash2 className="h-4 w-4" />
+    70→      </button>
+    71→    </div>
+    72→  );
+    73→}
+    74→
+    75→function TxExpanded({ tx }: { tx: TxRow }) {
+    76→  return (
+    77→    <tr className="border-b border-slate-50 bg-slate-50/70">
+    78→      <td />
+    79→      <td colSpan={7} className="px-4 pb-5">
+    80→        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-100 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4">
+    81→          <Detail label="Reference" value={tx.reference} mono />
+    82→          <Detail label="Kind" value={tx.kind} />
+    83→          <Detail label="Method" value={tx.method} />
+    84→          <Detail label="Notes" value={tx.notes} />
+    85→        </div>
+    86→      </td>
+    87→    </tr>
+    88→  );
+    89→}
+    90→
+    91→function Detail({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+    92→  return (
+    93→    <div>
+    94→      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
+    95→      <p className={cn("mt-1 break-words text-sm text-slate-800", mono && "font-mono text-[13px]")}>{value}</p>
+    96→    </div>
+    97→  );
+    98→}
+    99→
+   100→function ChevronRightIcon() {
+   101→  return (
+   102→    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+   103→      <path d="m9 18 6-6-6-6" />
+   104→    </svg>
+   105→  );
+   106→}
+   107→
+   108→/* ================= TRANSACTIONS ================= */
+   109→
+   110→export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
+   111→  const [query, setQuery] = useState("");
+   112→  const [type, setType] = useState("");
+   113→  const [status, setStatus] = useState("");
+   114→  const [pageIdx, setPageIdx] = useState(0);
+   115→  const [expanded, setExpanded] = useState<string | null>(null);
+   116→  const [newOpen, setNewOpen] = useState(false);
+   117→  const [editing, setEditing] = useState<TxRow | null>(null);
+   118→  const [deleting, setDeleting] = useState<TxRow | null>(null);
+   119→
+   120→  const filtered = useMemo(
+   121→    () =>
+   122→      ctx.state.txs.filter((t) => {
+   123→        const q = query.trim().toLowerCase();
+   124→        const matchQ =
+   125→          !q ||
+   126→          t.clientName.toLowerCase().includes(q) ||
+   127→          t.reference.toLowerCase().includes(q) ||
+   128→          t.notes.toLowerCase().includes(q) ||
+   129→          t.label.toLowerCase().includes(q) ||
+   130→          t.id.toLowerCase().includes(q);
+   131→        const matchT = !type || t.type === type;
+   132→        const matchS = !status || t.status === status;
+   133→        return matchQ && matchT && matchS;
+   134→      }),
+   135→    [ctx.state.txs, query, type, status],
+   136→  );
+   137→
+   138→  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+   139→  const safePage = Math.min(pageIdx, pageCount - 1);
+   140→  const rows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+   141→
+   142→  const exportCsv = () => {
+   143→    downloadCsv("cryptowise-transactions.csv", [
+   144→      ["Date", "Reference", "Client", "Kind", "Type", "Amount USD", "Status", "Balance After", "Method", "Notes"],
+   145→      ...filtered.map((t) => [t.dateISO, t.reference, t.clientName, t.kind, t.type, t.amount.toFixed(2), t.status, t.balanceAfter.toFixed(2), t.method, t.notes]),
+   146→    ]);
+   147→    ctx.toast("Report exported", `${filtered.length} transactions exported to CSV.`);
+   148→  };
+   149→
+   150→  return (
+   151→    <div>
+   152→      <PageHeader
+   153→        title="Transactions"
+   154→        subtitle="The ledger is the single source of truth — every edit updates balances, statistics and dashboards."
+   155→        right={
+   156→          <div className="flex items-center gap-2">
+   157→            <OutlineButton onClick={exportCsv}>
+   158→              <Download className="h-4 w-4" /> Export CSV
+   159→            </OutlineButton>
+   160→            <PrimaryButton onClick={() => setNewOpen(true)}>
+   161→              <Plus className="h-4 w-4" /> New Transaction
+   162→            </PrimaryButton>
+   163→          </div>
+   164→        }
+   165→      />
+   166→
+   167→      <Card className="p-4">
+   168→        <div className="flex flex-col gap-3 lg:flex-row">
+   169→          <SearchInput value={query} onChange={(v) => { setQuery(v); setPageIdx(0); }} placeholder="Search by client, reference, description, or notes..." />
+   170→          <Select
+   171→            className="lg:w-40"
+   172→            value={type}
+   173→            onChange={(v) => { setType(v); setPageIdx(0); }}
+   174→            placeholder="All Types"
+   175→            options={[
+   176→              { value: "CREDIT", label: "Credit" },
+   177→              { value: "DEBIT", label: "Debit" },
+   178→            ]}
+   179→          />
+   180→          <Select
+   181→            className="lg:w-44"
+   182→            value={status}
+   183→            onChange={(v) => { setStatus(v); setPageIdx(0); }}
+   184→            placeholder="All Statuses"
+   185→            options={TX_STATUS_OPTIONS}
+   186→          />
+   187→        </div>
+   188→      </Card>
+   189→
+   190→      <Card className="mt-5">
+   191→        <div className="overflow-x-auto">
+   192→          <table className="w-full min-w-[980px] text-sm">
+   193→            <thead>
+   194→              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+   195→                <th className="w-10 px-4 py-4" />
+   196→                <th className="px-2 py-4 font-medium">ID</th>
+   197→                <th className="px-4 py-4 font-medium">Date</th>
+   198→                <th className="px-4 py-4 font-medium">Client</th>
+   199→                <th className="px-4 py-4 font-medium">Type</th>
+   200→                <th className="px-4 py-4 text-right font-medium">Amount</th>
+   201→                <th className="px-4 py-4 font-medium">Status</th>
+   202→                <th className="px-6 py-4 text-right font-medium">Balance After</th>
+   203→              </tr>
+   204→            </thead>
+   205→            <tbody>
+   206→              {rows.map((t) => (
+   207→                <Fragment key={t.id}>
+   208→                  <tr
+   209→                    className="cursor-pointer border-b border-slate-50 transition-colors hover:bg-slate-50/60"
+   210→                    onClick={() => setExpanded(expanded === t.id ? null : t.id)}
+   211→                  >
+   212→                    <td className="px-4 py-4">
+   213→                      <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", expanded === t.id && "rotate-180")} />
+   214→                    </td>
+   215→                    <td className="px-2 py-4"><MonoId id={t.id} /></td>
+   216→                    <td className="whitespace-nowrap px-4 py-4 text-slate-600">{t.dateISO}</td>
+   217→                    <td className="max-w-[280px] truncate px-4 py-4 font-semibold text-slate-900">{t.clientName}</td>
+   218→                    <td className={cn("px-4 py-4 text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>{t.type}</td>
+   219→                    <td className={cn("whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")} dir="ltr">
+   220→                      {t.type === "CREDIT" ? "+" : "-"}{usd(t.amount)}
+   221→                    </td>
+   222→                    <td className="px-4 py-4"><StatusBadge status={t.status} /></td>
+   223→                    <td className="whitespace-nowrap px-6 py-4 text-right font-bold tabular-nums text-slate-900" dir="ltr">{usd(t.balanceAfter)}</td>
+   224→                  </tr>
+   225→                  {expanded === t.id && (
+   226→                    <tr className="border-b border-slate-50 bg-slate-50/70">
+   227→                      <td />
+   228→                      <td colSpan={7} className="px-4 pb-5">
+   229→                        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-100 bg-white p-5 sm:grid-cols-2 lg:grid-cols-5">
+   230→                          <Detail label="Reference" value={t.reference} mono />
+   231→                          <Detail label="Kind" value={t.kind} />
+   232→                          <Detail label="Method" value={t.method} />
+   233→                          <Detail label="Notes" value={t.notes} />
+   234→                          <div className="flex items-end justify-end">
+   235→                            <TxActions tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} />
+   236→                          </div>
+   237→                        </div>
+   238→                      </td>
+   239→                    </tr>
+   240→                  )}
+   241→                </Fragment>
+   242→              ))}
+   243→              {rows.length === 0 && (
+   244→                <tr>
+   245→                  <td colSpan={8} className="px-6 py-14 text-center text-sm text-slate-500">No transactions match your filters.</td>
+   246→                </tr>
+   247→              )}
+   248→            </tbody>
+   249→          </table>
+   250→        </div>
+   251→        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+   252→          <p className="text-[13px] text-slate-500">
+   253→            Showing {filtered.length === 0 ? 0 : safePage * PAGE_SIZE + 1}–{Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length} transactions
+   254→          </p>
+   255→          <div className="flex items-center gap-2">
+   256→            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage === 0} onClick={() => setPageIdx((p) => Math.max(0, p - 1))}>
+   257→              <ArrowLeft className="h-3.5 w-3.5" /> Prev
+   258→            </OutlineButton>
+   259→            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage >= pageCount - 1} onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}>
+   260→              Next <ChevronRightIcon />
+   261→            </OutlineButton>
+   262→          </div>
+   263→        </div>
+   264→      </Card>
+   265→
+   266→      <NewTxModal open={newOpen} onClose={() => setNewOpen(false)} ctx={ctx} />
+   267→      <EditTxModal tx={editing} onClose={() => setEditing(null)} ctx={ctx} />
+   268→
+   269→      {/* delete confirmation */}
+   270→      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Delete Transaction">
+   271→        <p className="text-sm leading-relaxed text-slate-600">
+   272→          Delete the {deleting?.type === "CREDIT" ? "credit" : "debit"} of <span className="font-bold">{usd(deleting?.amount ?? 0)}</span> for{" "}
+   273→          <span className="font-semibold text-slate-900">{deleting?.clientName}</span>? The client&apos;s balance, all dashboard statistics, statements and reports will
+   274→          update immediately. This cannot be undone.
+   275→        </p>
+   276→        <div className="mt-5 flex justify-end gap-3">
+   277→          <OutlineButton onClick={() => setDeleting(null)}>Cancel</OutlineButton>
+   278→          <PrimaryButton
+   279→            className="!bg-amber-600 hover:!bg-amber-700"
+   280→            onClick={async () => {
+   281→              if (!deleting) return;
+   282→              const ok = await ctx.runAction({ action: "delete-transaction", id: deleting.id }, { title: "Transaction deleted", description: "Totals, balances and statistics were recalculated." });
+   283→              if (ok) setDeleting(null);
+   284→            }}
+   285→          >
+   286→            Delete Transaction
+   287→          </PrimaryButton>
+   288→        </div>
+   289→      </Modal>
+   290→    </div>
+   291→  );
+   292→}
+   293→
+   294→function NewTxModal({ open, onClose, ctx }: { open: boolean; onClose: () => void; ctx: AdminCtx }) {
+   295→  const [clientId, setClientId] = useState("");
+   296→  const [type, setType] = useState<TxType>("CREDIT");
+   297→  const [kind, setKind] = useState<TxKind>("deposit");
+   298→  const [amount, setAmount] = useState("");
+   299→  const [status, setStatus] = useState<TxStatus>("COMPLETED");
+   300→  const [date, setDate] = useState(todayISO());
+   301→  const [method, setMethod] = useState("Bank Transfer");
+   302→  const [notes, setNotes] = useState("");
+   303→
+   304→  const submit = async () => {
+   305→    const value = parseFloat(amount);
+   306→    if (!clientId) {
+   307→      ctx.toast("Select a client", "Choose which client this transaction belongs to.");
+   308→      return;
+   309→    }
+   310→    if (!value || value <= 0) {
+   311→      ctx.toast("Invalid amount", "Enter an amount greater than zero.");
+   312→      return;
+   313→    }
+   314→    const ok = await ctx.runAction(
+   315→      { action: "create-transaction", tx: { clientId, type, kind, amount: value, status, dateISO: date, method, notes } },
+   316→      { title: "Transaction created", description: `${type === "CREDIT" ? "Credit" : "Debit"} of $${value.toLocaleString("en-US")} recorded — all dashboards updated.` },
+   317→    );
+   318→    if (ok) {
+   319→      setClientId(""); setType("CREDIT"); setKind("deposit"); setAmount(""); setStatus("COMPLETED"); setDate(todayISO()); setMethod("Bank Transfer"); setNotes("");
+   320→      onClose();
+   321→    }
+   322→  };
+   323→
+   324→  return (
+   325→    <Modal open={open} onClose={onClose} title="New Transaction">
+   326→      <div className="space-y-4">
+   327→        <div>
+   328→          <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Client *</span>
+   329→          <Select
+   330→            value={clientId}
+   331→            onChange={setClientId}
+   332→            placeholder="Select client"
+   333→            options={ctx.state.clients.map((c) => ({ value: c.id, label: c.name }))}
+   334→          />
+   335→        </div>
+   336→        <div className="grid grid-cols-2 gap-4">
+   337→          <div>
+   338→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Type *</span>
+   339→            <Select
+   340→              value={type}
+   341→              onChange={(v) => {
+   342→                setType(v as TxType);
+   343→                setKind(v === "CREDIT" ? "deposit" : "withdrawal");
+   344→              }}
+   345→              options={[
+   346→                { value: "CREDIT", label: "Credit (money in)" },
+   347→                { value: "DEBIT", label: "Debit (money out)" },
+   348→              ]}
+   349→            />
+   350→          </div>
+   351→          <div>
+   352→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Kind</span>
+   353→            <Select value={kind} onChange={(v) => setKind(v as TxKind)} options={KIND_OPTIONS} />
+   354→          </div>
+   355→          <TextInput label="Amount (USD) *" type="number" value={amount} onChange={setAmount} placeholder="0.00" />
+   356→          <div>
+   357→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Status</span>
+   358→            <Select value={status} onChange={(v) => setStatus(v as TxStatus)} options={TX_STATUS_OPTIONS} />
+   359→          </div>
+   360→          <TextInput label="Date" type="date" value={date} onChange={setDate} />
+   361→          <TextInput label="Method" value={method} onChange={setMethod} />
+   362→        </div>
+   363→        <TextInput label="Notes" value={notes} onChange={setNotes} placeholder="Optional" />
+   364→        <div className="flex justify-end gap-3 pt-2">
+   365→          <OutlineButton onClick={onClose}>Cancel</OutlineButton>
+   366→          <PrimaryButton onClick={submit}>Create Transaction</PrimaryButton>
+   367→        </div>
+   368→      </div>
+   369→    </Modal>
+   370→  );
+   371→}
+   372→
+   373→function EditTxModal({ tx, onClose, ctx }: { tx: TxRow | null; onClose: () => void; ctx: AdminCtx }) {
+   374→  const [dateISO, setDateISO] = useState("");
+   375→  const [kind, setKind] = useState<TxKind>("deposit");
+   376→  const [type, setType] = useState<TxType>("CREDIT");
+   377→  const [amount, setAmount] = useState("");
+   378→  const [status, setStatus] = useState<TxStatus>("COMPLETED");
+   379→  const [label, setLabel] = useState("");
+   380→  const [method, setMethod] = useState("");
+   381→  const [notes, setNotes] = useState("");
+   382→  const [loadedId, setLoadedId] = useState<string | null>(null);
+   383→
+   384→  if (tx && loadedId !== tx.id) {
+   385→    setLoadedId(tx.id);
+   386→    setDateISO(tx.dateISO);
+   387→    setKind(tx.kind);
+   388→    setType(tx.type);
+   389→    setAmount(String(tx.amount));
+   390→    setStatus(tx.status);
+   391→    setLabel(tx.label);
+   392→    setMethod(tx.method);
+   393→    setNotes(tx.notes === "—" ? "" : tx.notes);
+   394→  }
+   395→
+   396→  const close = () => {
+   397→    setLoadedId(null);
+   398→    onClose();
+   399→  };
+   400→
+   401→  const save = async () => {
+   402→    if (!tx) return;
+   403→    const value = parseFloat(amount);
+   404→    if (!Number.isFinite(value) || value <= 0) {
+   405→      ctx.toast("Invalid amount", "Enter an amount greater than zero.");
+   406→      return;
+   407→    }
+   408→    const ok = await ctx.runAction(
+   409→      { action: "update-transaction", id: tx.id, patch: { dateISO, kind, type, amount: value, status, label, method, notes } },
+   410→      { title: "Transaction updated", description: "Every balance, statistic and statement now reflects this change." },
+   411→    );
+   412→    if (ok) close();
+   413→  };
+   414→
+   415→  return (
+   416→    <Modal open={!!tx} onClose={close} title="Edit Transaction" panelClassName="max-w-lg">
+   417→      {tx && (
+   418→        <div className="space-y-4">
+   419→          <p className="rounded-lg bg-slate-50 px-3.5 py-2.5 text-[12.5px] text-slate-500">
+   420→            {tx.clientName} · <span className="font-mono">{tx.reference}</span>
+   421→          </p>
+   422→          <div className="grid grid-cols-2 gap-4">
+   423→            <TextInput label="Date" type="date" value={dateISO} onChange={setDateISO} />
+   424→            <TextInput label="Amount (USD) *" type="number" value={amount} onChange={setAmount} />
+   425→            <div>
+   426→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Direction</span>
+   427→              <Select value={type} onChange={(v) => setType(v as TxType)} options={[{ value: "CREDIT", label: "Credit (money in)" }, { value: "DEBIT", label: "Debit (money out)" }]} />
+   428→            </div>
+   429→            <div>
+   430→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Kind</span>
+   431→              <Select value={kind} onChange={(v) => setKind(v as TxKind)} options={KIND_OPTIONS} />
+   432→            </div>
+   433→            <div>
+   434→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Status</span>
+   435→              <Select value={status} onChange={(v) => setStatus(v as TxStatus)} options={TX_STATUS_OPTIONS} />
+   436→            </div>
+   437→            <TextInput label="Method" value={method} onChange={setMethod} />
+   438→          </div>
+   439→          <TextInput label="Description" value={label} onChange={setLabel} />
+   440→          <TextInput label="Notes" value={notes} onChange={setNotes} placeholder="—" />
+   441→          <div className="flex justify-end gap-3 pt-2">
+   442→            <OutlineButton onClick={close}>Cancel</OutlineButton>
+   443→            <PrimaryButton onClick={save}>Save Changes</PrimaryButton>
+   444→          </div>
+   445→        </div>
+   446→      )}
+   447→    </Modal>
+   448→  );
+   449→}
+   450→
+   451→/* ================= DEPOSITS ================= */
+   452→
+   453→export function DepositsPage({ ctx }: { ctx: AdminCtx }) {
+   454→  const [query, setQuery] = useState("");
+   455→  const [status, setStatus] = useState("");
+   456→  const [editing, setEditing] = useState<TxRow | null>(null);
+   457→  const [deleting, setDeleting] = useState<TxRow | null>(null);
+   458→
+   459→  const filtered = ctx.state.txs.filter((t) => {
+   460→    if (t.kind !== "deposit" && t.kind !== "opening") return false;
+   461→    const q = query.trim().toLowerCase();
+   462→    const matchQ = !q || t.clientName.toLowerCase().includes(q) || t.reference.toLowerCase().includes(q);
+   463→    const matchS = !status || t.status === status;
+   464→    return matchQ && matchS;
+   465→  });
+   466→
+   467→  const total = filtered.filter((t) => t.status === "COMPLETED").reduce((s, t) => s + t.amount, 0);
+   468→
+   469→  return (
+   470→    <div>
+   471→      <PageHeader title="Deposits" subtitle="Every credit received on the platform, including client deposit requests." />
+   472→      <Card className="p-4">
+   473→        <div className="flex flex-col gap-3 sm:flex-row">
+   474→          <SearchInput value={query} onChange={setQuery} placeholder="Search by client or reference..." />
+   475→          <Select className="sm:w-44" value={status} onChange={setStatus} placeholder="All Statuses" options={TX_STATUS_OPTIONS} />
+   476→        </div>
+   477→      </Card>
+   478→
+   479→      <Card className="mt-5">
+   480→        <div className="flex items-center justify-between px-6 py-4">
+   481→          <p className="text-[13px] text-slate-500">{filtered.length} deposits</p>
+   482→          <p className="text-sm font-bold text-emerald-600" dir="ltr">+{usd(total)} completed</p>
+   483→        </div>
+   484→        <div className="overflow-x-auto border-t border-slate-100">
+   485→          <table className="w-full min-w-[860px] text-sm">
+   486→            <thead>
+   487→              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+   488→                <th className="px-6 py-4 font-medium">Date</th>
+   489→                <th className="px-4 py-4 font-medium">Client</th>
+   490→                <th className="px-4 py-4 font-medium">Reference</th>
+   491→                <th className="px-4 py-4 text-right font-medium">Amount</th>
+   492→                <th className="px-4 py-4 font-medium">Status</th>
+   493→                <th className="px-6 py-4 text-right font-medium">Actions</th>
+   494→              </tr>
+   495→            </thead>
+   496→            <tbody>
+   497→              {filtered.map((t) => (
+   498→                <tr key={t.id} className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60">
+   499→                  <td className="whitespace-nowrap px-6 py-4 text-slate-600">{t.dateISO}</td>
+   500→                  <td className="max-w-[240px] truncate px-4 py-4 font-semibold text-slate-900">{t.clientName}</td>
+   501→                  <td className="px-4 py-4 font-mono text-[13px] text-slate-500">{t.reference}</td>
+   502→                  <td className="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums text-emerald-500" dir="ltr">+{usd(t.amount)}</td>
+   503→                  <td className="px-4 py-4"><StatusBadge status={t.status} /></td>
+   504→                  <td className="px-6 py-4 text-right"><TxActions tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} /></td>
+   505→                </tr>
+   506→              ))}
+   507→              {filtered.length === 0 && (
+   508→                <tr>
+   509→                  <td colSpan={6} className="px-6 py-14 text-center text-sm text-slate-500">No deposits found.</td>
+   510→                </tr>
+   511→              )}
+   512→            </tbody>
+   513→          </table>
+   514→        </div>
+   515→      </Card>
+   516→
+   517→      <EditTxModal tx={editing} onClose={() => setEditing(null)} ctx={ctx} />
+   518→      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Delete Transaction">
+   519→        <p className="text-sm leading-relaxed text-slate-600">
+   520→          Delete the deposit of <span className="font-bold">{usd(deleting?.amount ?? 0)}</span> for{" "}
+   521→          <span className="font-semibold text-slate-900">{deleting?.clientName}</span>? Balances, statistics and the client dashboard update immediately. This cannot be undone.
+   522→        </p>
+   523→        <div className="mt-5 flex justify-end gap-3">
+   524→          <OutlineButton onClick={() => setDeleting(null)}>Cancel</OutlineButton>
+   525→          <PrimaryButton
+   526→            className="!bg-amber-600 hover:!bg-amber-700"
+   527→            onClick={async () => {
+   528→              if (!deleting) return;
+   529→              const ok = await ctx.runAction({ action: "delete-transaction", id: deleting.id }, { title: "Transaction deleted", description: "Totals, balances and statistics were recalculated." });
+   530→              if (ok) setDeleting(null);
+   531→            }}
+   532→          >
+   533→            Delete Transaction
+   534→          </PrimaryButton>
+   535→        </div>
+   536→      </Modal>
+   537→    </div>
+   538→  );
+   539→}
+   540→
+   541→/* ================= WITHDRAWALS ================= */
+   542→
+   543→const W_STATUSES: WithdrawalStatus[] = ["PENDING", "PROCESSING", "COMPLETED", "REJECTED"];
+   544→
+   545→export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
+   546→  const [query, setQuery] = useState("");
+   547→  const [status, setStatus] = useState("");
+   548→  const [expanded, setExpanded] = useState<string | null>(null);
+   549→  const [editing, setEditing] = useState<TxRow | null>(null);
+   550→
+   551→  const filtered = ctx.state.txs.filter((t) => {
+   552→    if (t.kind !== "withdrawal") return false;
+   553→    const q = query.trim().toLowerCase();
+   554→    const matchQ = !q || t.clientName.toLowerCase().includes(q) || t.notes.toLowerCase().includes(q) || t.reference.toLowerCase().includes(q);
+   555→    const matchS = !status || t.status === status;
+   556→    return matchQ && matchS;
+   557→  });
+   558→
+   559→  const pendingTotal = filtered.filter((t) => t.status === "PENDING" || t.status === "PROCESSING").reduce((s, t) => s + t.amount, 0);
+   560→  const editingW = editing ? filtered.find((w) => w.id === editing.id) ?? null : null;
+   561→
+   562→  return (
+   563→    <div>
+   564→      <PageHeader title="Withdrawal Requests" subtitle="Approve or reject client withdrawals — approving debits the balance everywhere instantly." />
+   565→
+   566→      <Card className="p-4">
+   567→        <div className="flex flex-col gap-3 sm:flex-row">
+   568→          <SearchInput value={query} onChange={setQuery} placeholder="Search by client, reference, or destination..." />
+   569→          <Select
+   570→            className="sm:w-44"
+   571→            value={status}
+   572→            onChange={setStatus}
+   573→            placeholder="All Statuses"
+   574→            options={W_STATUSES.map((s) => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
+   575→          />
+   576→        </div>
+   577→      </Card>
+   578→
+   579→      <Card className="mt-5">
+   580→        <div className="flex items-center justify-between px-6 py-4">
+   581→          <p className="text-[13px] text-slate-500">{filtered.filter((t) => t.status === "PENDING" || t.status === "PROCESSING").length} awaiting review</p>
+   582→          <p className="text-sm font-bold text-amber-600" dir="ltr">−{usd(pendingTotal)} pending</p>
+   583→        </div>
+   584→        <div className="overflow-x-auto border-t border-slate-100">
+   585→          <table className="w-full min-w-[900px] text-sm">
+   586→            <thead>
+   587→              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+   588→                <th className="w-10 px-4 py-4" />
+   589→                <th className="px-2 py-4 font-medium">Date</th>
+   590→                <th className="px-4 py-4 font-medium">Client</th>
+   591→                <th className="px-4 py-4 font-medium">Method</th>
+   592→                <th className="px-4 py-4 text-right font-medium">Amount</th>
+   593→                <th className="px-4 py-4 font-medium">Status</th>
+   594→                <th className="px-6 py-4 text-right font-medium">Actions</th>
+   595→              </tr>
+   596→            </thead>
+   597→            <tbody>
+   598→              {filtered.map((w) => (
+   599→                <Fragment key={w.id}>
+   600→                  <tr className="border-b border-slate-50 transition-colors hover:bg-slate-50/60">
+   601→                    <td className="cursor-pointer px-4 py-4" onClick={() => setExpanded(expanded === w.id ? null : w.id)}>
+   602→                      <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", expanded === w.id && "rotate-180")} />
+   603→                    </td>
+   604→                    <td className="whitespace-nowrap px-2 py-4 text-slate-600">{w.dateISO}</td>
+   605→                    <td className="px-4 py-4 font-semibold text-slate-900">{w.clientName}</td>
+   606→                    <td className="px-4 py-4 font-medium text-slate-700">{w.method}</td>
+   607→                    <td className="whitespace-nowrap px-4 py-4 text-right font-mono text-[13px] tabular-nums text-slate-900" dir="ltr">−{usd(w.amount)}</td>
+   608→                    <td className="px-4 py-4"><StatusBadge status={w.status} /></td>
+   609→                    <td className="px-6 py-4 text-right">
+   610→                      <div className="inline-flex items-center gap-2">
+   611→                        {(w.status === "PENDING" || w.status === "PROCESSING") && (
+   612→                          <>
+   613→                            <PrimaryButton className="px-3 py-1.5 text-[13px]" onClick={() => ctx.runAction({ action: "set-transaction-status", id: w.id, status: "COMPLETED" }, { title: "Withdrawal approved", description: `${usd(w.amount)} debited from ${w.clientName} — every dashboard updated.` })}>
+   614→                              <Check className="h-3.5 w-3.5" /> Approve
+   615→                            </PrimaryButton>
+   616→                            <OutlineButton className="px-3 py-1.5 text-[13px]" onClick={() => ctx.runAction({ action: "set-transaction-status", id: w.id, status: "REJECTED" }, { title: "Withdrawal rejected", description: `${w.clientName} will see the decision on their dashboard.` })}>
+   617→                              <X className="h-3.5 w-3.5" /> Reject
+   618→                            </OutlineButton>
+   619→                          </>
+   620→                        )}
+   621→                        <OutlineButton className="px-3 py-1.5 text-[13px]" onClick={() => setEditing(w)}>
+   622→                          <Pencil className="h-3.5 w-3.5" /> Update
+   623→                        </OutlineButton>
+   624→                      </div>
+   625→                    </td>
+   626→                  </tr>
+   627→                  {expanded === w.id && (
+   628→                    <tr className="border-b border-slate-50 bg-slate-50/70">
+   629→                      <td />
+   630→                      <td colSpan={6} className="px-4 pb-5">
+   631→                        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-100 bg-white p-5 sm:grid-cols-2">
+   632→                          <Detail label="Reference" value={w.reference} mono />
+   633→                          <Detail label="Destination / Notes" value={w.notes} mono={w.notes.startsWith("0x") || w.notes.startsWith("bc1") || w.notes.startsWith("TQ")} />
+   634→                        </div>
+   635→                      </td>
+   636→                    </tr>
+   637→                  )}
+   638→                </Fragment>
+   639→              ))}
+   640→              {filtered.length === 0 && (
+   641→                <tr>
+   642→                  <td colSpan={7} className="px-6 py-14 text-center text-sm text-slate-500">No withdrawal requests found.</td>
+   643→                </tr>
+   644→              )}
+   645→            </tbody>
+   646→          </table>
+   647→        </div>
+   648→      </Card>
+   649→
+   650→      <UpdateWithdrawalModal
+   651→        withdrawal={editingW}
+   652→        onClose={() => setEditing(null)}
+   653→        onSave={async (newStatus, notes) => {
+   654→          if (!editingW) return;
+   655→          const ok = await ctx.runAction(
+   656→            { action: "update-transaction", id: editingW.id, patch: { status: newStatus as TxStatus, notes: notes || editingW.notes } },
+   657→            { title: "Withdrawal updated", description: `Status set to ${newStatus.toLowerCase()} — balances recalculated.` },
+   658→          );
+   659→          if (ok) setEditing(null);
+   660→        }}
+   661→      />
+   662→    </div>
+   663→  );
+   664→}
+   665→
+   666→function UpdateWithdrawalModal({
+   667→  withdrawal,
+   668→  onClose,
+   669→  onSave,
+   670→}: {
+   671→  withdrawal: TxRow | null;
+   672→  onClose: () => void;
+   673→  onSave: (status: WithdrawalStatus, notes: string) => void;
+   674→}) {
+   675→  const [status, setStatus] = useState("");
+   676→  const [notes, setNotes] = useState("");
+   677→
+   678→  const close = () => {
+   679→    setStatus("");
+   680→    setNotes("");
+   681→    onClose();
+   682→  };
+   683→
+   684→  return (
+   685→    <Modal open={!!withdrawal} onClose={close} title="Update Withdrawal Status">
+   686→      {withdrawal && (
+   687→        <div className="space-y-4">
+   688→          <p className="text-sm text-slate-500">
+   689→            {withdrawal.clientName} — <span dir="ltr">{usd(withdrawal.amount)}</span> · {withdrawal.method}
+   690→          </p>
+   691→          <div>
+   692→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">New Status *</span>
+   693→            <Select
+   694→              value={status}
+   695→              onChange={setStatus}
+   696→              placeholder="Select new status"
+   697→              options={W_STATUSES.map((s) => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
+   698→            />
+   699→          </div>
+   700→          <div>
+   701→            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Admin Notes</span>
+   702→            <textarea
+   703→              value={notes}
+   704→              onChange={(e) => setNotes(e.target.value)}
+   705→              placeholder="Optional notes visible to internal staff"
+   706→              rows={3}
+   707→              className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   708→            />
+   709→          </div>
+   710→          <div className="flex justify-end gap-3 pt-2">
+   711→            <OutlineButton onClick={close}>Cancel</OutlineButton>
+   712→            <PrimaryButton
+   713→              disabled={!status}
+   714→              onClick={() => {
+   715→                onSave(status as WithdrawalStatus, notes.trim());
+   716→                setStatus("");
+   717→                setNotes("");
+   718→              }}
+   719→            >
+   720→              Save Status
+   721→            </PrimaryButton>
+   722→          </div>
+   723→        </div>
+   724→      )}
+   725→    </Modal>
+   726→  );
+   727→}
+   728→
+   729→/* ================= BALANCES ================= */
+   730→
+   731→export function BalancesPage({ ctx }: { ctx: AdminCtx }) {
+   732→  const [query, setQuery] = useState("");
+   733→  const [adjusting, setAdjusting] = useState<AdminCtx["state"]["clients"][number] | null>(null);
+   734→
+   735→  const filtered = ctx.state.clients.filter((c) => {
+   736→    const q = query.trim().toLowerCase();
+   737→    return !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.accountNo.toLowerCase().includes(q);
+   738→  });
+   739→  const totalBalance = filtered.reduce((s, c) => s + c.financials.balance, 0);
+   740→
+   741→  return (
+   742→    <div>
+   743→      <PageHeader title="Balances" subtitle="Live balances computed from the ledger — adjust the opening balance to correct an account." />
+   744→
+   745→      <Card className="p-4">
+   746→        <SearchInput value={query} onChange={setQuery} placeholder="Search by name, email, or account no..." />
+   747→      </Card>
+   748→
+   749→      <Card className="mt-5">
+   750→        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4">
+   751→          <p className="text-[13px] text-slate-500">{filtered.length} accounts</p>
+   752→          <p className="text-sm font-bold text-slate-900" dir="ltr">{usd(totalBalance)} total</p>
+   753→        </div>
+   754→        <div className="overflow-x-auto border-t border-slate-100">
+   755→          <table className="w-full min-w-[1000px] text-sm">
+   756→            <thead>
+   757→              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+   758→                <th className="px-6 py-4 font-medium">Client</th>
+   759→                <th className="px-4 py-4 text-right font-medium">Opening</th>
+   760→                <th className="px-4 py-4 text-right font-medium">Credits</th>
+   761→                <th className="px-4 py-4 text-right font-medium">Debits</th>
+   762→                <th className="px-4 py-4 text-right font-medium">Pending W/D</th>
+   763→                <th className="px-4 py-4 text-right font-medium">Current Balance</th>
+   764→                <th className="px-4 py-4 text-right font-medium">Available</th>
+   765→                <th className="px-6 py-4 text-right font-medium">Actions</th>
+   766→              </tr>
+   767→            </thead>
+   768→            <tbody>
+   769→              {filtered.map((c) => (
+   770→                <tr key={c.id} className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60">
+   771→                  <td className="max-w-[260px] px-6 py-4">
+   772→                    <p className="truncate font-semibold text-slate-900">{c.name}</p>
+   773→                    <p className="truncate text-xs text-slate-500">{c.accountNo}</p>
+   774→                  </td>
+   775→                  <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums text-slate-600" dir="ltr">{usd(c.openingBalance)}</td>
+   776→                  <td className="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums text-emerald-600" dir="ltr">{usd(c.financials.credits)}</td>
+   777→                  <td className="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums text-amber-600" dir="ltr">{usd(c.financials.debits)}</td>
+   778→                  <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums text-slate-500" dir="ltr">{usd(c.financials.pendingWithdrawals)}</td>
+   779→                  <td className="whitespace-nowrap px-4 py-4 text-right font-bold tabular-nums text-slate-900" dir="ltr">{usd(c.financials.balance)}</td>
+   780→                  <td className="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums text-slate-700" dir="ltr">{usd(c.financials.available)}</td>
+   781→                  <td className="whitespace-nowrap px-6 py-4 text-right">
+   782→                    <OutlineButton className="px-3 py-1.5 text-[13px]" onClick={() => setAdjusting(c)}>
+   783→                      <Pencil className="h-3.5 w-3.5" /> Adjust
+   784→                    </OutlineButton>
+   785→                  </td>
+   786→                </tr>
+   787→              ))}
+   788→              {filtered.length === 0 && (
+   789→                <tr>
+   790→                  <td colSpan={8} className="px-6 py-14 text-center text-sm text-slate-500">No accounts found.</td>
+   791→                </tr>
+   792→              )}
+   793→            </tbody>
+   794→          </table>
+   795→        </div>
+   796→      </Card>
+   797→
+   798→      <AdjustBalanceModal client={adjusting} onClose={() => setAdjusting(null)} ctx={ctx} />
+   799→    </div>
+   800→  );
+   801→}
+   802→
+   803→function AdjustBalanceModal({ client, onClose, ctx }: { client: AdminCtx["state"]["clients"][number] | null; onClose: () => void; ctx: AdminCtx }) {
+   804→  const [value, setValue] = useState("");
+   805→
+   806→  return (
+   807→    <Modal open={!!client} onClose={onClose} title="Adjust Opening Balance">
+   808→      {client && (
+   809→        <div className="space-y-4">
+   810→          <p className="text-sm leading-relaxed text-slate-600">
+   811→            The current balance is <span className="font-bold text-slate-900">{usd(client.financials.balance)}</span> — always calculated from the ledger. Set a new
+   812→            opening balance to carry-in funds; every dashboard and statistic updates instantly.
+   813→          </p>
+   814→          <TextInput label="Opening Balance (USD)" type="number" value={value} onChange={setValue} placeholder={String(client.openingBalance)} />
+   815→          <div className="flex justify-end gap-3 pt-2">
+   816→            <OutlineButton onClick={onClose}>Cancel</OutlineButton>
+   817→            <PrimaryButton
+   818→              onClick={async () => {
+   819→                const ok = await ctx.runAction(
+   820→                  { action: "update-client", id: client.id, patch: { openingBalance: parseFloat(value) || 0 } },
+   821→                  { title: "Balance adjusted", description: `${client.name}'s opening balance is now ${usd(parseFloat(value) || 0)}.` },
+   822→                );
+   823→                if (ok) {
+   824→                  setValue("");
+   825→                  onClose();
+   826→                }
+   827→              }}
+   828→            >
+   829→              Save Balance
+   830→            </PrimaryButton>
+   831→          </div>
+   832→        </div>
+   833→      )}
+   834→    </Modal>
+   835→  );
+   836→}
+   837→

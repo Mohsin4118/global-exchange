@@ -26,6 +26,8 @@ import type {
   Session,
   StaffMember,
   Tx,
+  TxEvent,
+  TxStatus,
 } from "@/lib/shared-types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -112,6 +114,7 @@ function makeTx(p: {
   method?: string;
   notes?: string;
 }): Tx {
+  const status = p.status ?? "COMPLETED";
   return {
     id: uid("tx"),
     clientId: p.clientId,
@@ -122,10 +125,11 @@ function makeTx(p: {
     label: p.label,
     labelKey: p.labelKey,
     asset: p.asset,
-    status: p.status ?? "COMPLETED",
+    status,
     reference: newReference(),
     method: p.method ?? "Bank Transfer",
     notes: p.notes ?? "—",
+    history: [{ at: new Date(`${p.dateISO}T10:00:00Z`).toISOString(), by: "CryptoWise", byRole: "system", from: null, to: status }],
     createdAtISO: new Date(`${p.dateISO}T10:00:00Z`).toISOString(),
     updatedAtISO: new Date(`${p.dateISO}T10:00:00Z`).toISOString(),
   };
@@ -507,6 +511,13 @@ export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+/** Request statuses that are still moving through the pipeline. Everything
+    except REJECTED / CANCELLED / COMPLETED reserves funds (withdrawals) and
+    counts as an open request. */
+export function inFlight(status: TxStatus): boolean {
+  return status === "PENDING" || status === "UNDER_REVIEW" || status === "APPROVED" || status === "PROCESSING";
+}
+
 export function computeFinancials(clientId: string, data: DbData): ComputedFinancials {
   const client = data.clients.find((c) => c.id === clientId);
   const own = data.txs.filter((t) => t.clientId === clientId);
@@ -517,7 +528,7 @@ export function computeFinancials(clientId: string, data: DbData): ComputedFinan
     if (t.status === "COMPLETED") {
       if (t.type === "CREDIT") credits += t.amount;
       else debits += t.amount;
-    } else if ((t.status === "PENDING" || t.status === "PROCESSING") && t.kind === "withdrawal" && t.type === "DEBIT") {
+    } else if (inFlight(t.status) && t.kind === "withdrawal" && t.type === "DEBIT") {
       pendingWithdrawals += t.amount;
     }
   }
@@ -574,6 +585,13 @@ export function adminSnapshot(): AdminSnapshot {
     .map((t) => ({ ...t, clientName: nameById.get(t.clientId) ?? "—", balanceAfter: balAfter.get(t.id) ?? 0 }));
 
   const completed = txs.filter((t) => t.status === "COMPLETED");
+  const requestCounts = txs.reduce(
+    (acc, t) => {
+      acc[t.status] = (acc[t.status] ?? 0) + 1;
+      return acc;
+    },
+    { COMPLETED: 0, PENDING: 0, UNDER_REVIEW: 0, APPROVED: 0, PROCESSING: 0, REJECTED: 0, CANCELLED: 0 } as Record<TxStatus, number>,
+  );
   const stats: AdminStats = {
     totalClients: clients.length,
     activeClients: clients.filter((c) => c.status === "active").length,
@@ -581,8 +599,9 @@ export function adminSnapshot(): AdminSnapshot {
     volume: round2(completed.reduce((s, t) => s + t.amount, 0)),
     credits: round2(completed.filter((t) => t.type === "CREDIT").reduce((s, t) => s + t.amount, 0)),
     debits: round2(completed.filter((t) => t.type === "DEBIT").reduce((s, t) => s + t.amount, 0)),
-    pendingWithdrawals: txs.filter((t) => t.kind === "withdrawal" && (t.status === "PENDING" || t.status === "PROCESSING")).length,
+    pendingWithdrawals: txs.filter((t) => t.kind === "withdrawal" && inFlight(t.status)).length,
     txCount: txs.length,
+    requestCounts,
   };
 
   const comments: Record<string, ClientComment[]> = {};
@@ -614,10 +633,29 @@ export function clientView(clientId: string): { ok: true; view: { client: Public
       financials: computeFinancials(clientId, data),
       txs: data.txs
         .filter((t) => t.clientId === clientId)
-        .sort((a, b) => (a.dateISO === b.dateISO ? b.createdAtISO.localeCompare(a.createdAtISO) : b.dateISO.localeCompare(a.dateISO))),
+        .sort((a, b) => (a.dateISO === b.dateISO ? b.createdAtISO.localeCompare(a.createdAtISO) : b.dateISO.localeCompare(a.dateISO)))
+        .map(clientSafeTx),
       notifications: data.notifications.filter((n) => n.audience === clientId).sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO)),
     },
   };
+}
+
+/** Client-safe transaction: strips the PRIVATE admin note and every internal
+    remark from the history (the status transition itself stays visible; only
+    the internal wording is removed). Admin actors are anonymised to
+    "Super Admin" so admin emails/details never leak through the client API (#30 / #36). */
+export function clientSafeTx(t: Tx): Tx {
+  const { adminNote: _private, ...rest } = t;
+  const history = (t.history ?? []).map<TxEvent>((e) => ({
+    at: e.at,
+    by: e.byRole === "admin" ? "Super Admin" : e.by,
+    byRole: e.byRole,
+    from: e.from,
+    to: e.to,
+    ...(e.note ? { note: e.note } : {}),
+    ...(e.changes ? { changes: e.changes } : {}),
+  }));
+  return { ...rest, history };
 }
 
 /* ---------------- audit & notification helpers ---------------- */

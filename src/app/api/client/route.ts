@@ -7,8 +7,8 @@
 /* ------------------------------------------------------------------ */
 
 import { NextRequest, NextResponse } from "next/server";
-import { clientView, db, mutate, pushNotification, pushAudit, requireClient, round2, uid, verifyPassword, hashPassword } from "@/lib/server/db";
-import type { ClientAction } from "@/lib/shared-types";
+import { clientView, db, inFlight, mutate, pushNotification, pushAudit, requireClient, round2, uid, verifyPassword, hashPassword } from "@/lib/server/db";
+import type { ClientAction, Tx, TxEvent } from "@/lib/shared-types";
 
 export const dynamic = "force-dynamic";
 
@@ -36,51 +36,122 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Bad request" }, { status: 400 });
   }
 
-  /* ---- deposit / withdrawal request → PENDING ledger entry + admin notification ---- */
+  /* ---------------------------------------------------------------- */
+  /*  TRANSACTION REQUEST (#26/#27) — a client can ONLY submit a       */
+  /*  request. It is stored as a PENDING ledger entry; it NEVER moves  */
+  /*  the balance (only an admin moving it to COMPLETED does, via the  */
+  /*  ledger computation). The server decides the id, reference,       */
+  /*  status and timestamps — the client cannot inject any of them.    */
+  /* ---------------------------------------------------------------- */
   if (body.action === "request-transaction") {
     const amount = round2(Number(body.amount));
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json({ ok: false, error: "amount" }, { status: 400 });
     }
-    const kind = body.kind === "withdrawal" ? "withdrawal" : "deposit";
+    const kind: Tx["kind"] = body.kind === "withdrawal" || body.kind === "trade" ? body.kind : "deposit";
+    const asset = body.asset?.trim().slice(0, 60) || undefined;
+    const destination = body.destination?.trim().slice(0, 240) || undefined;
+    const note = body.note?.trim().slice(0, 500) || undefined;
     const data = db();
     const fin = clientView(client.id);
     if (!fin.ok) return NextResponse.json({ ok: false, error: "gone" }, { status: 410 });
     if (kind === "withdrawal" && amount > fin.view.financials.available) {
       return NextResponse.json({ ok: false, error: "funds" }, { status: 400 });
     }
+    // duplicate guard (#37): an identical open request is already being reviewed
+    const duplicate = data.txs.some(
+      (t) =>
+        t.clientId === client.id &&
+        inFlight(t.status) &&
+        t.kind === kind &&
+        t.amount === amount &&
+        (t.asset ?? undefined) === asset &&
+        (t.destination ?? undefined) === destination,
+    );
+    if (duplicate) {
+      return NextResponse.json({ ok: false, error: "duplicate" }, { status: 409 });
+    }
+    const nowISO = new Date().toISOString();
+    const prefix = kind === "deposit" ? "DEP" : kind === "withdrawal" ? "WDR" : "TRD";
+    const reference = `${prefix}-${nowISO.slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const created: Tx = {
+      id: uid("tx"),
+      clientId: client.id,
+      dateISO: nowISO.slice(0, 10),
+      kind,
+      type: kind === "deposit" ? "CREDIT" : "DEBIT",
+      amount,
+      label:
+        kind === "deposit"
+          ? "Deposit request — pending review"
+          : kind === "withdrawal"
+            ? "Withdrawal request — pending review"
+            : "Trade request — pending review",
+      asset,
+      destination,
+      status: "PENDING",
+      reference,
+      method: body.method?.trim() || (kind === "trade" ? "Market Order" : "Bank Transfer"),
+      notes: note || "—",
+      history: [{ at: nowISO, by: client.name, byRole: "client", from: null, to: "PENDING", note: note || undefined }],
+      createdAtISO: nowISO,
+      updatedAtISO: nowISO,
+    };
+    const amountLabel = `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
     mutate((d) => {
-      const nowISO = new Date().toISOString();
-      d.txs.unshift({
-        id: uid("tx"),
-        clientId: client.id,
-        dateISO: nowISO.slice(0, 10),
-        kind,
-        type: kind === "deposit" ? "CREDIT" : "DEBIT",
-        amount,
-        label: kind === "deposit" ? "Deposit request — pending review" : "Withdrawal request — pending review",
-        status: "PENDING",
-        reference: `${kind === "deposit" ? "DEP" : "WDR"}-${nowISO.slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`,
-        method: body.method?.trim() || (kind === "deposit" ? "Bank Transfer" : "Bank Transfer"),
-        notes: body.note?.trim() || "—",
-        createdAtISO: nowISO,
-        updatedAtISO: nowISO,
-      });
+      d.txs.unshift(created);
       pushNotification(d, {
         audience: "admin",
-        title: kind === "deposit" ? "New Deposit Request" : "New Withdrawal Request",
-        body: `${client.name} (${client.accountNo}) requested a ${kind} of $${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
-        kind: kind === "deposit" ? "deposit" : "withdrawal",
+        title: kind === "deposit" ? "New Deposit Request" : kind === "withdrawal" ? "New Withdrawal Request" : "New Trade Request",
+        body: `${client.name} (${client.accountNo}) submitted request ${reference} — ${kind} of ${amountLabel}${asset ? ` · ${asset}` : ""}.`,
+        kind: kind === "deposit" ? "deposit" : kind === "withdrawal" ? "withdrawal" : "info",
       });
       pushNotification(d, {
         audience: client.id,
-        title: kind === "deposit" ? "Deposit request received" : "Withdrawal request received",
-        body:
-          kind === "deposit"
-            ? `Your deposit request of $${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} is being reviewed by your account manager.`
-            : `Your withdrawal request of $${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} is being reviewed by your account manager.`,
-        kind: kind === "deposit" ? "deposit" : "withdrawal",
+        title: "Request submitted",
+        body: `Your ${kind} request ${reference} of ${amountLabel} has been submitted and is pending review.`,
+        kind: kind === "deposit" ? "deposit" : kind === "withdrawal" ? "withdrawal" : "info",
       });
+      pushAudit(d, "Create Transaction", "TRANSACTION", JSON.stringify({ reference, client: client.name, kind, amount, status: "PENDING", source: "client portal" }));
+    });
+    const fresh = clientView(client.id);
+    return NextResponse.json({ ok: true, reference, ...(fresh.ok ? fresh.view : {}) });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /*  CANCEL REQUEST (#32) — the ONLY mutation a client may perform on */
+  /*  a request: cancelling their OWN still-pending request. The id is */
+  /*  scoped against the session client, so another client's request   */
+  /*  can never be reached. Statuses beyond PENDING are admin-owned.   */
+  /* ---------------------------------------------------------------- */
+  if (body.action === "cancel-request") {
+    const target = db().txs.find((t) => t.id === body.id && t.clientId === client.id);
+    if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+    if (target.status !== "PENDING") {
+      return NextResponse.json({ ok: false, error: "not-cancellable" }, { status: 400 });
+    }
+    const nowISO = new Date().toISOString();
+    mutate((d) => {
+      const record = d.txs.find((t) => t.id === body.id && t.clientId === client.id)!;
+      record.status = "CANCELLED";
+      record.updatedAtISO = nowISO;
+      record.history = [
+        ...(record.history ?? []),
+        { at: nowISO, by: client.name, byRole: "client", from: "PENDING", to: "CANCELLED" } as TxEvent,
+      ];
+      pushNotification(d, {
+        audience: "admin",
+        title: "Request Cancelled by Client",
+        body: `${client.name} (${client.accountNo}) cancelled their ${record.kind} request ${record.reference} of $${record.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
+        kind: "info",
+      });
+      pushNotification(d, {
+        audience: client.id,
+        title: "Request cancelled",
+        body: `Your ${record.kind} request ${record.reference} has been cancelled. No funds were moved.`,
+        kind: "info",
+      });
+      pushAudit(d, "Update Transaction", "TRANSACTION", JSON.stringify({ reference: record.reference, client: client.name, from: "PENDING", to: "CANCELLED", by: "client" }));
     });
     const fresh = clientView(client.id);
     return NextResponse.json({ ok: true, ...(fresh.ok ? fresh.view : {}) });

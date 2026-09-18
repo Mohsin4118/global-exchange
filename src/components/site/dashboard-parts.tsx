@@ -83,11 +83,22 @@ export function StatusPill({ status, t }: { status: Tx["status"]; t: T }) {
   const map: Record<string, string> = {
     COMPLETED: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
     PENDING: "bg-amber-50 text-amber-800 ring-1 ring-amber-600/20",
+    UNDER_REVIEW: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20",
+    APPROVED: "bg-teal-50 text-teal-700 ring-1 ring-teal-600/20",
     PROCESSING: "bg-sky-50 text-sky-700 ring-1 ring-sky-600/20",
     REJECTED: "bg-slate-100 text-slate-500 ring-1 ring-white/10",
+    CANCELLED: "bg-slate-100 text-slate-500 ring-1 ring-white/10",
   };
-  const label = status === "COMPLETED" ? t("statusCompleted") : status === "PENDING" ? t("reqPending") : status === "PROCESSING" ? t("statusProcessing") : t("reqRejected");
-  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide", map[status])}>{label}</span>;
+  const labels: Record<string, string> = {
+    COMPLETED: t("statusCompleted"),
+    PENDING: t("reqPending"),
+    UNDER_REVIEW: t("statusUnderReview"),
+    APPROVED: t("statusApproved"),
+    PROCESSING: t("statusProcessing"),
+    REJECTED: t("reqRejected"),
+    CANCELLED: t("statusCancelled"),
+  };
+  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide", map[status] ?? "bg-slate-100 text-slate-500")}>{labels[status] ?? status}</span>;
 }
 
 export function LiveChip({ t }: { t: T }) {
@@ -352,52 +363,149 @@ export function AllocationBar({ segments, t }: { segments: Array<{ label: string
 
 /* ---------------- transactions ---------------- */
 
-export function TxRowItem({ tx, t, lang }: { tx: Tx; t: T; lang: Lang }) {
+export function TxRowItem({ tx, t, lang, onCancel }: { tx: Tx; t: T; lang: Lang; onCancel?: (tx: Tx) => void }) {
   const credit = tx.type === "CREDIT";
+  const [open, setOpen] = useState(false);
+  const history = [...(tx.history ?? [])].reverse();
+  const isRequest = tx.status !== "COMPLETED" || (tx.kind !== "adjustment" && tx.kind !== "opening");
   return (
-    <li className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50/60 sm:px-5">
-      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", credit ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15" : "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15")}>
-        {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13.5px] font-semibold text-slate-900">
-          {tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}
-          {tx.asset ? <span className="font-normal text-slate-500"> · {tx.asset}</span> : null}
-        </p>
-        <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
-          {fmtDate(tx.dateISO, lang)} · {tx.method}
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
-          {credit ? "+" : "−"}
-          {usd(tx.amount)}
+    <li className="transition-colors hover:bg-slate-50/60">
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center gap-3 px-4 py-3.5 text-start sm:px-5">
+        <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", credit ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/15" : "bg-amber-50 text-amber-800 ring-1 ring-amber-600/15")}>
+          {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
         </span>
-        <StatusPill status={tx.status} t={t} />
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13.5px] font-semibold text-slate-900">
+            {tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}
+            {tx.asset ? <span className="font-normal text-slate-500"> · {tx.asset}</span> : null}
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
+            {fmtDate(tx.dateISO, lang)} · {tx.method} · {tx.reference}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+            {credit ? "+" : "−"}
+            {usd(tx.amount)}
+          </span>
+          <StatusPill status={tx.status} t={t} />
+        </div>
+        <ChevronDownIcon open={open} />
+      </button>
+
+      {open && (
+        <div className="mx-4 mb-4 space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 sm:mx-5 sm:p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Detail label={t("requestRef")} value={tx.reference} mono />
+            <Detail label={t("requestType")} value={tx.kind} />
+            {tx.asset && <Detail label={t("requestAsset")} value={tx.asset} />}
+            {tx.destination && <Detail label={t("requestDestination")} value={tx.destination} />}
+            <Detail label={t("requestNote")} value={tx.notes} />
+            <Detail label={t("requestAmount")} value={usd(tx.amount)} mono />
+          </div>
+
+          {history.length > 0 && (
+            <div>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">{t("statusHistory")}</p>
+              <ol className="space-y-2.5 border-s border-slate-200 ps-4">
+                {history.map((ev, i) => (
+                  <li key={`${ev.at}-${i}`} className="text-[12px] leading-relaxed">
+                    <p className="font-semibold text-slate-700">
+                      {ev.from ? `${ev.byRole === "client" && ev.from === ev.to ? t("requestDetails") : statusLabelFor(ev.from, t)} → ${statusLabelFor(ev.to, t)}` : t("txSubmitted")}
+                      <span className="ms-2 font-normal text-slate-400" dir="ltr">
+                        {new Date(ev.at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </p>
+                    <p className="text-slate-400">{ev.byRole === "client" ? ev.by : "Super Admin"}</p>
+                    {ev.note && <p className="mt-0.5 rounded-md bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200/70">{ev.note}</p>}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {isRequest && tx.status === "PENDING" && onCancel && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => onCancel(tx)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[12.5px] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-3.5 w-3.5" /> {t("cancelRequest")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </li>
   );
 }
 
-/* ---------------- request modal (deposit / withdrawal, dark) ---------------- */
+function ChevronDownIcon({ open }: { open: boolean }) {
+  return (
+    <svg className={cn("h-3.5 w-3.5 shrink-0 text-slate-300 transition-transform", open && "rotate-180")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function statusLabelFor(status: Tx["status"] | null | undefined, t: T): string {
+  if (!status) return t("txSubmitted");
+  const labels: Record<string, string> = {
+    COMPLETED: t("statusCompleted"),
+    PENDING: t("reqPending"),
+    UNDER_REVIEW: t("statusUnderReview"),
+    APPROVED: t("statusApproved"),
+    PROCESSING: t("statusProcessing"),
+    REJECTED: t("reqRejected"),
+    CANCELLED: t("statusCancelled"),
+  };
+  return labels[status] ?? status;
+}
+
+function Detail({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+      <p className={cn("mt-0.5 break-words text-[12.5px] font-semibold text-slate-700", mono && "font-mono")} dir={mono ? "ltr" : undefined}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/* ---------------- transaction request modal (#27) ----------------
+   The client can ONLY submit a REQUEST — type, amount, asset,
+   destination/details and an optional note. The server assigns the
+   reference and the PENDING status; nothing is ever auto-executed. */
+
+export const REQUEST_KINDS = ["deposit", "withdrawal", "trade"] as const;
+export type RequestKind = (typeof REQUEST_KINDS)[number];
+
+const ASSET_OPTIONS = ["USD", "USDT", "BTC", "ETH", "SOL", "XRP", "Aramco", "Salik"];
 
 export function RequestModal({
-  kind,
+  initialKind,
   t,
   available,
   onClose,
   onSubmit,
 }: {
-  kind: "deposit" | "withdrawal";
+  initialKind: RequestKind;
   t: T;
   available: number;
   onClose: () => void;
-  onSubmit: (amount: number, note: string) => Promise<string | null>; // returns error key or null
+  onSubmit: (payload: { kind: RequestKind; amount: number; asset: string; destination: string; note: string }) => Promise<string | null>; // returns error key or null
 }) {
+  const [kind, setKind] = useState<RequestKind>(initialKind);
   const [amount, setAmount] = useState("");
+  const [asset, setAsset] = useState("USD");
+  const [destination, setDestination] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const title = kind === "deposit" ? t("requestTitleDeposit") : kind === "withdrawal" ? t("requestTitleWithdraw") : t("requestTitleTrade");
 
   const submit = async () => {
     const value = parseFloat(amount);
@@ -409,8 +517,12 @@ export function RequestModal({
       setError(t("requestTooMuch"));
       return;
     }
+    if (kind === "trade" && !destination.trim()) {
+      setError(t("requestDestinationHint"));
+      return;
+    }
     setBusy(true);
-    const err = await onSubmit(value, note.trim());
+    const err = await onSubmit({ kind, amount: value, asset, destination: destination.trim(), note: note.trim() });
     setBusy(false);
     if (err) setError(t(err as StringKey));
   };
@@ -420,27 +532,82 @@ export function RequestModal({
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div className="flex items-center justify-between p-5 pb-0">
-          <h3 className="text-lg font-bold text-slate-900">{kind === "deposit" ? t("requestTitleDeposit") : t("requestTitleWithdraw")}</h3>
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
           <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="space-y-4 p-5">
-          <p className="rounded-lg bg-white px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-500">{t("requestHint")}</p>
+          <p className="rounded-lg bg-emerald-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-600 ring-1 ring-emerald-600/10">{t("requestHint")}</p>
+
+          {/* request type */}
+          <div>
+            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestType")}</span>
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1">
+              {REQUEST_KINDS.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setKind(k)}
+                  className={cn(
+                    "rounded-lg px-2 py-2 text-[12px] font-bold capitalize transition-colors",
+                    kind === k ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                  )}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAmount")}</span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                dir="ltr"
+                aria-label={t("requestAmount")}
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAsset")}</span>
+              <select
+                value={asset}
+                onChange={(e) => setAsset(e.target.value)}
+                aria-label={t("requestAsset")}
+                className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+              >
+                {ASSET_OPTIONS.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAmount")}</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">
+              {t("requestDestination")}
+              {kind === "withdrawal" && <span className="ms-1 text-slate-400">({t("requestDestinationHint")})</span>}
+            </span>
             <input
-              type="number"
-              min="0"
-              step="any"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              dir="ltr"
-              aria-label={t("requestAmount")}
+              type="text"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              placeholder={kind === "withdrawal" ? "0x… / IBAN / wallet" : kind === "trade" ? "e.g. Buy BTC with USD" : "Optional reference"}
+              dir={kind === "withdrawal" ? "ltr" : undefined}
+              aria-label={t("requestDestination")}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
             />
           </label>
+
           <label className="block">
             <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestNote")}</span>
             <textarea
@@ -450,6 +617,7 @@ export function RequestModal({
               className="w-full resize-y rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
             />
           </label>
+
           {error && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-600/15">{error}</p>}
           <div className="flex justify-end gap-2.5 pt-1">
             <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">

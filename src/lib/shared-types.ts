@@ -10,7 +10,25 @@ export type KycStatus = "verified" | "pending" | "unverified";
 
 export type TxKind = "deposit" | "withdrawal" | "trade" | "adjustment" | "opening";
 export type TxType = "CREDIT" | "DEBIT"; // CREDIT = money in, DEBIT = money out
-export type TxStatus = "COMPLETED" | "PENDING" | "PROCESSING" | "REJECTED";
+/** Full request lifecycle. A client can only ever CREATE a PENDING request;
+    every other transition is an admin decision. PENDING / UNDER_REVIEW /
+    APPROVED / PROCESSING requests reserve funds (withdrawals) but NEVER move
+    the balance — only COMPLETED does. */
+export type TxStatus = "COMPLETED" | "PENDING" | "UNDER_REVIEW" | "APPROVED" | "PROCESSING" | "REJECTED" | "CANCELLED";
+
+/** One immutable entry of the per-transaction audit trail (#30).
+    `internalNote` is for Super Admin eyes only and is stripped from every
+    client-facing payload; `note` is the client-visible remark. */
+export interface TxEvent {
+  at: string; // ISO timestamp
+  by: string; // display name of the actor
+  byRole: "admin" | "client" | "system";
+  from: TxStatus | null; // null = request creation
+  to: TxStatus;
+  note?: string; // client-visible remark
+  internalNote?: string; // private admin note — never sent to clients
+  changes?: string[]; // edited field names (for edit events)
+}
 
 export interface Tx {
   id: string;
@@ -22,10 +40,13 @@ export interface Tx {
   label: string;
   labelKey?: string; // optional i18n key for seeded demo lines (client dashboard)
   asset?: string; // unit summary for trades, e.g. "0.35 BTC"
+  destination?: string; // client-provided destination/details (wallet, bank, target)
   status: TxStatus;
   reference: string;
   method: string;
   notes: string;
+  adminNote?: string; // PRIVATE admin note on the request — stripped from client payloads
+  history?: TxEvent[]; // append-only status/edit trail
   createdAtISO: string;
   updatedAtISO: string;
 }
@@ -197,6 +218,7 @@ export interface AdminStats {
   debits: number;
   pendingWithdrawals: number; // count of pending withdrawal requests
   txCount: number;
+  requestCounts: Record<TxStatus, number>; // live counts per request status
 }
 
 /* ---------------- API request shapes ---------------- */
@@ -208,7 +230,16 @@ export type AuthAction =
   | { action: "logout" };
 
 export type ClientAction =
-  | { action: "request-transaction"; kind: "deposit" | "withdrawal"; amount: number; note?: string; method?: string }
+  | {
+      action: "request-transaction";
+      kind: "deposit" | "withdrawal" | "trade";
+      amount: number;
+      asset?: string;
+      destination?: string;
+      note?: string;
+      method?: string;
+    }
+  | { action: "cancel-request"; id: string }
   | { action: "update-profile"; phone?: string; country?: string; address?: string; city?: string; postcode?: string }
   | { action: "change-password"; current: string; next: string }
   | { action: "mark-read"; ids: "all" | string[] };
@@ -220,7 +251,7 @@ export type AdminAction =
   | { action: "create-transaction"; tx: NewTxInput }
   | { action: "update-transaction"; id: string; patch: UpdateTxInput }
   | { action: "delete-transaction"; id: string }
-  | { action: "set-transaction-status"; id: string; status: TxStatus }
+  | { action: "set-transaction-status"; id: string; status: TxStatus; note?: string; internalNote?: string }
   | { action: "send-notification"; clientId: string; title: string; body: string }
   | { action: "mark-read"; id: string }
   | { action: "mark-all-read" }
@@ -281,6 +312,8 @@ export interface UpdateTxInput {
   status?: TxStatus;
   label?: string;
   asset?: string;
+  destination?: string;
+  adminNote?: string;
   method?: string;
   notes?: string;
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Download, Pencil, Plus, Trash2, X } from "lucide-react";
-import { usd, type TxType, type WithdrawalStatus } from "@/lib/admin-data";
+import { ArrowLeft, Check, ChevronDown, Clock, Download, Pencil, Plus, Trash2, X } from "lucide-react";
+import { usd, type TxType } from "@/lib/admin-data";
 import type { AdminCtx } from "./types";
-import type { TxKind, TxStatus } from "@/lib/shared-types";
-import { Card, Modal, MonoId, OutlineButton, PageHeader, PrimaryButton, SearchInput, Select, StatusBadge, TextInput } from "./ui";
+import type { TxEvent, TxKind, TxStatus } from "@/lib/shared-types";
+import { Card, Modal, MonoId, OutlineButton, PageHeader, PrimaryButton, SearchInput, Select, StatusBadge, statusLabel, TextInput } from "./ui";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
@@ -20,9 +20,14 @@ const KIND_OPTIONS: { value: TxKind; label: string }[] = [
 const TX_STATUS_OPTIONS: { value: TxStatus; label: string }[] = [
   { value: "COMPLETED", label: "Completed" },
   { value: "PENDING", label: "Pending" },
+  { value: "UNDER_REVIEW", label: "Under Review" },
+  { value: "APPROVED", label: "Approved" },
   { value: "PROCESSING", label: "Processing" },
   { value: "REJECTED", label: "Rejected" },
+  { value: "CANCELLED", label: "Cancelled" },
 ];
+/** Statuses that are still an open request (client funds reserved for withdrawals). */
+const IN_FLIGHT: TxStatus[] = ["PENDING", "UNDER_REVIEW", "APPROVED", "PROCESSING"];
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -43,13 +48,13 @@ function downloadCsv(filename: string, rows: string[][]) {
 type TxRow = AdminCtx["state"]["txs"][number];
 
 function TxActions({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCtx; onEdit: () => void; onDelete: () => void }) {
-  const pending = tx.status === "PENDING" || tx.status === "PROCESSING";
+  const pending = IN_FLIGHT.includes(tx.status);
   return (
     <div className="inline-flex items-center gap-1">
       {pending && (
         <>
           <button
-            onClick={() => ctx.runAction({ action: "set-transaction-status", id: tx.id, status: "COMPLETED" }, { title: "Approved", description: `${tx.clientName}'s ${tx.kind} of ${usd(tx.amount)} was applied — balances updated everywhere.` })}
+            onClick={() => ctx.runAction({ action: "set-transaction-status", id: tx.id, status: "COMPLETED" }, { title: "Approved & completed", description: `${tx.clientName}'s ${tx.kind} ${tx.reference} is completed — balances updated everywhere.` })}
             className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-emerald-700"
           >
             <Check className="h-3.5 w-3.5" /> Approve
@@ -68,6 +73,157 @@ function TxActions({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCtx; on
       <button onClick={onDelete} aria-label="Delete transaction" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600">
         <Trash2 className="h-4 w-4" />
       </button>
+    </div>
+  );
+}
+
+/* ================= REQUEST MANAGER (expanded detail) ================= */
+
+function fmtWhen(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function HistoryRow({ ev }: { ev: TxEvent }) {
+  const isEdit = ev.from === ev.to;
+  return (
+    <li className="relative flex gap-3 pb-4 last:pb-0">
+      <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+        <span className={cn("h-2.5 w-2.5 rounded-full", isEdit ? "bg-slate-300" : ev.to === "COMPLETED" ? "bg-emerald-500" : ev.to === "REJECTED" || ev.to === "CANCELLED" ? "bg-slate-400" : "bg-amber-500")} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-semibold text-slate-800">
+          {isEdit ? (
+            <>Details updated{ev.changes?.length ? <span className="font-normal text-slate-500"> · {ev.changes.join(", ")}</span> : null}</>
+          ) : (
+            <>
+              {ev.from ? statusLabel(ev.from) : "Submitted"} <span className="text-slate-400">→</span> {statusLabel(ev.to)}
+            </>
+          )}
+          {ev.internalNote && <span className="ms-2 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-500">Internal</span>}
+        </p>
+        <p className="mt-0.5 text-[11.5px] text-slate-400">
+          {fmtWhen(ev.at)} · {ev.byRole === "admin" ? "Super Admin" : ev.byRole === "client" ? ev.by : "System"}
+        </p>
+        {(ev.note || ev.internalNote) && <p className={cn("mt-1 rounded-md px-2.5 py-1.5 text-[12px] leading-relaxed", ev.internalNote ? "bg-indigo-50/60 text-indigo-700" : "bg-slate-50 text-slate-600")}>{ev.internalNote ?? ev.note}</p>}
+      </div>
+    </li>
+  );
+}
+
+function RequestManager({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCtx; onEdit: () => void; onDelete: () => void }) {
+  const [status, setStatus] = useState<TxStatus>(tx.status);
+  const [clientNote, setClientNote] = useState("");
+  const [internalNote, setInternalNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loadedId, setLoadedId] = useState(tx.id);
+  if (loadedId !== tx.id) {
+    setLoadedId(tx.id);
+    setStatus(tx.status);
+    setClientNote("");
+    setInternalNote("");
+  }
+
+  const decide = async (next: TxStatus, note?: string, internal?: string) => {
+    setBusy(true);
+    const ok = await ctx.runAction(
+      { action: "set-transaction-status", id: tx.id, status: next, note: note || undefined, internalNote: internal || undefined },
+      { title: `Request ${statusLabel(next).toLowerCase()}`, description: `${tx.clientName}'s ${tx.kind} ${tx.reference} → ${statusLabel(next)}. The client dashboard updates within seconds.` },
+    );
+    setBusy(false);
+    if (ok) {
+      setClientNote("");
+      setInternalNote("");
+      setStatus(next);
+    }
+  };
+
+  const history = [...(tx.history ?? [])].reverse();
+
+  return (
+    <div className="space-y-5 rounded-lg border border-slate-100 bg-white p-5">
+      {/* all request details */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Detail label="Reference" value={tx.reference} mono />
+        <Detail label="Kind" value={tx.kind} />
+        <Detail label="Method" value={tx.method} />
+        <Detail label="Asset" value={tx.asset ?? "—"} />
+        <Detail label="Destination / Details" value={tx.destination ?? "—"} />
+        <Detail label="Client Note" value={tx.notes} />
+        <Detail label="Internal Note (private)" value={tx.adminNote ?? "—"} />
+        <Detail label="Submitted" value={fmtWhen(tx.createdAtISO)} />
+      </div>
+
+      {/* status decision box — the admin's control panel for this request */}
+      <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="me-1 text-[12px] font-bold uppercase tracking-wide text-slate-400">Quick decision:</span>
+          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "UNDER_REVIEW"} onClick={() => decide("UNDER_REVIEW")}>
+            Under Review
+          </OutlineButton>
+          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "APPROVED"} onClick={() => decide("APPROVED")}>
+            Approved
+          </OutlineButton>
+          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "PROCESSING"} onClick={() => decide("PROCESSING")}>
+            Processing
+          </OutlineButton>
+          <PrimaryButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "COMPLETED"} onClick={() => decide("COMPLETED")}>
+            <Check className="h-3.5 w-3.5" /> Complete
+          </PrimaryButton>
+          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "REJECTED"} onClick={() => decide("REJECTED")}>
+            <X className="h-3.5 w-3.5" /> Reject
+          </OutlineButton>
+          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "CANCELLED"} onClick={() => decide("CANCELLED")}>
+            Cancelled
+          </OutlineButton>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div>
+            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Set status manually</span>
+            <Select value={status} onChange={(v) => setStatus(v as TxStatus)} options={TX_STATUS_OPTIONS} />
+          </div>
+          <TextInput label="Note for the client (visible)" value={clientNote} onChange={setClientNote} placeholder="e.g. Processed via bank transfer" />
+          <TextInput label="Internal note (private)" value={internalNote} onChange={setInternalNote} placeholder="e.g. KYC re-checked before approving" />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[11.5px] leading-relaxed text-slate-400">
+            Only <span className="font-semibold text-slate-600">Completed</span> moves the client&apos;s balance — submitting or reviewing a request never does. The client is
+            notified with the reference on every decision; internal notes stay private.
+          </p>
+          <PrimaryButton className="px-4 py-2 text-[13px]" disabled={busy || (status === tx.status && !clientNote.trim() && !internalNote.trim())} onClick={() => decide(status, clientNote.trim(), internalNote.trim())}>
+            Apply Decision
+          </PrimaryButton>
+        </div>
+      </div>
+
+      {/* status history / audit trail */}
+      <div>
+        <p className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-slate-400">
+          <Clock className="h-3.5 w-3.5" /> Status history — full audit trail
+        </p>
+        {history.length > 0 ? (
+          <ol className="ms-1 border-s border-slate-100 ps-5">
+            {history.map((ev, i) => (
+              <HistoryRow key={`${ev.at}-${i}`} ev={ev} />
+            ))}
+          </ol>
+        ) : (
+          <p className="text-[12.5px] text-slate-400">No recorded history for this legacy record.</p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+        <OutlineButton className="px-3 py-1.5 text-[12.5px]" onClick={onEdit}>
+          <Pencil className="h-3.5 w-3.5" /> Edit details
+        </OutlineButton>
+        <button
+          onClick={onDelete}
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Delete request
+        </button>
+      </div>
     </div>
   );
 }
@@ -226,15 +382,7 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
                     <tr className="border-b border-slate-50 bg-slate-50/70">
                       <td />
                       <td colSpan={7} className="px-4 pb-5">
-                        <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-100 bg-white p-5 sm:grid-cols-2 lg:grid-cols-5">
-                          <Detail label="Reference" value={t.reference} mono />
-                          <Detail label="Kind" value={t.kind} />
-                          <Detail label="Method" value={t.method} />
-                          <Detail label="Notes" value={t.notes} />
-                          <div className="flex items-end justify-end">
-                            <TxActions tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} />
-                          </div>
-                        </div>
+                        <RequestManager tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} />
                       </td>
                     </tr>
                   )}
@@ -378,6 +526,8 @@ function EditTxModal({ tx, onClose, ctx }: { tx: TxRow | null; onClose: () => vo
   const [status, setStatus] = useState<TxStatus>("COMPLETED");
   const [label, setLabel] = useState("");
   const [method, setMethod] = useState("");
+  const [destination, setDestination] = useState("");
+  const [adminNote, setAdminNote] = useState("");
   const [notes, setNotes] = useState("");
   const [loadedId, setLoadedId] = useState<string | null>(null);
 
@@ -390,6 +540,8 @@ function EditTxModal({ tx, onClose, ctx }: { tx: TxRow | null; onClose: () => vo
     setStatus(tx.status);
     setLabel(tx.label);
     setMethod(tx.method);
+    setDestination(tx.destination ?? "");
+    setAdminNote(tx.adminNote ?? "");
     setNotes(tx.notes === "—" ? "" : tx.notes);
   }
 
@@ -406,8 +558,8 @@ function EditTxModal({ tx, onClose, ctx }: { tx: TxRow | null; onClose: () => vo
       return;
     }
     const ok = await ctx.runAction(
-      { action: "update-transaction", id: tx.id, patch: { dateISO, kind, type, amount: value, status, label, method, notes } },
-      { title: "Transaction updated", description: "Every balance, statistic and statement now reflects this change." },
+      { action: "update-transaction", id: tx.id, patch: { dateISO, kind, type, amount: value, status, label, method, destination, adminNote, notes } },
+      { title: "Request updated", description: "Every balance, statistic, statement and the client dashboard now reflect this change." },
     );
     if (ok) close();
   };
@@ -437,7 +589,9 @@ function EditTxModal({ tx, onClose, ctx }: { tx: TxRow | null; onClose: () => vo
             <TextInput label="Method" value={method} onChange={setMethod} />
           </div>
           <TextInput label="Description" value={label} onChange={setLabel} />
-          <TextInput label="Notes" value={notes} onChange={setNotes} placeholder="—" />
+          <TextInput label="Destination / Details" value={destination} onChange={setDestination} placeholder="Wallet address, bank account, target asset…" />
+          <TextInput label="Internal Note (private)" value={adminNote} onChange={setAdminNote} placeholder="Never visible to the client" />
+          <TextInput label="Client Note" value={notes} onChange={setNotes} placeholder="—" />
           <div className="flex justify-end gap-3 pt-2">
             <OutlineButton onClick={close}>Cancel</OutlineButton>
             <PrimaryButton onClick={save}>Save Changes</PrimaryButton>
@@ -540,7 +694,7 @@ export function DepositsPage({ ctx }: { ctx: AdminCtx }) {
 
 /* ================= WITHDRAWALS ================= */
 
-const W_STATUSES: WithdrawalStatus[] = ["PENDING", "PROCESSING", "COMPLETED", "REJECTED"];
+const W_STATUSES: TxStatus[] = ["PENDING", "UNDER_REVIEW", "APPROVED", "PROCESSING", "COMPLETED", "REJECTED", "CANCELLED"];
 
 export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
   const [query, setQuery] = useState("");
@@ -650,11 +804,11 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
       <UpdateWithdrawalModal
         withdrawal={editingW}
         onClose={() => setEditing(null)}
-        onSave={async (newStatus, notes) => {
+        onSave={async (newStatus, note) => {
           if (!editingW) return;
           const ok = await ctx.runAction(
-            { action: "update-transaction", id: editingW.id, patch: { status: newStatus as TxStatus, notes: notes || editingW.notes } },
-            { title: "Withdrawal updated", description: `Status set to ${newStatus.toLowerCase()} — balances recalculated.` },
+            { action: "set-transaction-status", id: editingW.id, status: newStatus, note: note || undefined },
+            { title: `Withdrawal ${statusLabel(newStatus).toLowerCase()}`, description: `${editingW.clientName}'s request ${editingW.reference} → ${statusLabel(newStatus)} — balances recalculated and the client notified.` },
           );
           if (ok) setEditing(null);
         }}
@@ -670,23 +824,23 @@ function UpdateWithdrawalModal({
 }: {
   withdrawal: TxRow | null;
   onClose: () => void;
-  onSave: (status: WithdrawalStatus, notes: string) => void;
+  onSave: (status: TxStatus, note: string) => void;
 }) {
   const [status, setStatus] = useState("");
-  const [notes, setNotes] = useState("");
+  const [note, setNote] = useState("");
 
   const close = () => {
     setStatus("");
-    setNotes("");
+    setNote("");
     onClose();
   };
 
   return (
-    <Modal open={!!withdrawal} onClose={close} title="Update Withdrawal Status">
+    <Modal open={!!withdrawal} onClose={close} title="Update Withdrawal Request">
       {withdrawal && (
         <div className="space-y-4">
           <p className="text-sm text-slate-500">
-            {withdrawal.clientName} — <span dir="ltr">{usd(withdrawal.amount)}</span> · {withdrawal.method}
+            {withdrawal.clientName} — <span dir="ltr">{usd(withdrawal.amount)}</span> · {withdrawal.method} · <span className="font-mono">{withdrawal.reference}</span>
           </p>
           <div>
             <span className="mb-1.5 block text-[13px] font-medium text-slate-600">New Status *</span>
@@ -694,15 +848,15 @@ function UpdateWithdrawalModal({
               value={status}
               onChange={setStatus}
               placeholder="Select new status"
-              options={W_STATUSES.map((s) => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))}
+              options={W_STATUSES.map((s) => ({ value: s, label: statusLabel(s) }))}
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Admin Notes</span>
+            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Note for the client (visible on their dashboard)</span>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes visible to internal staff"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Optional — sent to the client with the decision"
               rows={3}
               className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
             />
@@ -712,9 +866,9 @@ function UpdateWithdrawalModal({
             <PrimaryButton
               disabled={!status}
               onClick={() => {
-                onSave(status as WithdrawalStatus, notes.trim());
+                onSave(status as TxStatus, note.trim());
                 setStatus("");
-                setNotes("");
+                setNote("");
               }}
             >
               Save Status

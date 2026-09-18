@@ -12,6 +12,7 @@ import {
   adminSnapshot,
   db,
   hashPassword,
+  inFlight,
   mutate,
   newReference,
   pushAudit,
@@ -22,7 +23,7 @@ import {
   uid,
   verifyPassword,
 } from "@/lib/server/db";
-import type { AdminAction, Client, Tx } from "@/lib/shared-types";
+import type { AdminAction, Client, Tx, TxEvent } from "@/lib/shared-types";
 
 export const dynamic = "force-dynamic";
 
@@ -217,6 +218,7 @@ export async function POST(req: NextRequest) {
         kind: "info",
       });
       pushAudit(d, "Create Transaction", "TRANSACTION", JSON.stringify({ clientId: client.id, client: client.name, type: input.type, amount, reference: tx.reference, status: tx.status }));
+      tx.history = [{ at: nowISO, by: "Super Admin", byRole: "admin", from: null, to: tx.status, note: "Posted by Super Admin" }];
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }
@@ -241,10 +243,30 @@ export async function POST(req: NextRequest) {
       }
       if (patch.status) (old.status = record.status), (next.status = patch.status), (record.status = patch.status);
       if (patch.label !== undefined) (old.label = record.label), (next.label = patch.label), (record.label = patch.label.trim() || record.label);
-      if (patch.asset !== undefined) record.asset = patch.asset.trim() || undefined;
+      if (patch.asset !== undefined) (old.asset = record.asset), (next.asset = patch.asset), (record.asset = patch.asset.trim() || undefined);
+      if (patch.destination !== undefined) (old.destination = record.destination), (next.destination = patch.destination), (record.destination = patch.destination.trim() || undefined);
+      if (patch.adminNote !== undefined) record.adminNote = patch.adminNote.trim() || undefined;
       if (patch.method !== undefined) record.method = patch.method.trim() || record.method;
       if (patch.notes !== undefined) record.notes = patch.notes.trim() || "—";
       record.updatedAtISO = new Date().toISOString();
+      // per-request audit trail (#30): record which fields the admin edited
+      const changed = Object.keys(next);
+      if (changed.length > 0) {
+        record.history = [
+          ...(record.history ?? []),
+          { at: new Date().toISOString(), by: "Super Admin", byRole: "admin", from: record.status, to: record.status, changes: changed } as TxEvent,
+        ];
+        // keep the client in sync when client-visible request details change (#33)
+        const owner = d.clients.find((c) => c.id === record.clientId);
+        if (owner && changed.some((k) => ["amount", "asset", "destination", "dateISO"].includes(k))) {
+          pushNotification(d, {
+            audience: owner.id,
+            title: "Request updated",
+            body: `The details of your request ${record.reference} were updated by your account manager. Open it under Transactions to review.`,
+            kind: "info",
+          });
+        }
+      }
       pushAudit(d, "Update Transaction", "TRANSACTION", JSON.stringify(next), Object.keys(old).length ? JSON.stringify(old) : undefined);
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
@@ -255,40 +277,75 @@ export async function POST(req: NextRequest) {
     if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
     mutate((d) => {
       d.txs = d.txs.filter((t) => t.id !== body.id);
+      // the client must see the correct state after an admin removal (#33/#37)
+      const owner = d.clients.find((c) => c.id === target.clientId);
+      if (owner && inFlight(target.status)) {
+        pushNotification(d, {
+          audience: owner.id,
+          title: "Request removed",
+          body: `Your ${target.kind} request ${target.reference} has been removed by your account manager. No funds were moved.`,
+          kind: "info",
+        });
+      }
       pushAudit(d, "Delete Transaction", "TRANSACTION", JSON.stringify({ reference: target.reference, client: d.clients.find((c) => c.id === target.clientId)?.name, type: target.type, amount: target.amount, status: target.status }));
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }
 
-  /* ---- approve / reject pending requests (balance recalculates automatically) ---- */
+  /* ------------------------------------------------------------------ */
+  /*  REQUEST STATUS DECISION (#28/#29/#30/#34) — admin-only. Records    */
+  /*  an immutable history entry (previous → new status, actor, notes),  */
+  /*  notifies the client with the reference, and writes a global audit  */
+  /*  entry. Balances react automatically because they are computed      */
+  /*  from the ledger (only COMPLETED moves money — #31).                */
+  /* ------------------------------------------------------------------ */
   if (body.action === "set-transaction-status") {
     const target = data.txs.find((t) => t.id === body.id);
     if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+    const VALID: readonly string[] = ["COMPLETED", "PENDING", "UNDER_REVIEW", "APPROVED", "PROCESSING", "REJECTED", "CANCELLED"];
+    if (!VALID.includes(body.status)) {
+      return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
+    }
     const client = data.clients.find((c) => c.id === target.clientId);
+    const clientNote = body.note?.trim().slice(0, 400) || undefined;
+    const internalNote = body.internalNote?.trim().slice(0, 400) || undefined;
     mutate((d) => {
       const record = d.txs.find((t) => t.id === body.id)!;
       const old = record.status;
+      if (old === body.status) return; // no-op — never duplicate history entries
       record.status = body.status;
       record.updatedAtISO = new Date().toISOString();
-      if (old !== body.status && client && (record.kind === "withdrawal" || record.kind === "deposit")) {
+      record.history = [
+        ...(record.history ?? []),
+        {
+          at: new Date().toISOString(),
+          by: "Super Admin",
+          byRole: "admin",
+          from: old,
+          to: body.status,
+          ...(clientNote ? { note: clientNote } : {}),
+          ...(internalNote ? { internalNote } : {}),
+        } as TxEvent,
+      ];
+      if (client) {
         const amountLabel = `$${record.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-        if (body.status === "COMPLETED") {
-          pushNotification(d, {
-            audience: client.id,
-            title: record.kind === "withdrawal" ? "Withdrawal approved" : "Deposit approved",
-            body: `Your ${record.kind} of ${amountLabel} has been approved and ${record.kind === "withdrawal" ? "processed" : "credited"}.`,
-            kind: record.kind,
-          });
-        } else if (body.status === "REJECTED") {
-          pushNotification(d, {
-            audience: client.id,
-            title: record.kind === "withdrawal" ? "Withdrawal declined" : "Deposit declined",
-            body: `Your ${record.kind} request of ${amountLabel} was reviewed and could not be completed. Please contact your account manager.`,
-            kind: record.kind,
-          });
-        }
+        const statusLine: Record<string, string> = {
+          UNDER_REVIEW: "is now under review",
+          APPROVED: "has been approved and is being processed",
+          PROCESSING: "is being processed",
+          COMPLETED: "has been completed",
+          REJECTED: "was reviewed and could not be completed",
+          CANCELLED: "has been cancelled",
+          PENDING: "is pending review again",
+        };
+        pushNotification(d, {
+          audience: client.id,
+          title: `Request ${record.reference} — ${body.status.replace("_", " ").toLowerCase()}`,
+          body: `Your ${record.kind} request ${record.reference} of ${amountLabel} ${statusLine[body.status] ?? `is now ${body.status.toLowerCase()}`}.${clientNote ? ` Note from your account manager: ${clientNote}` : ""}`,
+          kind: record.kind === "withdrawal" ? "withdrawal" : record.kind === "deposit" ? "deposit" : "info",
+        });
       }
-      pushAudit(d, record.kind === "withdrawal" ? "Update Withdrawal" : "Update Transaction", record.kind === "withdrawal" ? "WITHDRAWAL" : "TRANSACTION", JSON.stringify({ reference: record.reference, client: client?.name, status: body.status }), JSON.stringify({ status: old }));
+      pushAudit(d, record.kind === "withdrawal" ? "Update Withdrawal" : "Update Transaction", record.kind === "withdrawal" ? "WITHDRAWAL" : "TRANSACTION", JSON.stringify({ reference: record.reference, client: client?.name, status: body.status, ...(clientNote ? { note: clientNote } : {}), ...(internalNote ? { internalNote } : {}) }), JSON.stringify({ status: old }));
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }
