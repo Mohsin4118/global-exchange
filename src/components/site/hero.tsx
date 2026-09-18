@@ -48,9 +48,6 @@ export function Hero({
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="relative isolate"
           >
-            {/* mobile-only floating asset cluster — Bitcoin kept, satellites added (client request) */}
-            <FloatingCluster />
-
             <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-4 py-1.5 text-[12.5px] font-medium text-[#00E5A0]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
               {t("heroBadge")}
@@ -100,7 +97,9 @@ export function Hero({
             </div>
           </motion.div>
 
-          {/* right visual — glowing globe + BTC coin on a podium */}
+          {/* right visual — glowing globe + enlarged GOLD Bitcoin coin + orbiting official logos.
+              The graphic lives in its own grid cell (desktop) / below the copy (mobile),
+              so it can never overlap the headline, description or buttons (client request). */}
           <motion.div
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -109,6 +108,7 @@ export function Hero({
             dir="ltr"
           >
             <GlobeVisual />
+            <HeroSatellites />
           </motion.div>
         </div>
 
@@ -185,73 +185,40 @@ export function Hero({
   );
 }
 
-/* ---------------- Mobile floating asset cluster (right of the headline) ---------------- */
+/* ---------------- Orbiting official-logo satellites around the Bitcoin coin ---------------- */
 
-// Official brand logo files (public/logos) — real marks, no generic glyphs (client request)
-const CLUSTER_ASSETS = [
-  { logo: "/logos/ethereum.svg", imgClass: "h-[62%] w-auto", label: "Ethereum", pos: "top-[12px] end-[24px]", float: 4.6, delay: 0.55 },
-  { logo: "/logos/tether.svg", imgClass: "w-[64%] h-auto", label: "USDT/Tether", pos: "top-[102px] end-[106px]", float: 5.4, delay: 0.75 },
-  { logo: "/logos/aramco.svg", imgClass: "h-[76%] w-[76%] rounded-full", label: "Aramco", pos: "top-[150px] end-[60px]", float: 5.0, delay: 0.95 },
-  { logo: "/logos/salik.svg", imgClass: "w-[66%] h-auto", label: "Salek", pos: "top-[178px] end-[8px]", float: 5.8, delay: 1.15 },
+// Official brand logo files (public/logos) — real marks, no generic glyphs (client request).
+// Positioned with physical insets inside a dir="ltr" wrapper so they never mirror, never clip
+// at the edges and never reach the hero copy (the visual is a separate grid cell / stacked
+// below the text on mobile — rebuilt responsively, no CSS scale).
+const SATELLITES = [
+  { logo: "/logos/ethereum.svg", imgClass: "h-[62%] w-auto", label: "Ethereum", pos: "left-[16%] top-[5%]", float: 4.6, delay: 0.55 },
+  { logo: "/logos/tether.svg", imgClass: "w-[64%] h-auto", label: "USDT/Tether", pos: "right-[16%] top-[8%]", float: 5.4, delay: 0.75 },
+  { logo: "/logos/aramco.svg", imgClass: "h-[76%] w-[76%] rounded-full", label: "Aramco", pos: "left-[16%] top-[46%]", float: 5.0, delay: 0.95 },
+  { logo: "/logos/salik.svg", imgClass: "w-[66%] h-auto", label: "Salek", pos: "right-[16%] top-[52%]", float: 5.8, delay: 1.15 },
 ];
 
-function FloatingCluster() {
+function HeroSatellites() {
   return (
-    <div className="lg:hidden pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-      {/* main Bitcoin coin — kept exactly where the client pointed.
-          No dir override here: `end-0` must resolve against the page
-          direction so the coin mirrors to the LEFT in the Arabic RTL
-          header (client requirement) and stays on the right in EN. */}
-      <motion.div
-        className="absolute end-0 top-12"
-        initial={{ opacity: 0, scale: 0.7 }}
-        animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
-        transition={{
-          opacity: { duration: 0.7, delay: 0.35, ease: "easeOut" },
-          scale: { duration: 0.7, delay: 0.35, ease: "easeOut" },
-          y: { duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.35 },
-        }}
-      >
-        <div className="relative flex h-28 w-28 items-center justify-center sm:h-32 sm:w-32">
-          {/* soft halo */}
-          <div className="absolute inset-0 rounded-full bg-[#00E5A0]/[0.1] blur-2xl" />
-          {/* dashed orbit halo, like the globe coin */}
-          <div className="absolute inset-0 rounded-full border border-dashed border-[#00E5A0]/30" />
-          {/* coin face */}
-          <div
-            className="relative flex h-[74%] w-[74%] items-center justify-center rounded-full border-2 border-[#00E5A0] shadow-[0_0_34px_-4px_rgba(0,229,160,0.55),inset_0_0_18px_rgba(0,229,160,0.14)]"
-            style={{ background: "radial-gradient(circle at 35% 28%, #134234, #0a2b21 60%, #06180f)" }}
-          >
-            <div className="absolute inset-[10%] rounded-full border border-[#00E5A0]/30" />
-            <span className="text-[40px] sm:text-[46px] font-extrabold leading-none text-[#2cf0b5] drop-shadow-[0_0_16px_rgba(44,240,181,0.6)]">
-              ₿
-            </span>
-          </div>
-          {/* sparkle dots */}
-          <span className="absolute -start-1 top-6 h-1.5 w-1.5 rounded-full bg-[#2cf0b5]/80 animate-pulse" />
-          <span className="absolute -end-1.5 bottom-8 h-1 w-1 rounded-full bg-[#2cf0b5]/60 animate-pulse [animation-delay:1.2s]" />
-        </div>
-      </motion.div>
-
-      {/* satellite assets — Ethereum, USDT/Tether, Aramco, Salek (exact client naming) */}
-      {CLUSTER_ASSETS.map((a) => (
+    <div className="pointer-events-none absolute inset-0 z-10" aria-hidden="true">
+      {SATELLITES.map((a) => (
         <motion.div
           key={a.label}
           className={cn("absolute flex flex-col items-center", a.pos)}
           initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+          animate={{ opacity: 1, scale: 1, y: [0, -7, 0] }}
           transition={{
             opacity: { duration: 0.5, delay: a.delay, ease: "easeOut" },
             scale: { duration: 0.5, delay: a.delay, ease: "easeOut" },
             y: { duration: a.float, repeat: Infinity, ease: "easeInOut", delay: a.delay },
           }}
         >
-          <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/20 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.75)]">
+          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/25 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.8)] sm:h-12 sm:w-12">
             <img src={a.logo} alt="" aria-hidden="true" loading="lazy" className={a.imgClass} />
           </span>
           <span
             dir="ltr"
-            className="mt-0.5 whitespace-nowrap rounded-full border border-white/10 bg-[#04121c]/85 px-1.5 py-px text-[8px] font-semibold leading-tight text-white/65"
+            className="mt-1 whitespace-nowrap rounded-full border border-white/10 bg-[#04121c]/90 px-1.5 py-px text-[8px] font-semibold leading-tight text-white/70"
           >
             {a.label}
           </span>
@@ -285,9 +252,25 @@ function GlobeVisual() {
             <stop offset="100%" stopColor="#00E5A0" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="coneGrad" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor="#00E5A0" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#00E5A0" stopOpacity="0" />
+            <stop offset="0%" stopColor="#F7B733" stopOpacity="0.20" />
+            <stop offset="100%" stopColor="#F7B733" stopOpacity="0" />
           </linearGradient>
+          {/* metallic gold for the Bitcoin mark (client request: GOLD / METALLIC GOLD B) */}
+          <linearGradient id="btcGold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFF7DC" />
+            <stop offset="20%" stopColor="#FFE89A" />
+            <stop offset="45%" stopColor="#F7B733" />
+            <stop offset="70%" stopColor="#DE9A12" />
+            <stop offset="100%" stopColor="#B9770E" />
+          </linearGradient>
+          <linearGradient id="coinRim" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFE89A" />
+            <stop offset="55%" stopColor="#E8A317" />
+            <stop offset="100%" stopColor="#9C6A0B" />
+          </linearGradient>
+          <filter id="coinHalo" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="16" />
+          </filter>
           <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="6" result="b" />
             <feMerge>
@@ -336,52 +319,90 @@ function GlobeVisual() {
         <g>
           <path d="M152,322 v22 a88,20 0 0 0 176,0 v-22" fill="#07211a" stroke="#00E5A0" strokeOpacity="0.2" />
           <ellipse cx="240" cy="322" rx="88" ry="20" fill="#0a2b21" stroke="#00E5A0" strokeOpacity="0.4" />
-          <ellipse cx="240" cy="322" rx="60" ry="13" fill="none" stroke="#00E5A0" strokeOpacity="0.35" strokeDasharray="3 5" />
+          <ellipse cx="240" cy="322" rx="60" ry="13" fill="none" stroke="#F7B733" strokeOpacity="0.45" strokeDasharray="3 5" />
         </g>
 
-        {/* floating BTC coin */}
+        {/* floating BTC coin — ENLARGED with a metallic GOLD “B” as the hero focus (client request) */}
         <motion.g
           animate={{ y: [0, -9, 0] }}
           transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
         >
-          <circle cx="240" cy="150" r="76" fill="none" stroke="#00E5A0" strokeOpacity="0.22" strokeDasharray="2 7" />
-          <circle cx="240" cy="150" r="64" fill="url(#coinFace)" stroke="#00E5A0" strokeWidth="2" filter="url(#softGlow)" />
-          <circle cx="240" cy="150" r="52" fill="none" stroke="#00E5A0" strokeOpacity="0.3" />
+          {/* warm gold halo behind the coin */}
+          <circle cx="240" cy="150" r="92" fill="#F7B733" opacity="0.16" filter="url(#coinHalo)" />
+          {/* dashed mint orbit */}
+          <circle cx="240" cy="150" r="102" fill="none" stroke="#00E5A0" strokeOpacity="0.22" strokeDasharray="2 7" />
+          {/* coin face + gold rim */}
+          <circle cx="240" cy="150" r="86" fill="url(#coinFace)" stroke="url(#coinRim)" strokeWidth="3.5" />
+          {/* inner gold ring */}
+          <circle cx="240" cy="150" r="70" fill="none" stroke="#F7B733" strokeOpacity="0.32" />
+          {/* embossed depth layer */}
           <text
             x="240"
-            y="152"
+            y="155"
             textAnchor="middle"
             dominantBaseline="central"
-            fontSize="58"
+            fontSize="124"
             fontWeight="800"
-            fill="#2cf0b5"
+            fill="#7A5407"
+            opacity="0.55"
             fontFamily="ui-sans-serif, system-ui, sans-serif"
           >
             ₿
           </text>
+          {/* metallic gold B — much larger, perfectly centered */}
+          <text
+            x="240"
+            y="150"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize="124"
+            fontWeight="800"
+            fill="url(#btcGold)"
+            fontFamily="ui-sans-serif, system-ui, sans-serif"
+          >
+            ₿
+          </text>
+          {/* specular highlight arc on the coin rim */}
+          <path d="M192,108 A62,62 0 0 1 288,108" fill="none" stroke="#FFF7DC" strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" />
         </motion.g>
 
-        {/* sparkles */}
-        <g fill="#2cf0b5">
+        {/* sparkles — mint ambient + gold accents near the coin */}
+        <g>
           <motion.circle
             cx="105" cy="95" r="2"
+            fill="#2cf0b5"
             animate={{ opacity: [0.15, 0.9, 0.15] }}
             transition={{ duration: 3, repeat: Infinity, delay: 0.4 }}
           />
           <motion.circle
             cx="395" cy="120" r="2.4"
+            fill="#2cf0b5"
             animate={{ opacity: [0.2, 1, 0.2] }}
             transition={{ duration: 3.6, repeat: Infinity, delay: 1.1 }}
           />
           <motion.circle
             cx="365" cy="300" r="1.8"
+            fill="#2cf0b5"
             animate={{ opacity: [0.15, 0.8, 0.15] }}
             transition={{ duration: 2.8, repeat: Infinity, delay: 1.8 }}
           />
           <motion.circle
             cx="130" cy="285" r="1.8"
+            fill="#2cf0b5"
             animate={{ opacity: [0.1, 0.7, 0.1] }}
             transition={{ duration: 3.2, repeat: Infinity, delay: 0.9 }}
+          />
+          <motion.circle
+            cx="338" cy="64" r="2.4"
+            fill="#F7B733"
+            animate={{ opacity: [0.2, 1, 0.2] }}
+            transition={{ duration: 3.1, repeat: Infinity, delay: 0.6 }}
+          />
+          <motion.circle
+            cx="148" cy="212" r="2"
+            fill="#F7B733"
+            animate={{ opacity: [0.15, 0.85, 0.15] }}
+            transition={{ duration: 3.4, repeat: Infinity, delay: 1.4 }}
           />
         </g>
       </svg>

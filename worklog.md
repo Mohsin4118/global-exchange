@@ -360,3 +360,20 @@ Work Log:
 Stage Summary:
 - All 16 requirements re-verified working as ONE connected system: server-side JSON DB + API-layer authorization is the single source of truth; balances computed from ledger so every create/edit/delete/approve instantly updates client dashboards, CRM statistics, deposits/withdrawals, balances, audit and reports in both directions
 - 34/34 checklist steps PASS; zero page errors; zero console errors; lint 0 errors; DB reset to pristine; demo credentials unchanged (demo@cryptowiseuk.com / Demo@2026 · super@cryptowiseuk.com / Super@2026)
+
+---
+Task ID: 20
+Agent: Main agent (Super Z)
+Task: Homepage hero rework (reqs 17-18) — MUCH larger GOLD/metallic Bitcoin B as hero focus, correct official crypto logo positioning with zero text overlap, proper mobile responsive rebuild (no scale hacks), header consistency check
+
+Work Log:
+- Removed the old mobile-only FloatingCluster that floated coins BEHIND the hero heading (overlap violation); hero copy column is now pure text — badge, "Crypto Made" (white) / "Simple." (mint), description, chips, buttons — nothing can cover it on any viewport
+- Rebuilt GlobeVisual Bitcoin coin: radius 64→86 (dashed orbit 76→102), ₿ glyph fontSize 58→124 with two-layer emboss (dark depth layer + metallic-gold linearGradient #FFF7DC→#FFE89A→#F7B733→#DE9A12→#B9770E), perfectly centered at coin center (240,150) via textAnchor=middle + dominantBaseline=central; gold rim gradient stroke, inner gold ring, warm gold halo (blurred circle), specular highlight arc, gold podium dashed ring + gold-tinted light cone, 2 gold sparkles added beside mint ones
+- New HeroSatellites layer anchored INSIDE the visual wrapper (dir=ltr, pointer-events-none): official logo files from public/logos — Ethereum, USDT/Tether, Aramco, Salek in white circular badges + tiny label pills, gentle framer-motion float; symmetric orbit insets left/right 16% so the fixed contact dock (EN: bottom-right, AR: bottom-left) never covers any label at any scroll position; badges h-9 mobile / h-12 desktop
+- Responsive rebuild is structural, not scaled: the graphic is its own grid cell on desktop and stacks BELOW the copy on mobile in normal flow → zero overlap possible; physical inset positioning inside dir=ltr wrapper keeps satellites stable in RTL; verified scrollWidth==clientWidth at 375/390/1440 (no horizontal overflow, no right-edge clipping, no transform scale/zoom anywhere)
+- Header (req 18) verified: CryptoWise logo mark + name + TRADE · INVEST · GROW tagline + mobile menu button, sticky in-flow (cannot overlap hero); AR header mirrored with menu button left
+- Browser verification (screenshots in scripts/verify20/): desktop 1440 EN + AR (visual column right in EN / LEFT in AR per RTL, gold B prominent in both), mobile 390 + 375 EN + AR (text untouched by graphics, satellites in-bounds, dock clear), 0 page errors, 0 console errors, lint 0 errors / 42 pre-existing warnings
+
+Stage Summary:
+- Hero now has a much larger METALLIC GOLD Bitcoin B as the undisputed main focus of the crypto graphic, surrounded by the correct official logos (Bitcoin mark itself gold, ETH/USDT/Aramco/Salek official files) in a clean orbit
+- Hero text, buttons and header are geometrically unreachable by the graphic on every viewport; mobile adaptation is a true layout rebuild (flow + insets), not a CSS scale-down
