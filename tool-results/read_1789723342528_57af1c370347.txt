@@ -1,0 +1,670 @@
+     1→/* ------------------------------------------------------------------ */
+     2→/*  CryptoWise — server-side database (single source of truth)         */
+     3→/*  JSON file store under /data. ALL mutations go through the API      */
+     4→/*  routes, which enforce authentication and authorization: a client   */
+     5→/*  token can only ever touch its own records; admin endpoints require */
+     6→/*  an admin session. Balances are never stored — they are always      */
+     7→/*  computed from the transaction ledger, so every edit/delete is      */
+     8→/*  reflected everywhere at once.                                      */
+     9→/* ------------------------------------------------------------------ */
+    10→
+    11→import crypto from "crypto";
+    12→import fs from "fs";
+    13→import path from "path";
+    14→import type {
+    15→  AdminRole,
+    16→  AdminSnapshot,
+    17→  AdminStats,
+    18→  AuditAction,
+    19→  AuditEntry,
+    20→  Client,
+    21→  ClientComment,
+    22→  ComputedFinancials,
+    23→  DbData,
+    24→  Notification,
+    25→  PublicClient,
+    26→  Session,
+    27→  StaffMember,
+    28→  Tx,
+    29→  TxEvent,
+    30→  TxStatus,
+    31→} from "@/lib/shared-types";
+    32→
+    33→const DATA_DIR = path.join(process.cwd(), "data");
+    34→const DB_FILE = path.join(DATA_DIR, "db.json");
+    35→
+    36→/* ---------------- password hashing (scrypt) ---------------- */
+    37→
+    38→export function hashPassword(password: string): { salt: string; hash: string } {
+    39→  const salt = crypto.randomBytes(16).toString("hex");
+    40→  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+    41→  return { salt, hash };
+    42→}
+    43→
+    44→export function verifyPassword(password: string, stored: { salt: string; hash: string }): boolean {
+    45→  try {
+    46→    const candidate = crypto.scryptSync(password, stored.salt, 64);
+    47→    const expected = Buffer.from(stored.hash, "hex");
+    48→    return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
+    49→  } catch {
+    50→    return false;
+    51→  }
+    52→}
+    53→
+    54→/* ---------------- ids & formatting ---------------- */
+    55→
+    56→let seq = 0;
+    57→export function uid(prefix: string): string {
+    58→  seq += 1;
+    59→  return `${prefix}${Date.now().toString(36)}${seq.toString(36)}${crypto.randomBytes(3).toString("hex")}`;
+    60→}
+    61→
+    62→export function newReference(): string {
+    63→  const d = new Date();
+    64→  const ymd = `${d.getFullYear().toString().slice(-2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    65→  return `TXN-${ymd}-${crypto.randomInt(1000, 9999)}`;
+    66→}
+    67→
+    68→export function stamp(): string {
+    69→  const d = new Date();
+    70→  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    71→  let h = d.getHours();
+    72→  const ampm = h >= 12 ? "PM" : "AM";
+    73→  h = h % 12 || 12;
+    74→  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}, ${String(h).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`;
+    75→}
+    76→
+    77→function relTime(iso: string): string {
+    78→  const then = new Date(iso).getTime();
+    79→  if (Number.isNaN(then)) return "just now";
+    80→  const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+    81→  if (mins < 1) return "just now";
+    82→  if (mins < 60) return `${mins}m ago`;
+    83→  const hours = Math.round(mins / 60);
+    84→  if (hours < 24) return `${hours}h ago`;
+    85→  const days = Math.round(hours / 24);
+    86→  if (days < 7) return `${days}d ago`;
+    87→  return `${Math.round(days / 7)}w ago`;
+    88→}
+    89→
+    90→function daysAgoISO(days: number): string {
+    91→  const d = new Date();
+    92→  d.setDate(d.getDate() - days);
+    93→  return d.toISOString().slice(0, 10);
+    94→}
+    95→
+    96→function hashCode(s: string): number {
+    97→  let h = 0;
+    98→  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    99→  return h;
+   100→}
+   101→
+   102→/* ---------------- seed ---------------- */
+   103→
+   104→function makeTx(p: {
+   105→  clientId: string;
+   106→  dateISO: string;
+   107→  kind: Tx["kind"];
+   108→  type: Tx["type"];
+   109→  amount: number;
+   110→  label: string;
+   111→  labelKey?: string;
+   112→  asset?: string;
+   113→  status?: Tx["status"];
+   114→  method?: string;
+   115→  notes?: string;
+   116→}): Tx {
+   117→  const status = p.status ?? "COMPLETED";
+   118→  return {
+   119→    id: uid("tx"),
+   120→    clientId: p.clientId,
+   121→    dateISO: p.dateISO,
+   122→    kind: p.kind,
+   123→    type: p.type,
+   124→    amount: p.amount,
+   125→    label: p.label,
+   126→    labelKey: p.labelKey,
+   127→    asset: p.asset,
+   128→    status,
+   129→    reference: newReference(),
+   130→    method: p.method ?? "Bank Transfer",
+   131→    notes: p.notes ?? "—",
+   132→    history: [{ at: new Date(`${p.dateISO}T10:00:00Z`).toISOString(), by: "CryptoWise", byRole: "system", from: null, to: status }],
+   133→    createdAtISO: new Date(`${p.dateISO}T10:00:00Z`).toISOString(),
+   134→    updatedAtISO: new Date(`${p.dateISO}T10:00:00Z`).toISOString(),
+   135→  };
+   136→}
+   137→
+   138→function makeNotification(p: Pick<Notification, "audience" | "title" | "body" | "kind"> & { createdAtISO?: string; unread?: boolean }): Notification {
+   139→  const createdAtISO = p.createdAtISO ?? new Date().toISOString();
+   140→  return {
+   141→    id: uid("n"),
+   142→    audience: p.audience,
+   143→    title: p.title,
+   144→    body: p.body,
+   145→    kind: p.kind,
+   146→    createdAtISO,
+   147→    time: relTime(createdAtISO),
+   148→    unread: p.unread ?? true,
+   149→  };
+   150→}
+   151→
+   152→function seed(): DbData {
+   153→  const legacy: Array<{
+   154→    id: string;
+   155→    name: string;
+   156→    email: string;
+   157→    phone: string;
+   158→    country: string;
+   159→    balance: number;
+   160→    agent: string;
+   161→    joined: number;
+   162→    credits: Array<[number, string]>;
+   163→    debits?: Array<[number, string]>;
+   164→  }> = [
+   165→    { id: "cmu17qlbz001kksrjcmizek47", name: "جميل باعاد", email: "Jamalabaabad@cryptowiseuk.com", phone: "966655444511", country: "Saudi Arabia", balance: 630093.15, agent: "Super Admin", joined: 1, credits: [[630093.15, "Deposit — Bank Transfer"]] },
+   166→    { id: "cmu12en3o0017ksrj5f2ew7sm", name: "Mohammad zakaria Almairi", email: "mzalmyri@gmail.com", phone: "967712345678", country: "", balance: 1647314.64, agent: "Super Admin", joined: 1, credits: [[1647314.64, "Deposit — Bank Transfer"]] },
+   167→    { id: "cmu0wcfw2000jksrj6zsjppcz", name: "Abdalkafi M", email: "abdalkafi11@cryptowiseuk.com", phone: "249912345678", country: "Saudi Arabia", balance: 230697.3, agent: "Super Admin", joined: 2, credits: [[230697.3, "Deposit — Bank Transfer"]] },
+   168→    { id: "cmu0xcb3x000hksrjxd9gt4nq", name: "Charlie Williams (Joint A/C - No: 35d2c6sd52)", email: "charliew12@gmail.com", phone: "447700900123", country: "United Kingdom", balance: 652103.61, agent: "Super Admin", joined: 2, credits: [[380000, "Deposit — Bank Transfer"], [122000, "Deposit — Bank Transfer"], [150103.61, "Deposit — Bank Transfer"]] },
+   169→    { id: "cmu0yd9z000gksrjq2pf8wxk", name: "John John", email: "john1@gmail.com", phone: "", country: "", balance: 0, agent: "Super Admin", joined: 3, credits: [] },
+   170→    { id: "cmu0zr4w000fksrju8hn3v2m", name: "سيد محمد محمود", email: "h6939411@gmail.com", phone: "", country: "السعودية", balance: 0, agent: "", joined: 4, credits: [] },
+   171→    { id: "cmtyzus0r000aksrjgsnsegbh", name: "محسن ذيب الفقاطيني", email: "Mohsen@cryptowiseuk.com", phone: "962790000000", country: "", balance: 2856800.62, agent: "", joined: 4, credits: [[2856800.62, "Deposit — Bank Transfer"]] },
+   172→    { id: "cmtvd6b3z000jksrjy0ql8d2", name: "عزيز الزهراني", email: "alzhrany@cryptowiseuk.com", phone: "966501234567", country: "", balance: 179679.35, agent: "", joined: 4, credits: [[179679.35, "Deposit — Bank Transfer"]] },
+   173→    { id: "cmtvdbf10000iksrj4xw2n7q", name: "محمد النبريصي", email: "mhmdalnbryst214@gmail.com", phone: "", country: "", balance: 62088.96, agent: "", joined: 4, credits: [[62088.96, "Deposit — Bank Transfer"]] },
+   174→    { id: "cmtve5k80000hksrjq3xn9w2", name: "Salem Hadi", email: "Salem12@cryptowiseuk.com", phone: "967734567890", country: "", balance: 120009.96, agent: "", joined: 5, credits: [[120009.96, "Deposit — Bank Transfer"]] },
+   175→    { id: "cmtv9p2w00007ksrjum3dx4k", name: "Paula Louise Mole", email: "paula.mole@outlook.com", phone: "447700900456", country: "United Kingdom", balance: 18810.58, agent: "", joined: 5, credits: [[20000, "Deposit — Bank Transfer"], [1000, "Deposit — Bank Transfer"]], debits: [[2189.42, "Debit — Bank charges"]] },
+   176→    { id: "cmtvczfiy0006ksrjb5rs8e2d", name: "Najah Nubraisii", email: "najah.n@gmail.com", phone: "", country: "", balance: 60000, agent: "", joined: 6, credits: [[60000, "Deposit — Bank Transfer"]] },
+   177→    { id: "cmtvda7w00004ksrjk9lm3f8q", name: "ALY ABDELMOULA", email: "aly.abdelmoula@gmail.com", phone: "21620123456", country: "", balance: 120525, agent: "", joined: 6, credits: [[120525, "Deposit — Bank Transfer"]] },
+   178→    { id: "cmtvd4a1z0005ksrjm2xt7v3n", name: "عزيز جمال الزهراني", email: "aziz.jalal@gmail.com", phone: "", country: "", balance: 1.0, agent: "", joined: 6, credits: [[1.0, "Test deposit"]] },
+   179→    { id: "cmtt8k3w00002ksrjp6vh9x4d", name: "marc John", email: "marc.john@gmail.com", phone: "", country: "", balance: 65983.91, agent: "", joined: 8, credits: [[65983.91, "Deposit — Bank Transfer"]] },
+   180→    { id: "cmtt5r9w00001ksrjw4yq2f6n", name: "John Anderson", email: "john.anderson@proton.me", phone: "", country: "", balance: 65983.92, agent: "", joined: 8, credits: [[65983.92, "Deposit — Bank Transfer"]] },
+   181→  ];
+   182→
+   183→  const clients: Client[] = [];
+   184→  const txs: Tx[] = [];
+   185→  const notifications: Notification[] = [];
+   186→  const legacyPassword = hashPassword("Client@2026");
+   187→
+   188→  for (const l of legacy) {
+   189→    clients.push({
+   190→      id: l.id,
+   191→      accountNo: `CW-${100000 + (Math.abs(hashCode(l.id)) % 899999)}`,
+   192→      name: l.name,
+   193→      email: l.email,
+   194→      passwordHash: { ...legacyPassword },
+   195→      phone: l.phone,
+   196→      country: l.country,
+   197→      address: "",
+   198→      city: "",
+   199→      postcode: "",
+   200→      openingBalance: 0,
+   201→      holdings: [],
+   202→      tier: l.balance >= 500000 ? "Private" : l.balance >= 100000 ? "Premium" : "Standard",
+   203→      status: "active",
+   204→      kycStatus: l.credits.length > 0 ? "verified" : "unverified",
+   205→      agent: l.agent,
+   206→      managerNote: "",
+   207→      createdAtISO: daysAgoISO(l.joined),
+   208→    });
+   209→    for (const [amount, label] of l.credits) {
+   210→      txs.push(makeTx({ clientId: l.id, dateISO: daysAgoISO(l.joined), kind: "deposit", type: "CREDIT", amount, label }));
+   211→    }
+   212→    for (const [amount, label] of l.debits ?? []) {
+   213→      txs.push(makeTx({ clientId: l.id, dateISO: daysAgoISO(l.joined), kind: "adjustment", type: "DEBIT", amount, label }));
+   214→    }
+   215→    notifications.push(
+   216→      makeNotification({
+   217→        audience: "admin",
+   218→        title: "New Client Registration",
+   219→        body: `${l.name} has registered on the platform.`,
+   220→        kind: "registration",
+   221→        createdAtISO: new Date(`${daysAgoISO(l.joined)}T09:30:00Z`).toISOString(),
+   222→        unread: false,
+   223→      }),
+   224→    );
+   225→  }
+   226→
+   227→  /* ---- pending withdrawal requests (from the platform's withdrawal queue) ---- */
+   228→  const withdrawals: Array<{ client: string; date: number; amount: string; usd: number; method: string; address: string }> = [
+   229→    { client: "cmtv9p2w00007ksrjum3dx4k", date: 5, amount: "20000.00000000 USDT", usd: 20000, method: "Crypto — USDT (TRC-20)", address: "TQn9Y2khEsLJW1ChVWFMSMeRDow5oNj4yE" },
+   230→    { client: "cmtve5k80000hksrjq3xn9w2", date: 6, amount: "10000.00000000 USDT", usd: 10000, method: "Crypto — USDT (ERC-20)", address: "0x8fA7b4C23E9105D6ea7B3190cD425f6E8a90D123" },
+   231→    { client: "cmu0yd9z000gksrjq2pf8wxk", date: 7, amount: "0.12636634 BTC", usd: 9775.42, method: "Crypto — Bitcoin", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
+   232→  ];
+   233→  for (const w of withdrawals) {
+   234→    txs.push(
+   235→      makeTx({
+   236→        clientId: w.client,
+   237→        dateISO: daysAgoISO(w.date),
+   238→        kind: "withdrawal",
+   239→        type: "DEBIT",
+   240→        amount: w.usd,
+   241→        label: `Withdrawal request — ${w.amount}`,
+   242→        status: "PENDING",
+   243→        method: w.method,
+   244→        notes: w.address,
+   245→      }),
+   246→    );
+   247→    const client = legacy.find((l) => l.id === w.client);
+   248→    notifications.push(
+   249→      makeNotification({
+   250→        audience: "admin",
+   251→        title: "New Withdrawal Request",
+   252→        body: `${client?.name ?? "Client"} requested a withdrawal of ${w.amount}.`,
+   253→        kind: "withdrawal",
+   254→        createdAtISO: new Date(`${daysAgoISO(w.date)}T14:00:00Z`).toISOString(),
+   255→      }),
+   256→    );
+   257→  }
+   258→
+   259→  /* ---- demo client (Alex Morgan) — the published demo credentials ---- */
+   260→  const demoId = "demo-client";
+   261→  clients.push({
+   262→    id: demoId,
+   263→    accountNo: "CW-102394",
+   264→    name: "Alex Morgan",
+   265→    email: "demo@cryptowiseuk.com",
+   266→    passwordHash: hashPassword("Demo@2026"),
+   267→    phone: "+44 7700 900123",
+   268→    country: "United Kingdom",
+   269→    address: "44 Harbor Point",
+   270→    city: "Bristol",
+   271→    postcode: "BS1 4TT",
+   272→    openingBalance: 0,
+   273→    holdings: [
+   274→      { assetId: "bitcoin", units: 0.35 },
+   275→      { assetId: "ethereum", units: 4.2 },
+   276→      { assetId: "tether", units: 12500 },
+   277→      { assetId: "solana", units: 18 },
+   278→      { assetId: "aramco", units: 1200 },
+   279→      { assetId: "salik", units: 2500 },
+   280→    ],
+   281→    tier: "Private",
+   282→    status: "active",
+   283→    kycStatus: "verified",
+   284→    agent: "Super Admin",
+   285→    managerNote: "Your dedicated portfolio manager is available Mon–Fri, 9am–6pm GMT.",
+   286→    createdAtISO: daysAgoISO(26),
+   287→    isDemo: true,
+   288→  });
+   289→  const demoTrades: Array<[number, number, string]> = [
+   290→    [18, 27088.95, "0.35 BTC"],
+   291→    [17, 10448.05, "4.2 ETH"],
+   292→    [16, 1818.36, "18 SOL"],
+   293→    [14, 8736, "1,200 Aramco"],
+   294→    [14, 3500, "2,500 Salek"],
+   295→    [13, 12497.5, "12,500 USDT"],
+   296→  ];
+   297→  txs.push(makeTx({ clientId: demoId, dateISO: daysAgoISO(21), kind: "deposit", type: "CREDIT", amount: 85000, label: "Wire deposit — First Gulf Bank", labelKey: "txWireIn" }));
+   298→  for (const [day, amount, asset] of demoTrades) {
+   299→    txs.push(makeTx({ clientId: demoId, dateISO: daysAgoISO(day), kind: "trade", type: "DEBIT", amount, label: "Buy order filled", labelKey: "txBuy", asset }));
+   300→  }
+   301→  txs.push(makeTx({ clientId: demoId, dateISO: daysAgoISO(11), kind: "withdrawal", type: "DEBIT", amount: 8431.14, label: "Withdrawal to bank account", labelKey: "txWithdraw" }));
+   302→  txs.push(
+   303→    makeTx({
+   304→      clientId: demoId,
+   305→      dateISO: daysAgoISO(1),
+   306→      kind: "withdrawal",
+   307→      type: "DEBIT",
+   308→      amount: 2000,
+   309→      label: "Withdrawal request — bank transfer",
+   310→      status: "PENDING",
+   311→      notes: "Requested from client dashboard",
+   312→    }),
+   313→  );
+   314→  notifications.push(
+   315→    makeNotification({
+   316→      audience: demoId,
+   317→      title: "Welcome to CryptoWise",
+   318→      body: "Your private portal is live. Your dedicated manager can be reached any time from the contact buttons below.",
+   319→      kind: "account",
+   320→      createdAtISO: new Date(`${daysAgoISO(26)}T09:00:00Z`).toISOString(),
+   321→      unread: false,
+   322→    }),
+   323→    makeNotification({
+   324→      audience: demoId,
+   325→      title: "Wire deposit received",
+   326→      body: "Your deposit of $85,000.00 has been credited to your account.",
+   327→      kind: "deposit",
+   328→      createdAtISO: new Date(`${daysAgoISO(21)}T11:00:00Z`).toISOString(),
+   329→      unread: false,
+   330→    }),
+   331→    makeNotification({
+   332→      audience: demoId,
+   333→      title: "Withdrawal request received",
+   334→      body: "Your withdrawal request of $2,000.00 is being reviewed by your account manager.",
+   335→      kind: "withdrawal",
+   336→      createdAtISO: new Date(`${daysAgoISO(1)}T12:30:00Z`).toISOString(),
+   337→      unread: true,
+   338→    }),
+   339→  );
+   340→
+   341→  /* ---- second portal client — proves client A can never see client B ---- */
+   342→  const sarahId = "client-sarah";
+   343→  clients.push({
+   344→    id: sarahId,
+   345→    accountNo: "CW-238171",
+   346→    name: "Sarah Johnson",
+   347→    email: "sarah.johnson@example.com",
+   348→    passwordHash: hashPassword("Sarah@2026"),
+   349→    phone: "+44 7700 900456",
+   350→    country: "United Kingdom",
+   351→    address: "12 Kingsway Mews",
+   352→    city: "London",
+   353→    postcode: "W1T 4QJ",
+   354→    openingBalance: 0,
+   355→    holdings: [],
+   356→    tier: "Premium",
+   357→    status: "active",
+   358→    kycStatus: "pending",
+   359→    agent: "Super Admin",
+   360→    managerNote: "",
+   361→    createdAtISO: daysAgoISO(2),
+   362→  });
+   363→  txs.push(makeTx({ clientId: sarahId, dateISO: daysAgoISO(2), kind: "opening", type: "CREDIT", amount: 25000, label: "Account opening deposit", labelKey: "txOpening" }));
+   364→  notifications.push(
+   365→    makeNotification({ audience: "admin", title: "New Client Registration", body: "Sarah Johnson has registered on the platform.", kind: "registration", createdAtISO: new Date(`${daysAgoISO(2)}T10:15:00Z`).toISOString() }),
+   366→    makeNotification({
+   367→      audience: sarahId,
+   368→      title: "Welcome to CryptoWise",
+   369→      body: "Your account has been created. Your account manager will help you fund your account — reach out any time.",
+   370→      kind: "account",
+   371→      createdAtISO: new Date(`${daysAgoISO(2)}T10:16:00Z`).toISOString(),
+   372→      unread: false,
+   373→    }),
+   374→  );
+   375→
+   376→  /* ---- audit history (replicated from the platform) ---- */
+   377→  const audit: AuditEntry[] = [
+   378→    { id: "a57", date: "Sep 14, 2026, 01:39 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmtyzus0r000aksrjgsnsegbh","type":"CREDIT","amount":2856332,"reference":"TXN-2026-0908-01"}', ip: "—" },
+   379→    { id: "a56", date: "Sep 14, 2026, 01:22 PM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu17qlbz001kksrjcmizek47","type":"CREDIT","amount":630015,"reference":"TXN-2026-0914-05"}', ip: "—" },
+   380→    { id: "a55", date: "Sep 14, 2026, 01:22 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Jamalabaabad@cryptowiseuk.com","name":"جميل باعاد","country":"Saudi Arabia"}', ip: "—" },
+   381→    { id: "a54", date: "Sep 14, 2026, 11:06 AM", admin: "Super Admin", action: "Update Client", entity: "USER", detailsOld: '{"name":null,"email":"Abdalkafi11@cryptowiseuk.com"}', detailsNew: '{"name":"Abdalkafi M","email":"abdalkafi11@cryptowiseuk.com"}', ip: "—" },
+   382→    { id: "a53", date: "Sep 14, 2026, 11:03 AM", admin: "Super Admin", action: "Create Transaction", entity: "TRANSACTION", detailsNew: '{"clientId":"cmu12en3o0017ksrj5f2ew7sm","type":"CREDIT","amount":1662000,"reference":"TXN-2026-0914-04"}', ip: "—" },
+   383→    { id: "a49", date: "Sep 14, 2026, 08:03 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"Abdalkafi11@cryptowiseuk.com","name":"Abdalkafi M","country":"Saudi Arabia"}', ip: "—" },
+   384→    { id: "a48", date: "Sep 13, 2026, 04:29 PM", admin: "Super Admin", action: "Update Client", entity: "USER", detailsOld: '{"name":"Charile Williams","email":"charliew12@gmail.com"}', detailsNew: '{"name":"Charlie Williams (Joint A/C - No: 35d2c6sd52)","email":"charliew12@gmail.com"}', ip: "—" },
+   385→    { id: "a45", date: "Sep 12, 2026, 09:38 AM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"paula.mole@outlook.com","name":"Paula Louise Mole","country":"United Kingdom"}', ip: "—" },
+   386→    { id: "a27", date: "Sep 7, 2026, 04:02 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"najah.n@gmail.com","name":"Najah Nubraisii"}', ip: "—" },
+   387→    { id: "a21", date: "Sep 4, 2026, 07:41 AM", admin: "Super Admin", action: "Sign In", entity: "SESSION", detailsNew: '{"method":"password","mfa":true}', ip: "—" },
+   388→    { id: "a18", date: "Sep 3, 2026, 05:26 PM", admin: "Super Admin", action: "Create Client", entity: "USER", detailsNew: '{"email":"john.anderson@proton.me","name":"John Anderson"}', ip: "—" },
+   389→    { id: "a02", date: "Aug 22, 2026, 05:35 PM", admin: "Super Admin", action: "Create Role", entity: "ROLE", detailsNew: '{"name":"Super Admin","permissions":["all"]}', ip: "—" },
+   390→  ];
+   391→
+   392→  const staff: StaffMember[] = [
+   393→    { id: "st1", name: "Super Admin", email: "super@cryptowiseuk.com", role: "Super Admin", status: "ACTIVE", lastLogin: "—", you: true },
+   394→    { id: "st2", name: "Super Admin", email: "bouabidbeegrowth@gmail.com", role: "Super Admin", status: "ACTIVE", lastLogin: "Sep 14, 2026" },
+   395→  ];
+   396→
+   397→  const roles: AdminRole[] = [
+   398→    { id: "r1", name: "Super Admin", allAccess: true, permissions: [], staffCount: 2 },
+   399→    { id: "r2", name: "Agent", permissions: ["View", "Create", "Edit", "Delete", "Manage", "Send"], staffCount: 0 },
+   400→  ];
+   401→
+   402→  return {
+   403→    clients,
+   404→    txs,
+   405→    notifications,
+   406→    audit,
+   407→    comments: [],
+   408→    staff,
+   409→    roles,
+   410→    sessions: [],
+   411→    adminUser: {
+   412→      email: "super@cryptowiseuk.com",
+   413→      name: "Super Admin",
+   414→      passwordHash: hashPassword("Super@2026"),
+   415→    },
+   416→  };
+   417→}
+   418→
+   419→/* ---------------- file IO ---------------- */
+   420→
+   421→function readDb(): DbData {
+   422→  if (!fs.existsSync(DB_FILE)) {
+   423→    fs.mkdirSync(DATA_DIR, { recursive: true });
+   424→    const seeded = seed();
+   425→    fs.writeFileSync(DB_FILE, JSON.stringify(seeded, null, 2), "utf8");
+   426→    return seeded;
+   427→  }
+   428→  try {
+   429→    const raw = fs.readFileSync(DB_FILE, "utf8");
+   430→    const parsed = JSON.parse(raw) as DbData;
+   431→    if (!parsed.adminUser || !Array.isArray(parsed.clients)) throw new Error("corrupt db");
+   432→    parsed.sessions ??= [];
+   433→    parsed.comments ??= [];
+   434→    parsed.staff ??= [];
+   435→    parsed.roles ??= [];
+   436→    parsed.audit ??= [];
+   437→    parsed.notifications ??= [];
+   438→    parsed.txs ??= [];
+   439→    return parsed;
+   440→  } catch {
+   441→    const seeded = seed();
+   442→    fs.writeFileSync(DB_FILE, JSON.stringify(seeded, null, 2), "utf8");
+   443→    return seeded;
+   444→  }
+   445→}
+   446→
+   447→function writeDb(data: DbData) {
+   448→  fs.mkdirSync(DATA_DIR, { recursive: true });
+   449→  const tmp = `${DB_FILE}.tmp`;
+   450→  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+   451→  fs.renameSync(tmp, DB_FILE);
+   452→}
+   453→
+   454→/** Read (seeding on first use). */
+   455→export function db(): DbData {
+   456→  return readDb();
+   457→}
+   458→
+   459→/** Mutate the database atomically and persist. */
+   460→export function mutate<T>(fn: (data: DbData) => T): T {
+   461→  const data = readDb();
+   462→  const result = fn(data);
+   463→  writeDb(data);
+   464→  return result;
+   465→}
+   466→
+   467→/* ---------------- sessions & authz ---------------- */
+   468→
+   469→export function createSession(role: "admin" | "client", email: string, clientId?: string): Session {
+   470→  const session: Session = {
+   471→    token: crypto.randomBytes(24).toString("hex"),
+   472→    role,
+   473→    email,
+   474→    clientId,
+   475→    createdAtISO: new Date().toISOString(),
+   476→  };
+   477→  mutate((data) => {
+   478→    data.sessions = [session, ...data.sessions].slice(0, 200);
+   479→  });
+   480→  return session;
+   481→}
+   482→
+   483→export function resolveSession(token: string | null | undefined): Session | null {
+   484→  if (!token) return null;
+   485→  const data = readDb();
+   486→  return data.sessions.find((s) => s.token === token) ?? null;
+   487→}
+   488→
+   489→export function destroySession(token: string) {
+   490→  mutate((data) => {
+   491→    data.sessions = data.sessions.filter((s) => s.token !== token);
+   492→  });
+   493→}
+   494→
+   495→/** Session must belong to a client — returns the client record or null. */
+   496→export function requireClient(token: string | null | undefined): Client | null {
+   497→  const session = resolveSession(token);
+   498→  if (!session || session.role !== "client" || !session.clientId) return null;
+   499→  return readDb().clients.find((c) => c.id === session.clientId) ?? null;
+   500→}
+   501→
+   502→/** Session must be an admin session. */
+   503→export function requireAdmin(token: string | null | undefined): boolean {
+   504→  const session = resolveSession(token);
+   505→  return Boolean(session && session.role === "admin");
+   506→}
+   507→
+   508→/* ---------------- derived money math ---------------- */
+   509→
+   510→export function round2(n: number): number {
+   511→  return Math.round((n + Number.EPSILON) * 100) / 100;
+   512→}
+   513→
+   514→/** Request statuses that are still moving through the pipeline. Everything
+   515→    except REJECTED / CANCELLED / COMPLETED reserves funds (withdrawals) and
+   516→    counts as an open request. */
+   517→export function inFlight(status: TxStatus): boolean {
+   518→  return status === "PENDING" || status === "UNDER_REVIEW" || status === "APPROVED" || status === "PROCESSING";
+   519→}
+   520→
+   521→export function computeFinancials(clientId: string, data: DbData): ComputedFinancials {
+   522→  const client = data.clients.find((c) => c.id === clientId);
+   523→  const own = data.txs.filter((t) => t.clientId === clientId);
+   524→  let credits = 0;
+   525→  let debits = 0;
+   526→  let pendingWithdrawals = 0;
+   527→  for (const t of own) {
+   528→    if (t.status === "COMPLETED") {
+   529→      if (t.type === "CREDIT") credits += t.amount;
+   530→      else debits += t.amount;
+   531→    } else if (inFlight(t.status) && t.kind === "withdrawal" && t.type === "DEBIT") {
+   532→      pendingWithdrawals += t.amount;
+   533→    }
+   534→  }
+   535→  const balance = Math.max(0, (client?.openingBalance ?? 0) + credits - debits);
+   536→  return {
+   537→    balance: round2(balance),
+   538→    available: round2(Math.max(0, balance - pendingWithdrawals)),
+   539→    credits: round2(credits),
+   540→    debits: round2(debits),
+   541→    pendingWithdrawals: round2(pendingWithdrawals),
+   542→    txCount: own.length,
+   543→  };
+   544→}
+   545→
+   546→/** Balance timeline per client so each tx row can show "balance after". */
+   547→function balanceAfterMap(data: DbData): Map<string, number> {
+   548→  const result = new Map<string, number>();
+   549→  const byClient = new Map<string, Tx[]>();
+   550→  for (const t of data.txs) {
+   551→    const list = byClient.get(t.clientId) ?? [];
+   552→    list.push(t);
+   553→    byClient.set(t.clientId, list);
+   554→  }
+   555→  for (const [clientId, list] of byClient) {
+   556→    const client = data.clients.find((c) => c.id === clientId);
+   557→    const sorted = [...list].sort((a, b) => (a.dateISO === b.dateISO ? a.createdAtISO.localeCompare(b.createdAtISO) : a.dateISO.localeCompare(b.dateISO)));
+   558→    let bal = client?.openingBalance ?? 0;
+   559→    for (const t of sorted) {
+   560→      if (t.status === "COMPLETED") bal = Math.max(0, bal + (t.type === "CREDIT" ? t.amount : -t.amount));
+   561→      result.set(t.id, round2(bal));
+   562→    }
+   563→  }
+   564→  return result;
+   565→}
+   566→
+   567→/* ---------------- safe serialization ---------------- */
+   568→
+   569→export function publicClient(c: Client): PublicClient {
+   570→  const { passwordHash: _drop, ...rest } = c;
+   571→  return rest;
+   572→}
+   573→
+   574→export function adminSnapshot(): AdminSnapshot {
+   575→  const data = readDb();
+   576→  const balAfter = balanceAfterMap(data);
+   577→  const clients = data.clients.map((c) => ({
+   578→    ...publicClient(c),
+   579→    financials: computeFinancials(c.id, data),
+   580→    hasPortalPassword: true,
+   581→  }));
+   582→  const nameById = new Map(data.clients.map((c) => [c.id, c.name] as const));
+   583→  const txs = [...data.txs]
+   584→    .sort((a, b) => (a.dateISO === b.dateISO ? b.createdAtISO.localeCompare(a.createdAtISO) : b.dateISO.localeCompare(a.dateISO)))
+   585→    .map((t) => ({ ...t, clientName: nameById.get(t.clientId) ?? "—", balanceAfter: balAfter.get(t.id) ?? 0 }));
+   586→
+   587→  const completed = txs.filter((t) => t.status === "COMPLETED");
+   588→  const requestCounts = txs.reduce(
+   589→    (acc, t) => {
+   590→      acc[t.status] = (acc[t.status] ?? 0) + 1;
+   591→      return acc;
+   592→    },
+   593→    { COMPLETED: 0, PENDING: 0, UNDER_REVIEW: 0, APPROVED: 0, PROCESSING: 0, REJECTED: 0, CANCELLED: 0 } as Record<TxStatus, number>,
+   594→  );
+   595→  const stats: AdminStats = {
+   596→    totalClients: clients.length,
+   597→    activeClients: clients.filter((c) => c.status === "active").length,
+   598→    totalBalance: round2(clients.reduce((s, c) => s + c.financials.balance, 0)),
+   599→    volume: round2(completed.reduce((s, t) => s + t.amount, 0)),
+   600→    credits: round2(completed.filter((t) => t.type === "CREDIT").reduce((s, t) => s + t.amount, 0)),
+   601→    debits: round2(completed.filter((t) => t.type === "DEBIT").reduce((s, t) => s + t.amount, 0)),
+   602→    pendingWithdrawals: txs.filter((t) => t.kind === "withdrawal" && inFlight(t.status)).length,
+   603→    txCount: txs.length,
+   604→    requestCounts,
+   605→  };
+   606→
+   607→  const comments: Record<string, ClientComment[]> = {};
+   608→  for (const cm of data.comments) {
+   609→    (comments[cm.clientId] ??= []).push(cm);
+   610→  }
+   611→
+   612→  return {
+   613→    clients,
+   614→    txs,
+   615→    notifications: [...data.notifications].sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO)),
+   616→    audit: data.audit,
+   617→    comments,
+   618→    staff: data.staff,
+   619→    roles: data.roles,
+   620→    stats,
+   621→  };
+   622→}
+   623→
+   624→/** The one and only payload a client may ever receive about itself. */
+   625→export function clientView(clientId: string): { ok: true; view: { client: PublicClient; financials: ComputedFinancials; txs: Tx[]; notifications: Notification[] } } | { ok: false } {
+   626→  const data = readDb();
+   627→  const client = data.clients.find((c) => c.id === clientId);
+   628→  if (!client) return { ok: false };
+   629→  return {
+   630→    ok: true,
+   631→    view: {
+   632→      client: publicClient(client),
+   633→      financials: computeFinancials(clientId, data),
+   634→      txs: data.txs
+   635→        .filter((t) => t.clientId === clientId)
+   636→        .sort((a, b) => (a.dateISO === b.dateISO ? b.createdAtISO.localeCompare(a.createdAtISO) : b.dateISO.localeCompare(a.dateISO)))
+   637→        .map(clientSafeTx),
+   638→      notifications: data.notifications.filter((n) => n.audience === clientId).sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO)),
+   639→    },
+   640→  };
+   641→}
+   642→
+   643→/** Client-safe transaction: strips the PRIVATE admin note and every internal
+   644→    remark from the history (the status transition itself stays visible; only
+   645→    the internal wording is removed). Admin actors are anonymised to
+   646→    "Super Admin" so admin emails/details never leak through the client API (#30 / #36). */
+   647→export function clientSafeTx(t: Tx): Tx {
+   648→  const { adminNote: _private, ...rest } = t;
+   649→  const history = (t.history ?? []).map<TxEvent>((e) => ({
+   650→    at: e.at,
+   651→    by: e.byRole === "admin" ? "Super Admin" : e.by,
+   652→    byRole: e.byRole,
+   653→    from: e.from,
+   654→    to: e.to,
+   655→    ...(e.note ? { note: e.note } : {}),
+   656→    ...(e.changes ? { changes: e.changes } : {}),
+   657→  }));
+   658→  return { ...rest, history };
+   659→}
+   660→
+   661→/* ---------------- audit & notification helpers ---------------- */
+   662→
+   663→export function pushAudit(data: DbData, action: AuditAction, entity: AuditEntry["entity"], detailsNew: string, detailsOld?: string) {
+   664→  data.audit = [{ id: uid("a"), date: stamp(), admin: "Super Admin", action, entity, detailsNew, detailsOld, ip: "—" }, ...data.audit].slice(0, 300);
+   665→}
+   666→
+   667→export function pushNotification(data: DbData, p: Pick<Notification, "audience" | "title" | "body" | "kind">) {
+   668→  data.notifications = [makeNotification(p), ...data.notifications].slice(0, 400);
+   669→}
+   670→

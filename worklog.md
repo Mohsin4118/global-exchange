@@ -483,3 +483,27 @@ Work Log:
 
 Stage Summary:
 - The client can ONLY submit requests (PENDING, unique reference, no balance effect, duplicate-guarded, cancellable while pending); the Super Admin holds full control (view every detail, all 7 statuses, client-visible + private notes, edit details, delete) and every decision is history-tracked, notified to the client with the reference, audited, and reflected in the client dashboard within seconds (4s poll + focus refresh). One ledger, one truth — no fake frontend state, no hardcoded statuses, no duplicated stores.
+
+---
+Task ID: 26
+Agent: Main agent (Super Z)
+Task: Tasks 25-39 — full re-verification after session continuation (FINAL CHECK Task 39 at API + UI level, then pristine reset)
+
+Work Log:
+- Confirmed prior-run state: server DB architecture (/data/db.json + /api/auth,/api/client,/api/admin + bearer sessions) fully in place; client-auth.ts localStorage layer retired; lint 0 errors (44 warnings), tsc clean for src/
+- Dev server boot: HTTP 200; DB self-seeds lazily on first API call (admin login ok → db.json created)
+- API suite scripts/test-workflow.mjs re-run: ALL 39 WORKFLOW CHECKS PASSED (submit→PENDING, no balance change on submit, duplicate guard 409, client token blocked from admin endpoints, internal note never leaked, balance moves ONLY on completion, withdrawal reservation released on rejection, client cancel own PENDING only, client B isolation, admin edit propagates with change history, audit + notifications with references, persistence)
+- UI FINAL CHECK via agent-browser (scripts/verify26/, 7 screenshots):
+  1) demo client login → baseline Cash $12,480.00 / Total $76,651.90
+  2) Request a Deposit modal (Deposit/Withdrawal/Trade tabs, Amount, Asset select USD…Salik, Destination, Note) → submitted 2500 USDT → toast "pending review", reference DEP-20260918-7551
+  3) Client transactions: "Deposit request — pending review · USDT" + Pending pill, expandable details, STATUS HISTORY (Submitted · Alex Morgan), Cancel Request (PENDING only)
+  4) Admin via #admin: dashboard "Pending Requests 5" pipeline + awaiting-action list includes the new request
+  5) Admin Transactions search finds it; RequestManager shows REFERENCE/KIND/METHOD/ASSET/DESTINATION/CLIENT NOTE/INTERNAL NOTE (PRIVATE)/SUBMITTED + quick decisions + manual status select + client-visible note + private internal note + STATUS HISTORY — FULL AUDIT TRAIL + Edit details/Delete request
+  6) Status machine via UI: Pending → Under review (09:27) → Approved (09:29) → Completed (09:31), every hop logged with actor; Balance After column $12,480.00 until completion → $14,980.00 ONLY on Completed
+  7) Client re-login: Cash Available $14,980.00, request shows Completed, notifications with real references ("Your deposit request DEP-20260918-7551 of $2,500.00 has been completed." / "…has been approved and is being processed.")
+  8) AR/RTL: Arabic dashboard fully mirrored (sidebar right, amounts left), pills مكتمل / قيد المراجعة; dir lives on the app root div (page.tsx:128) not documentElement — by design
+- Note: admin row IDs render truncated (txmu6r6i3…) but search matches full reference; filter selects are native, RequestManager manual-status select is index 2 (values COMPLETED/PENDING/…)
+- DB reset to pristine seed after verification (18 clients, 31 txs, 4 pending seed requests, 13 audit entries)
+
+Stage Summary:
+- Tasks 25-39 confirmed COMPLETE and re-proven end-to-end at both API level (39/39) and real UI level (client submit → PENDING → admin review/decide → balance moves only on completion → client notified with references → AR RTL intact); deliverable reset to a pristine seeded state and zip rebuilt
