@@ -63,8 +63,8 @@ export function TrustStats({ t }: { t: (k: StringKey) => string }) {
               <Sprout className="h-5.5 w-5.5" />
             </span>
             <div>
-              <p className="text-[15px] font-bold text-[#00E5A0]">{t("trustedBy")}</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-white/55">{t("trustedByDesc")}</p>
+              <p className="text-[0.9375rem] font-bold text-[#00E5A0]">{t("trustedBy")}</p>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-white/55">{t("trustedByDesc")}</p>
             </div>
           </div>
 
@@ -78,11 +78,11 @@ export function TrustStats({ t }: { t: (k: StringKey) => string }) {
                   (i > 0 ? " sm:border-s sm:border-white/[0.08]" : "")
                 }
               >
-                <p className="text-2xl sm:text-[26px] font-bold text-white">
+                <p className="text-2xl sm:text-[1.625rem] font-bold text-white">
                   {s.prefix}
                   <Counter target={s.target} suffix={s.suffix} decimals={s.decimals} />
                 </p>
-                <p className="mt-1 text-[12px] font-medium text-white/50">{s.label}</p>
+                <p className="mt-1 text-[0.75rem] font-medium text-white/50">{s.label}</p>
               </div>
             ))}
           </div>
@@ -114,7 +114,7 @@ export function SecurityBadges({ t }: { t: (k: StringKey) => string }) {
           className="text-center"
         >
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">{t("badgesTitle")}</h2>
-          <p className="mx-auto mt-3 max-w-xl text-[14.5px] leading-relaxed text-white/55">{t("badgesSub")}</p>
+          <p className="mx-auto mt-3 max-w-xl text-[0.90625rem] leading-relaxed text-white/55">{t("badgesSub")}</p>
         </motion.div>
 
         <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -130,8 +130,8 @@ export function SecurityBadges({ t }: { t: (k: StringKey) => string }) {
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#00E5A0]/30 bg-[#00E5A0]/10 text-[#00E5A0] group-hover:scale-110 transition-transform">
                 <b.icon className="h-4.5 w-4.5" />
               </span>
-              <p className="mt-3 text-[12.5px] font-bold text-white leading-tight">{b.title}</p>
-              <p className="mt-1 text-[10.5px] leading-snug text-white/40">{b.desc}</p>
+              <p className="mt-3 text-[0.78125rem] font-bold text-white leading-tight">{b.title}</p>
+              <p className="mt-1 text-[0.65625rem] leading-snug text-white/40">{b.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -171,11 +171,11 @@ export function Testimonials({ t }: { t: (k: StringKey) => string }) {
           transition={{ duration: 0.55 }}
           className="text-center"
         >
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
+          <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
             {t("testimonialsBadge")}
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("testimonialsTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-white/55">{t("testimonialsSub")}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-[0.9375rem] leading-relaxed text-white/55">{t("testimonialsSub")}</p>
         </motion.div>
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -189,16 +189,16 @@ export function Testimonials({ t }: { t: (k: StringKey) => string }) {
               className="flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 hover:border-[#00E5A0]/25 transition-colors"
             >
               <Stars />
-              <blockquote className="mt-3.5 flex-1 text-[13.5px] leading-relaxed text-white/70">
+              <blockquote className="mt-3.5 flex-1 text-[0.84375rem] leading-relaxed text-white/70">
                 “{item.quote}”
               </blockquote>
               <figcaption className="mt-5 flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#00E5A0]/80 to-teal-600 text-[13px] font-bold text-[#03251b]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#00E5A0]/80 to-teal-600 text-[0.8125rem] font-bold text-[#03251b]">
                   {item.initial}
                 </span>
                 <div>
-                  <p className="text-[13px] font-semibold text-white">{item.name}</p>
-                  <p className="text-[11px] text-white/40">{item.loc}</p>
+                  <p className="text-[0.8125rem] font-semibold text-white">{item.name}</p>
+                  <p className="text-[0.6875rem] text-white/40">{item.loc}</p>
                 </div>
               </figcaption>
             </motion.figure>
@@ -231,9 +231,9 @@ export function Faq({ t }: { t: (k: StringKey) => string }) {
           transition={{ duration: 0.55 }}
           className="text-center"
         >
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">{t("faqBadge")}</span>
+          <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">{t("faqBadge")}</span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("faqTitle")}</h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-white/55">{t("faqSub")}</p>
+          <p className="mt-4 text-[0.9375rem] leading-relaxed text-white/55">{t("faqSub")}</p>
         </motion.div>
 
         <div className="mt-10 flex flex-col gap-3">
@@ -252,7 +252,7 @@ export function Faq({ t }: { t: (k: StringKey) => string }) {
                   aria-expanded={isOpen}
                   className="flex w-full items-center justify-between gap-4 px-5 py-4 text-start"
                 >
-                  <span className="text-[14.5px] font-semibold text-white">{f.q}</span>
+                  <span className="text-[0.90625rem] font-semibold text-white">{f.q}</span>
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 shrink-0 text-[#00E5A0] transition-transform duration-300",
@@ -267,7 +267,7 @@ export function Faq({ t }: { t: (k: StringKey) => string }) {
                   )}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-4 text-[13.5px] leading-relaxed text-white/55">{f.a}</p>
+                    <p className="px-5 pb-4 text-[0.84375rem] leading-relaxed text-white/55">{f.a}</p>
                   </div>
                 </div>
               </div>

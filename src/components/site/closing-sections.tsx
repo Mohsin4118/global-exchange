@@ -30,11 +30,11 @@ export function SupportedCryptos({
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
+          <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
             {t("supportedTitle")}
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("supportedHeading")}</h2>
-          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-white/55">{t("supportedSub")}</p>
+          <p className="mx-auto mt-4 max-w-xl text-[0.9375rem] leading-relaxed text-white/55">{t("supportedSub")}</p>
         </motion.div>
 
         <motion.div
@@ -50,7 +50,7 @@ export function SupportedCryptos({
               <span
                 key={c.id}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-[11.5px] font-semibold",
+                  "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-[0.71875rem] font-semibold",
                   i === 0 ? "bg-white/10 text-white" : "text-white/40"
                 )}
               >
@@ -67,15 +67,15 @@ export function SupportedCryptos({
             <div className="flex items-center gap-3">
               <CoinBadge glyph={coins[0].glyph} gradient={coins[0].gradient} className="h-10 w-10 text-base" />
               <div>
-                <p className="text-[13px] font-semibold text-white/85">{coins[0].name}</p>
-                <p className="font-mono text-[10.5px] text-white/35">{coins[0].symbol}</p>
+                <p className="text-[0.8125rem] font-semibold text-white/85">{coins[0].name}</p>
+                <p className="font-mono text-[0.65625rem] text-white/35">{coins[0].symbol}</p>
               </div>
             </div>
             <div className="text-end">
               <p className="font-mono text-2xl font-bold text-white tabular-nums">{formatPrice(coins[0].price)}</p>
               <p
                 className={cn(
-                  "font-mono text-[12px] font-semibold tabular-nums",
+                  "font-mono text-[0.75rem] font-semibold tabular-nums",
                   coins[0].change24h >= 0 ? "text-emerald-400" : "text-amber-400"
                 )}
               >
@@ -97,7 +97,7 @@ export function SupportedCryptos({
 
           {/* activity */}
           <div className="mt-6 border-t border-white/[0.06] pt-5">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">{t("recentActivity")}</p>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-white/40">{t("recentActivity")}</p>
             <div className="mt-3 flex flex-col gap-2">
               {activity.map((a) => (
                 <div
@@ -106,12 +106,12 @@ export function SupportedCryptos({
                   dir="ltr"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="font-mono text-[12px] font-bold text-white/80">{a.route}</span>
-                    <span className="truncate font-mono text-[11px] text-white/40">{a.amount}</span>
+                    <span className="font-mono text-[0.75rem] font-bold text-white/80">{a.route}</span>
+                    <span className="truncate font-mono text-[0.6875rem] text-white/40">{a.amount}</span>
                   </div>
                   <span
                     className={cn(
-                      "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold",
+                      "shrink-0 rounded-md px-2 py-0.5 text-[0.625rem] font-bold",
                       a.status === "Completed" ? "bg-emerald-400/12 text-emerald-400" : "bg-amber-400/12 text-amber-400"
                     )}
                   >
@@ -131,13 +131,13 @@ export function SupportedCryptos({
           transition={{ duration: 0.55, delay: 0.15 }}
           className="mx-auto mt-6 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"
         >
-          <span className="text-[11.5px] font-semibold uppercase tracking-wide text-white/40">{t("fiatSupported")}</span>
+          <span className="text-[0.71875rem] font-semibold uppercase tracking-wide text-white/40">{t("fiatSupported")}</span>
           {FIAT_CURRENCIES.map((f) => (
             <span
               key={f.id}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[12px] font-semibold text-white/75"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[0.75rem] font-semibold text-white/75"
             >
-              <CoinBadge glyph={f.glyph} gradient={f.gradient} className="h-4 w-4 text-[8px]" />
+              <CoinBadge glyph={f.glyph} gradient={f.gradient} className="h-4 w-4 text-[0.5rem]" />
               {f.symbol}
             </span>
           ))}
@@ -167,11 +167,11 @@ export function SecuritySection({ t }: { t: (k: StringKey) => string }) {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
+          <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
             {t("aboutSecurity")}
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("securityTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-white/55">{t("securitySub")}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-[0.9375rem] leading-relaxed text-white/55">{t("securitySub")}</p>
         </motion.div>
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -190,8 +190,8 @@ export function SecuritySection({ t }: { t: (k: StringKey) => string }) {
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#00E5A0]/12 text-[#00E5A0]">
                 <c.icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-4 text-[16px] font-semibold text-white">{c.title}</h3>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-white/50">{c.desc}</p>
+              <h3 className="mt-4 text-[1rem] font-semibold text-white">{c.title}</h3>
+              <p className="mt-2 text-[0.84375rem] leading-relaxed text-white/50">{c.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -214,17 +214,17 @@ export function FinalCta({ t, onRegister, onLogin }: { t: (k: StringKey) => stri
         >
           <LogoMark className="mx-auto h-14 w-14" />
           <h2 className="mt-6 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("ctaTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-white/55">{t("ctaSub")}</p>
+          <p className="mx-auto mt-4 max-w-xl text-[0.9375rem] leading-relaxed text-white/55">{t("ctaSub")}</p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={onRegister}
-              className="rounded-xl bg-[#00E5A0] px-7 py-3.5 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+              className="rounded-xl bg-[#00E5A0] px-7 py-3.5 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
             >
               {t("getStarted")}
             </button>
             <button
               onClick={onLogin}
-              className="rounded-xl border border-white/12 bg-white/[0.04] px-7 py-3.5 text-[14.5px] font-semibold text-white/85 hover:bg-white/[0.08] transition-colors"
+              className="rounded-xl border border-white/12 bg-white/[0.04] px-7 py-3.5 text-[0.90625rem] font-semibold text-white/85 hover:bg-white/[0.08] transition-colors"
             >
               {t("login")}
             </button>
@@ -255,12 +255,12 @@ export function Footer({
         {/* regulatory notes */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <h4 className="text-[13px] font-bold text-white/85">{t("fcaTitle")}</h4>
-            <p className="mt-2 text-[11.5px] leading-relaxed text-white/40">{t("fcaText")}</p>
+            <h4 className="text-[0.8125rem] font-bold text-white/85">{t("fcaTitle")}</h4>
+            <p className="mt-2 text-[0.71875rem] leading-relaxed text-white/40">{t("fcaText")}</p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <h4 className="text-[13px] font-bold text-white/85">{t("riskTitle")}</h4>
-            <p className="mt-2 text-[11.5px] leading-relaxed text-white/40">{t("riskText")}</p>
+            <h4 className="text-[0.8125rem] font-bold text-white/85">{t("riskTitle")}</h4>
+            <p className="mt-2 text-[0.71875rem] leading-relaxed text-white/40">{t("riskText")}</p>
           </div>
         </div>
 
@@ -271,14 +271,14 @@ export function Footer({
               <LogoMark className="h-10 w-10" />
               <div className="leading-tight">
                 <p className="font-semibold text-white">CryptoWise</p>
-                <p className="text-[10px] uppercase tracking-[0.22em] text-[#00E5A0]/80">{t("tagline")}</p>
+                <p className="text-[0.625rem] uppercase tracking-[0.22em] text-[#00E5A0]/80">{t("tagline")}</p>
               </div>
             </div>
-            <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-white/45">{t("footerAbout")}</p>
+            <p className="mt-4 max-w-sm text-[0.8125rem] leading-relaxed text-white/45">{t("footerAbout")}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <a
                 href="mailto:support@cryptowiseuk.com"
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.75rem] font-medium text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
               >
                 <Mail className="h-3.5 w-3.5" /> support@cryptowiseuk.com
               </a>
@@ -300,7 +300,7 @@ export function Footer({
               <a
                 href={SITE_PHONE_TEL}
                 aria-label={`${t("phone")}: ${SITE_PHONE_DISPLAY}`}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.75rem] font-medium text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
               >
                 <Phone className="h-3.5 w-3.5" />
                 <span dir="ltr">{SITE_PHONE_DISPLAY}</span>
@@ -313,14 +313,14 @@ export function Footer({
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00E5A0]/10">
                   <Landmark className="h-4 w-4 text-[#00E5A0]" />
                 </span>
-                <p className="text-[13px] font-bold text-white/85">{t("licenseTitle")}</p>
+                <p className="text-[0.8125rem] font-bold text-white/85">{t("licenseTitle")}</p>
               </div>
-              <p className="mt-2.5 text-[11.5px] leading-relaxed text-white/45">{t("licenseText")}</p>
+              <p className="mt-2.5 text-[0.71875rem] leading-relaxed text-white/45">{t("licenseText")}</p>
               <a
                 href="https://find-and-update.company-information.service.gov.uk/company/16728292"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2.5 inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[#00E5A0]/90 underline decoration-[#00E5A0]/30 underline-offset-2 transition-colors hover:text-[#00E5A0]"
+                className="mt-2.5 inline-flex items-center gap-1.5 text-[0.71875rem] font-bold text-[#00E5A0]/90 underline decoration-[#00E5A0]/30 underline-offset-2 transition-colors hover:text-[#00E5A0]"
               >
                 {t("companiesHouse")}
               </a>
@@ -350,13 +350,13 @@ export function Footer({
         </div>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/[0.06] pt-6">
-          <p className="text-[12px] text-white/35">
+          <p className="text-[0.75rem] text-white/35">
             © {year} CryptoWise. {t("rights")}
           </p>
-          <p className="text-[12px] text-white/35">{t("riskNote")}</p>
+          <p className="text-[0.75rem] text-white/35">{t("riskNote")}</p>
           <button
             onClick={onAdmin}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-white/55 hover:text-amber-400 hover:border-amber-400/30 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[0.75rem] font-semibold text-white/55 hover:text-amber-400 hover:border-amber-400/30 transition-colors"
             title={t("adminBadge")}
           >
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -371,7 +371,7 @@ export function Footer({
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h4 className="text-[13px] font-bold uppercase tracking-wide text-white/85">{title}</h4>
+      <h4 className="text-[0.8125rem] font-bold uppercase tracking-wide text-white/85">{title}</h4>
       <ul className="mt-4 flex flex-col gap-2.5">{children}</ul>
     </div>
   );
@@ -381,7 +381,7 @@ function FooterLink({ label, href, onClick }: { label: string; href?: string; on
   if (onClick) {
     return (
       <li>
-        <button onClick={onClick} className="text-[13px] text-white/50 hover:text-[#00E5A0] transition-colors">
+        <button onClick={onClick} className="text-[0.8125rem] text-white/50 hover:text-[#00E5A0] transition-colors">
           {label}
         </button>
       </li>
@@ -389,7 +389,7 @@ function FooterLink({ label, href, onClick }: { label: string; href?: string; on
   }
   return (
     <li>
-      <a href={href} className="text-[13px] text-white/50 hover:text-[#00E5A0] transition-colors">
+      <a href={href} className="text-[0.8125rem] text-white/50 hover:text-[#00E5A0] transition-colors">
         {label}
       </a>
     </li>

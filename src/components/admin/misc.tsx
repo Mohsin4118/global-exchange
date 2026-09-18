@@ -85,7 +85,7 @@ export function AuditPage({ ctx }: { ctx: AdminCtx }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-4 py-4 font-medium">Admin</th>
                 <th className="px-4 py-4 font-medium">Action</th>
@@ -100,11 +100,11 @@ export function AuditPage({ ctx }: { ctx: AdminCtx }) {
                   <td className="whitespace-nowrap px-6 py-4 text-slate-600">{a.date}</td>
                   <td className="whitespace-nowrap px-4 py-4 font-semibold text-slate-900">{a.admin}</td>
                   <td className="whitespace-nowrap px-4 py-4">
-                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-[13px] font-medium text-slate-700">
+                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-[0.8125rem] font-medium text-slate-700">
                       {a.action}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-[13px] font-medium tracking-wide text-slate-600">{a.entity}</td>
+                  <td className="whitespace-nowrap px-4 py-4 text-[0.8125rem] font-medium tracking-wide text-slate-600">{a.entity}</td>
                   <td className="max-w-[420px] px-4 py-3">
                     {a.detailsOld && (
                       <p className="truncate font-mono text-xs text-amber-600" title={a.detailsOld}>{a.detailsOld}</p>
@@ -123,14 +123,14 @@ export function AuditPage({ ctx }: { ctx: AdminCtx }) {
           </table>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
-          <p className="text-[13px] text-slate-500">
+          <p className="text-[0.8125rem] text-slate-500">
             Showing 1–{rows.length} of {filtered.length} entries
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               disabled={safePage === 0}
               onClick={() => setPageIdx((p) => Math.max(0, p - 1))}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" /> Previous
             </button>
@@ -139,7 +139,7 @@ export function AuditPage({ ctx }: { ctx: AdminCtx }) {
                 key={i}
                 onClick={() => setPageIdx(i)}
                 className={cn(
-                  "h-9 w-9 rounded-lg text-[13px] font-semibold transition-colors",
+                  "h-9 w-9 rounded-lg text-[0.8125rem] font-semibold transition-colors",
                   i === safePage ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-100",
                 )}
               >
@@ -149,7 +149,7 @@ export function AuditPage({ ctx }: { ctx: AdminCtx }) {
             <button
               disabled={safePage >= pageCount - 1}
               onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-40"
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>
@@ -199,7 +199,7 @@ export function NotificationsPage({ ctx }: { ctx: AdminCtx }) {
                   <p className="text-sm font-bold text-slate-900">{n.title}</p>
                   {n.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
                 </div>
-                <p className="mt-0.5 text-[13px] text-slate-500">{n.body}</p>
+                <p className="mt-0.5 text-[0.8125rem] text-slate-500">{n.body}</p>
               </div>
               <span className="shrink-0 text-xs text-slate-400">{n.time}</span>
             </div>
@@ -253,7 +253,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
         <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="py-3 pr-4 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Role</th>
@@ -318,7 +318,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
         <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="py-3 pr-4 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Permissions</th>
                 <th className="px-4 py-3 font-medium">Staff</th>
@@ -375,7 +375,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
           <TextInput label="Full Name *" value={name} onChange={setName} placeholder="Staff member name" />
           <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="staff@cryptowiseuk.com" />
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Role *</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Role *</span>
             <Select value={role} onChange={setRole} options={ctx.state.roles.map((r) => ({ value: r.name, label: r.name }))} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -426,7 +426,7 @@ export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
         <div className="mt-6 flex items-center gap-4 border-b border-slate-100 pb-6">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-lg font-bold text-emerald-700">SA</span>
           <div>
-            <p className="text-[15px] font-bold text-slate-900">Super Admin</p>
+            <p className="text-[0.9375rem] font-bold text-slate-900">Super Admin</p>
             <p className="text-sm text-slate-500">Super Admin</p>
           </div>
         </div>
@@ -434,13 +434,13 @@ export function ProfilePage({ ctx }: { ctx: AdminCtx }) {
           <TextInput label="Name" value={name} onChange={setName} />
           <TextInput label="Email" value="admin@cryptowiseuk.com" disabled />
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Role</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Role</span>
             <div className="flex h-11 w-full cursor-not-allowed items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3.5 text-sm text-slate-500">
               <ShieldCheck className="h-4 w-4 text-slate-400" /> Super Admin
             </div>
           </div>
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Status</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Status</span>
             <div className="flex h-11 w-full cursor-not-allowed items-center gap-2 rounded-lg border border-emerald-200/70 bg-emerald-50/60 px-3.5 text-sm font-medium text-emerald-700">
               <span className="h-2 w-2 rounded-full bg-emerald-500" /> Active
             </div>

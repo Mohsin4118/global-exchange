@@ -37,8 +37,8 @@ export function Pillars({ t }: { t: (k: StringKey) => string }) {
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[#00E5A0]/40 bg-[#00E5A0]/[0.05] text-[#00E5A0]">
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-4 text-[15.5px] font-bold text-white">{title}</h3>
-              <p className="mt-2 max-w-[240px] text-[13px] leading-relaxed text-white/50">{desc}</p>
+              <h3 className="mt-4 text-[0.96875rem] font-bold text-white">{title}</h3>
+              <p className="mt-2 max-w-[240px] text-[0.8125rem] leading-relaxed text-white/50">{desc}</p>
             </motion.div>
           ))}
         </div>
@@ -58,13 +58,13 @@ export function Ticker({ coins }: { coins: Coin[] }) {
       <div className="flex w-max animate-[marquee_36s_linear_infinite] gap-10 py-3">
         {doubled.map((c, i) => (
           <span key={`${c.id}-${i}`} className="flex items-center gap-2 whitespace-nowrap">
-            <span className="font-mono text-[11.5px] font-bold text-white/50">{c.symbol}</span>
-            <span className="font-mono text-[11.5px] font-semibold text-white/85 tabular-nums">
+            <span className="font-mono text-[0.71875rem] font-bold text-white/50">{c.symbol}</span>
+            <span className="font-mono text-[0.71875rem] font-semibold text-white/85 tabular-nums">
               {formatPrice(c.price)}
             </span>
             <span
               className={cn(
-                "font-mono text-[11px] font-semibold tabular-nums",
+                "font-mono text-[0.6875rem] font-semibold tabular-nums",
                 c.change24h >= 0 ? "text-emerald-400" : "text-amber-400"
               )}
             >
@@ -98,11 +98,11 @@ export function StocksSection({
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
+          <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
             {t("stocksBadge")}
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("stocksTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-white/55">{t("stocksSub")}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-[0.9375rem] leading-relaxed text-white/55">{t("stocksSub")}</p>
         </motion.div>
 
         <div className="mx-auto mt-10 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
@@ -118,8 +118,8 @@ export function StocksSection({
               <div className="flex items-center gap-3">
                 <CoinBadge glyph={s.glyph} gradient={s.gradient} className="h-11 w-11 text-lg" />
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-white">{s.name}</p>
-                  <p className="font-mono text-[11px] text-white/40" dir="ltr">
+                  <p className="truncate text-[0.9375rem] font-semibold text-white">{s.name}</p>
+                  <p className="font-mono text-[0.6875rem] text-white/40" dir="ltr">
                     {s.symbol} · {s.exchange}
                   </p>
                 </div>
@@ -127,7 +127,7 @@ export function StocksSection({
               <p className="mt-4 font-mono text-2xl font-bold text-white tabular-nums">{formatPrice(s.price)}</p>
               <p
                 className={cn(
-                  "mt-0.5 font-mono text-[12.5px] font-semibold tabular-nums",
+                  "mt-0.5 font-mono text-[0.78125rem] font-semibold tabular-nums",
                   s.change24h >= 0 ? "text-emerald-400" : "text-amber-400"
                 )}
               >
@@ -135,7 +135,7 @@ export function StocksSection({
               </p>
               <button
                 onClick={onRegister}
-                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] py-2.5 text-[13px] font-semibold text-white/80 group-hover:border-[#00E5A0]/40 group-hover:text-[#00E5A0] transition-colors"
+                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] py-2.5 text-[0.8125rem] font-semibold text-white/80 group-hover:border-[#00E5A0]/40 group-hover:text-[#00E5A0] transition-colors"
               >
                 {t("getStarted")}
                 <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
@@ -171,7 +171,7 @@ export function LiveMarket({
           className="text-center"
         >
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("liveMarketTitle")}</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-white/55">{t("liveMarketSub")}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-[0.9375rem] leading-relaxed text-white/55">{t("liveMarketSub")}</p>
         </motion.div>
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -187,14 +187,14 @@ export function LiveMarket({
               <div className="flex items-center gap-3">
                 <CoinBadge glyph={c.glyph} gradient={c.gradient} className="h-11 w-11 text-lg" />
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-white">{c.name}</p>
-                  <p className="font-mono text-[11px] text-white/40">{c.symbol}</p>
+                  <p className="truncate text-[0.9375rem] font-semibold text-white">{c.name}</p>
+                  <p className="font-mono text-[0.6875rem] text-white/40">{c.symbol}</p>
                 </div>
               </div>
               <p className="mt-4 font-mono text-2xl font-bold text-white tabular-nums">{formatPrice(c.price)}</p>
               <p
                 className={cn(
-                  "mt-0.5 font-mono text-[12.5px] font-semibold tabular-nums",
+                  "mt-0.5 font-mono text-[0.78125rem] font-semibold tabular-nums",
                   c.change24h >= 0 ? "text-emerald-400" : "text-amber-400"
                 )}
               >
@@ -202,7 +202,7 @@ export function LiveMarket({
               </p>
               <button
                 onClick={onRegister}
-                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] py-2.5 text-[13px] font-semibold text-white/80 group-hover:border-[#00E5A0]/40 group-hover:text-[#00E5A0] transition-colors"
+                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] py-2.5 text-[0.8125rem] font-semibold text-white/80 group-hover:border-[#00E5A0]/40 group-hover:text-[#00E5A0] transition-colors"
               >
                 {t("getStarted")}
                 <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />

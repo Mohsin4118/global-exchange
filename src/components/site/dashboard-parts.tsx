@@ -110,7 +110,7 @@ export function Card({ className, children }: { className?: string; children: Re
 export function SectionTitle({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
-      <h2 className="text-[15px] font-bold tracking-tight text-slate-900">{title}</h2>
+      <h2 className="text-[0.9375rem] font-bold tracking-tight text-slate-900">{title}</h2>
       {right}
     </div>
   );
@@ -135,12 +135,12 @@ export function StatusPill({ status, t }: { status: Tx["status"]; t: T }) {
     REJECTED: t("reqRejected"),
     CANCELLED: t("statusCancelled"),
   };
-  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide", map[status] ?? "bg-slate-100 text-slate-500")}>{labels[status] ?? status}</span>;
+  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold tracking-wide", map[status] ?? "bg-slate-100 text-slate-500")}>{labels[status] ?? status}</span>;
 }
 
 export function LiveChip({ t }: { t: T }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600 ring-1 ring-emerald-600/20">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[0.6875rem] font-bold text-emerald-600 ring-1 ring-emerald-600/20">
       <span className="relative flex h-1.5 w-1.5">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
@@ -170,16 +170,16 @@ export function KpiCard({
   return (
     <Card className="p-3.5 sm:p-5">
       <div className="flex items-start justify-between gap-2.5 sm:gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{label}</p>
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-slate-500 sm:text-[0.78125rem] sm:normal-case sm:tracking-normal">{label}</p>
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/15 sm:h-9 sm:w-9 sm:rounded-xl">{icon}</span>
       </div>
-      <p className="mt-2 font-mono text-[20px] font-bold leading-none tracking-tight text-slate-900 sm:mt-2.5 sm:text-[24px]" dir="ltr">
+      <p className="mt-2 font-mono text-[1.25rem] font-bold leading-none tracking-tight text-slate-900 sm:mt-2.5 sm:text-[1.5rem]" dir="ltr">
         {value}
       </p>
       {sub && (
         <p
           className={cn(
-            "mt-1.5 text-[11px] font-semibold sm:text-[12px]",
+            "mt-1.5 text-[0.6875rem] font-semibold sm:text-[0.75rem]",
             subTone === "up" ? "text-emerald-600" : subTone === "down" ? "text-amber-600" : "text-slate-500",
           )}
           dir="ltr"
@@ -191,25 +191,32 @@ export function KpiCard({
   );
 }
 
-/*  Source of Funds — a FIRST-CLASS dashboard card (same design system as
-    KpiCard: same Card surface, padding scale, label row + icon chip, same
-    responsive behavior). The free text the Super Admin writes is the card's
-    value slot; it wraps naturally (multiline + long tokens) and renders
-    Arabic RTL via dir="auto". Read-only for the client by design (#9). */
+/*  SOURCE card — a FIRST-CLASS financial card and the FIRST one on the
+    dashboard (directly ABOVE Total Balance). Uses the EXACT same design
+    system as KpiCard: same Card surface, padding scale, label row + icon
+    chip, same responsive behavior, same grid slot widths. Value slot uses
+    the Total Balance value typography (bold, tight, prominent) for short
+    entries; longer compliance-style texts wrap compactly at a readable
+    prose size so the card never balloons and never stretches its grid row.
+    Free text wraps naturally (multiline + long tokens) and renders Arabic
+    RTL via dir="auto". Read-only for the client (#9). */
 export function SourceOfFundsCard({ text, t }: { text?: string; t: T }) {
   const value = text?.trim() ?? "";
+  const long = value.length > 72;
   return (
     <Card className="p-3.5 sm:p-5">
       <div className="flex items-start justify-between gap-2.5 sm:gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{t("sourceOfFunds")}</p>
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-slate-500 sm:text-[0.78125rem] sm:normal-case sm:tracking-normal">{t("sourceOfFunds")}</p>
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/15 sm:h-9 sm:w-9 sm:rounded-xl">
           <Landmark className="h-4 w-4" />
         </span>
       </div>
       <p
         className={cn(
-          "mt-2 break-words text-[13px] leading-relaxed sm:mt-2.5 sm:text-[14px]",
-          value ? "whitespace-pre-wrap font-semibold text-slate-800" : "font-medium italic text-slate-400",
+          "mt-2 break-words tracking-tight sm:mt-2.5",
+          !value && "text-[0.8125rem] font-medium italic leading-relaxed text-slate-400 sm:text-[0.875rem]",
+          value && !long && "whitespace-pre-wrap text-[1.0625rem] font-bold leading-snug text-slate-900 sm:text-[1.25rem]",
+          value && long && "whitespace-pre-wrap text-[0.84375rem] font-semibold leading-relaxed text-slate-800 sm:text-[0.875rem]",
         )}
         dir="auto"
       >
@@ -297,8 +304,8 @@ export function HoldingsTable({ rows, t, lang, money = usd }: { rows: HoldingRow
   if (rows.length === 0) {
     return (
       <Card className="p-10 text-center">
-        <p className="text-[15px] font-bold text-slate-900">{t("noAssets")}</p>
-        <p className="mx-auto mt-1.5 max-w-sm text-[13px] text-slate-500">{t("noAssetsSub")}</p>
+        <p className="text-[0.9375rem] font-bold text-slate-900">{t("noAssets")}</p>
+        <p className="mx-auto mt-1.5 max-w-sm text-[0.8125rem] text-slate-500">{t("noAssetsSub")}</p>
       </Card>
     );
   }
@@ -309,7 +316,7 @@ export function HoldingsTable({ rows, t, lang, money = usd }: { rows: HoldingRow
       <div className="hidden overflow-x-auto lg:block">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-slate-200/70 text-[12px] font-semibold uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-slate-200/70 text-[0.75rem] font-semibold uppercase tracking-wide text-slate-400">
               <th className="px-5 py-3.5 text-start font-semibold">{t("holdings")}</th>
               <th className="px-3 py-3.5 text-end font-semibold">{t("units")}</th>
               <th className="px-3 py-3.5 text-end font-semibold">{t("price")}</th>
@@ -323,10 +330,10 @@ export function HoldingsTable({ rows, t, lang, money = usd }: { rows: HoldingRow
               <tr key={r.coin.id} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/60">
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
-                    <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 text-[13px]" />
+                    <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 text-[0.8125rem]" />
                     <div className="min-w-0">
                       <p className="truncate font-bold text-slate-900">{r.coin.name}</p>
-                      <p className="truncate text-[11.5px] text-slate-400" dir="ltr">
+                      <p className="truncate text-[0.71875rem] text-slate-400" dir="ltr">
                         {r.coin.symbol}
                       </p>
                     </div>
@@ -343,7 +350,7 @@ export function HoldingsTable({ rows, t, lang, money = usd }: { rows: HoldingRow
                 </td>
                 <td className="px-3 py-3.5 text-end">
                   <span
-                    className={cn("inline-block rounded-md px-2 py-1 text-[12px] font-bold tabular-nums", r.coin.change24h >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800")}
+                    className={cn("inline-block rounded-md px-2 py-1 text-[0.75rem] font-bold tabular-nums", r.coin.change24h >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800")}
                     dir="ltr"
                   >
                     {formatChange(r.coin.change24h)}
@@ -369,31 +376,31 @@ export function HoldingsTable({ rows, t, lang, money = usd }: { rows: HoldingRow
         {rows.map((r) => (
           <li key={r.coin.id} className="p-4">
             <div className="flex items-center gap-3">
-              <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 shrink-0 text-[13px]" />
+              <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 shrink-0 text-[0.8125rem]" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-bold text-slate-900">{r.coin.name}</p>
-                <p className="truncate text-[11px] text-slate-400" dir="ltr">
+                <p className="truncate text-[0.84375rem] font-bold text-slate-900">{r.coin.name}</p>
+                <p className="truncate text-[0.6875rem] text-slate-400" dir="ltr">
                   {r.coin.symbol} · {fmtUnits(r.units)} {t("units").toLowerCase()}
                 </p>
               </div>
               <div className="shrink-0 text-end">
-                <p className="whitespace-nowrap text-[13.5px] font-bold tabular-nums text-slate-900" dir="ltr">
+                <p className="whitespace-nowrap text-[0.84375rem] font-bold tabular-nums text-slate-900" dir="ltr">
                   {money(r.value)}
                 </p>
-                <p className={cn("text-[11.5px] font-bold tabular-nums", r.coin.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+                <p className={cn("text-[0.71875rem] font-bold tabular-nums", r.coin.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                   {formatChange(r.coin.change24h)}
                 </p>
               </div>
             </div>
             <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
-              <span className="text-[11px] text-slate-400" dir="ltr">
+              <span className="text-[0.6875rem] text-slate-400" dir="ltr">
                 {t("price")}: {money(r.coin.price)}
               </span>
               <div className="flex items-center gap-2">
                 <svg viewBox="0 0 72 28" className="h-6 w-14" preserveAspectRatio="none" aria-hidden="true">
                   <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#059669" : "#fbbf24"} strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
-                <span className="text-[11px] font-semibold tabular-nums text-slate-500" dir="ltr">
+                <span className="text-[0.6875rem] font-semibold tabular-nums text-slate-500" dir="ltr">
                   {((r.value / total) * 100).toFixed(1)}%
                 </span>
               </div>
@@ -410,7 +417,7 @@ export function AllocationBar({ segments, t }: { segments: Array<{ label: string
   const sum = segments.reduce((s, x) => s + x.value, 0) || 1;
   return (
     <Card className="p-4 sm:p-5">
-      <p className="text-[15px] font-bold tracking-tight text-slate-900">{t("allocation")}</p>
+      <p className="text-[0.9375rem] font-bold tracking-tight text-slate-900">{t("allocation")}</p>
       <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-slate-100" role="img" aria-label={t("allocation")}>
         {segments.map((s, i) => (
           <div key={i} style={{ width: `${(s.value / sum) * 100}%`, backgroundColor: s.color }} />
@@ -418,7 +425,7 @@ export function AllocationBar({ segments, t }: { segments: Array<{ label: string
       </div>
       <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
         {segments.map((s, i) => (
-          <li key={i} className="flex items-center gap-2 text-[12.5px] font-medium text-slate-600">
+          <li key={i} className="flex items-center gap-2 text-[0.78125rem] font-medium text-slate-600">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
             {s.label}
             <span className="font-bold tabular-nums text-slate-900" dir="ltr">
@@ -445,16 +452,16 @@ export function TxRowItem({ tx, t, lang, onCancel, money = usd }: { tx: Tx; t: T
           {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-semibold text-slate-900">
+          <p className="truncate text-[0.84375rem] font-semibold text-slate-900">
             {tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}
             {tx.asset ? <span className="font-normal text-slate-500"> · {tx.asset}</span> : null}
           </p>
-          <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
+          <p className="mt-0.5 text-[0.71875rem] text-slate-400" dir="ltr">
             {fmtDate(tx.dateISO, lang)} · {tx.method} · {tx.reference}
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+          <span className={cn("whitespace-nowrap text-[0.84375rem] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
             {credit ? "+" : "−"}
             {money(tx.amount)}
           </span>
@@ -476,10 +483,10 @@ export function TxRowItem({ tx, t, lang, onCancel, money = usd }: { tx: Tx; t: T
 
           {history.length > 0 && (
             <div>
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">{t("statusHistory")}</p>
+              <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-slate-400">{t("statusHistory")}</p>
               <ol className="space-y-2.5 border-s border-slate-200 ps-4">
                 {history.map((ev, i) => (
-                  <li key={`${ev.at}-${i}`} className="text-[12px] leading-relaxed">
+                  <li key={`${ev.at}-${i}`} className="text-[0.75rem] leading-relaxed">
                     <p className="font-semibold text-slate-700">
                       {ev.from ? `${ev.byRole === "client" && ev.from === ev.to ? t("requestDetails") : statusLabelFor(ev.from, t)} → ${statusLabelFor(ev.to, t)}` : t("txSubmitted")}
                       <span className="ms-2 font-normal text-slate-400" dir="ltr">
@@ -499,7 +506,7 @@ export function TxRowItem({ tx, t, lang, onCancel, money = usd }: { tx: Tx; t: T
               <button
                 type="button"
                 onClick={() => onCancel(tx)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[12.5px] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[0.78125rem] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-3.5 w-3.5" /> {t("cancelRequest")}
               </button>
@@ -536,8 +543,8 @@ function statusLabelFor(status: Tx["status"] | null | undefined, t: T): string {
 function Detail({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <p className="text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className={cn("mt-0.5 break-words text-[12.5px] font-semibold text-slate-700", mono && "font-mono")} dir={mono ? "ltr" : undefined}>
+      <p className="text-[0.65625rem] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+      <p className={cn("mt-0.5 break-words text-[0.78125rem] font-semibold text-slate-700", mono && "font-mono")} dir={mono ? "ltr" : undefined}>
         {value}
       </p>
     </div>
@@ -608,11 +615,11 @@ export function RequestModal({
           </button>
         </div>
         <div className="space-y-4 p-5">
-          <p className="rounded-lg bg-emerald-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-600 ring-1 ring-emerald-600/10">{t("requestHint")}</p>
+          <p className="rounded-lg bg-emerald-50 px-3.5 py-2.5 text-[0.78125rem] leading-relaxed text-slate-600 ring-1 ring-emerald-600/10">{t("requestHint")}</p>
 
           {/* request type */}
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestType")}</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("requestType")}</span>
             <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1">
               {REQUEST_KINDS.map((k) => (
                 <button
@@ -620,7 +627,7 @@ export function RequestModal({
                   type="button"
                   onClick={() => setKind(k)}
                   className={cn(
-                    "rounded-lg px-2 py-2 text-[12px] font-bold capitalize transition-colors",
+                    "rounded-lg px-2 py-2 text-[0.75rem] font-bold capitalize transition-colors",
                     kind === k ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700",
                   )}
                 >
@@ -632,7 +639,7 @@ export function RequestModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAmount")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("requestAmount")}</span>
               <input
                 type="number"
                 min="0"
@@ -642,16 +649,16 @@ export function RequestModal({
                 placeholder="0.00"
                 dir="ltr"
                 aria-label={t("requestAmount")}
-                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[1rem] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestAsset")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("requestAsset")}</span>
               <select
                 value={asset}
                 onChange={(e) => setAsset(e.target.value)}
                 aria-label={t("requestAsset")}
-                className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
+                className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 text-[1rem] font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
               >
                 {ASSET_OPTIONS.map((a) => (
                   <option key={a} value={a}>
@@ -663,7 +670,7 @@ export function RequestModal({
           </div>
 
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">
               {t("requestDestination")}
               {kind === "withdrawal" && <span className="ms-1 text-slate-400">({t("requestDestinationHint")})</span>}
             </span>
@@ -674,12 +681,12 @@ export function RequestModal({
               placeholder={kind === "withdrawal" ? "0x… / IBAN / wallet" : kind === "trade" ? "e.g. Buy BTC with USD" : "Optional reference"}
               dir={kind === "withdrawal" ? "ltr" : undefined}
               aria-label={t("requestDestination")}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[1rem] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("requestNote")}</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("requestNote")}</span>
             <textarea
               rows={2}
               value={note}
@@ -688,7 +695,7 @@ export function RequestModal({
             />
           </label>
 
-          {error && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-600/15">{error}</p>}
+          {error && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[0.78125rem] font-semibold text-amber-800 ring-1 ring-amber-600/15">{error}</p>}
           <div className="flex justify-end gap-2.5 pt-1">
             <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">
               {t("cancel")}
@@ -728,7 +735,7 @@ export function NotificationsCard({
         title={t("notificationsTitle")}
         right={
           unread > 0 ? (
-            <button onClick={onMarkAll} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+            <button onClick={onMarkAll} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
               <Check className="h-3.5 w-3.5" /> {t("markAllRead")}
             </button>
           ) : undefined
@@ -742,15 +749,15 @@ export function NotificationsCard({
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="truncate text-[13px] font-bold text-slate-900">{n.title}</p>
+                <p className="truncate text-[0.8125rem] font-bold text-slate-900">{n.title}</p>
                 {n.unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" />}
               </div>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{n.body}</p>
+              <p className="mt-0.5 text-[0.75rem] leading-relaxed text-slate-500">{n.body}</p>
             </div>
-            <span className="shrink-0 text-[11px] text-slate-400">{n.time}</span>
+            <span className="shrink-0 text-[0.6875rem] text-slate-400">{n.time}</span>
           </li>
         ))}
-        {list.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-slate-500">{t("noNotifications")}</li>}
+        {list.length === 0 && <li className="px-6 py-8 text-center text-[0.8125rem] text-slate-500">{t("noNotifications")}</li>}
       </ul>
     </Card>
   );
@@ -822,7 +829,7 @@ export function ProfileCard({
   ];
 
   const inputCls =
-    "h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm";
+    "h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[1rem] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm";
 
   return (
     <Card className="overflow-hidden">
@@ -835,7 +842,7 @@ export function ProfileCard({
                 setForm({ phone: c.phone, country: c.country, address: c.address, city: c.city, postcode: c.postcode });
                 setEditing(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[0.75rem] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               <Pencil className="h-3.5 w-3.5" /> {t("editProfile")}
             </button>
@@ -846,23 +853,23 @@ export function ProfileCard({
         {editing ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("phone")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("phone")}</span>
               <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("country")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("country")}</span>
               <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={inputCls} />
             </label>
             <label className="block sm:col-span-2">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("address")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("address")}</span>
               <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("city")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("city")}</span>
               <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputCls} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("postcode")}</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("postcode")}</span>
               <input value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} className={inputCls} />
             </label>
             <div className="flex justify-end gap-2.5 sm:col-span-2">
@@ -878,8 +885,8 @@ export function ProfileCard({
           <dl className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
             {rows.map(([k, v, ltr]) => (
               <div key={k} className="flex items-center justify-between gap-4 border-b border-slate-100 py-2.5 last:border-0">
-                <dt className="shrink-0 text-[12.5px] font-medium text-slate-500">{k}</dt>
-                <dd className="truncate text-[13px] font-semibold text-slate-900" dir={ltr || /^[+$\d]/.test(v) ? "ltr" : undefined}>
+                <dt className="shrink-0 text-[0.78125rem] font-medium text-slate-500">{k}</dt>
+                <dd className="truncate text-[0.8125rem] font-semibold text-slate-900" dir={ltr || /^[+$\d]/.test(v) ? "ltr" : undefined}>
                   {v}
                 </dd>
               </div>
@@ -890,13 +897,13 @@ export function ProfileCard({
         {/* Display currency — one formatter drives every figure on the dashboard */}
         <div className="mt-4 border-t border-slate-200/70 pt-4">
           <label className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-[13px] font-medium text-slate-600">{t("displayCurrency")}</span>
+            <span className="text-[0.8125rem] font-medium text-slate-600">{t("displayCurrency")}</span>
             <select
               value={c.currency ?? "USD"}
               onChange={(e) => onCurrencyChange(e.target.value as CurrencyCode)}
               aria-label={t("displayCurrency")}
               dir="ltr"
-              className="h-10 min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[16px] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
+              className="h-10 min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[1rem] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
             >
               {CURRENCIES.map((code) => (
                 <option key={code} value={code}>
@@ -905,29 +912,29 @@ export function ProfileCard({
               ))}
             </select>
           </label>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{t("currencyNote")}</p>
+          <p className="mt-2 text-[0.6875rem] leading-relaxed text-slate-400">{t("currencyNote")}</p>
         </div>
 
         <div className="mt-5 border-t border-slate-200/70 pt-4">
           {!pwOpen ? (
-            <button onClick={() => setPwOpen(true)} className="text-[13px] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
+            <button onClick={() => setPwOpen(true)} className="text-[0.8125rem] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
               {t("changePassword")}
             </button>
           ) : (
             <div className="max-w-sm space-y-3">
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("currentPassword")}</span>
+                <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("currentPassword")}</span>
                 <PasswordInput theme="light" value={pw.current} onChange={(v) => setPw({ ...pw, current: v })} autoComplete="current-password" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("newPassword")}</span>
+                <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("newPassword")}</span>
                 <PasswordInput theme="light" value={pw.next} onChange={(v) => setPw({ ...pw, next: v })} autoComplete="new-password" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{t("confirmNewPassword")}</span>
+                <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{t("confirmNewPassword")}</span>
                 <PasswordInput theme="light" value={pw.confirm} onChange={(v) => setPw({ ...pw, confirm: v })} autoComplete="new-password" />
               </label>
-              {pwError && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-600/15">{pwError}</p>}
+              {pwError && <p className="rounded-lg bg-amber-50 px-3.5 py-2 text-[0.78125rem] font-semibold text-amber-800 ring-1 ring-amber-600/15">{pwError}</p>}
               <div className="flex justify-end gap-2.5">
                 <button
                   onClick={() => {
@@ -958,7 +965,7 @@ export function ContactCard({ t }: { t: T }) {
     <Card className="overflow-hidden">
       <SectionTitle title={t("contactTitle")} />
       <div className="px-4 pb-5 pt-3 sm:px-5">
-        <p className="mb-3.5 text-[12.5px] text-slate-500">{t("contactSub")}</p>
+        <p className="mb-3.5 text-[0.78125rem] text-slate-500">{t("contactSub")}</p>
         <ContactButtonsCard variant="light" />
       </div>
     </Card>
@@ -976,20 +983,20 @@ export function MarketStrip({ coins, stocks, t, singleColumn, money = usd }: { c
         {top.map((c) => (
           <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white px-3.5 py-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <CoinBadge glyph={c.glyph} gradient={c.gradient} className="h-8 w-8 text-[12px]" />
+              <CoinBadge glyph={c.glyph} gradient={c.gradient} className="h-8 w-8 text-[0.75rem]" />
               <div className="min-w-0">
-                <p className="truncate text-[13px] font-bold text-slate-900">{c.name}</p>
-                <p className="truncate text-[11px] text-slate-400" dir="ltr">
+                <p className="truncate text-[0.8125rem] font-bold text-slate-900">{c.name}</p>
+                <p className="truncate text-[0.6875rem] text-slate-400" dir="ltr">
                   {c.symbol}
                   {c.exchange ? ` · ${c.exchange}` : ""}
                 </p>
               </div>
             </div>
             <div className="shrink-0 text-end">
-              <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-slate-900" dir="ltr">
+              <p className="whitespace-nowrap text-[0.8125rem] font-bold tabular-nums text-slate-900" dir="ltr">
                 {money(c.price)}
               </p>
-              <p className={cn("text-[11px] font-bold tabular-nums", c.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+              <p className={cn("text-[0.6875rem] font-bold tabular-nums", c.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                 {formatChange(c.change24h)}
               </p>
             </div>
@@ -1005,28 +1012,28 @@ export function MarketStrip({ coins, stocks, t, singleColumn, money = usd }: { c
 export function TierBadge({ tier, t }: { tier: string; t: T }) {
   if (tier === "Private") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11.5px] font-bold text-amber-800 ring-1 ring-amber-600/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[0.71875rem] font-bold text-amber-800 ring-1 ring-amber-600/20">
         <Crown className="h-3.5 w-3.5" /> {t("tierPrivate")}
       </span>
     );
   }
   if (tier === "Premium") {
-    return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11.5px] font-bold text-emerald-600 ring-1 ring-emerald-600/20">{t("tierPremium")}</span>;
+    return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[0.71875rem] font-bold text-emerald-600 ring-1 ring-emerald-600/20">{t("tierPremium")}</span>;
   }
-  return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-bold text-slate-600 ring-1 ring-white/10">{t("tierStandard")}</span>;
+  return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[0.71875rem] font-bold text-slate-600 ring-1 ring-white/10">{t("tierStandard")}</span>;
 }
 
 /** Green Verified badge with a check icon — rendered NEXT TO the client name. */
 export function VerifiedBadge({ verified, t }: { verified: boolean; t: T }) {
   if (!verified) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11.5px] font-bold text-amber-800 ring-1 ring-amber-600/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[0.71875rem] font-bold text-amber-800 ring-1 ring-amber-600/20">
         <BadgeCheck className="h-3.5 w-3.5" /> {t("kycPendingBadge")}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11.5px] font-bold text-emerald-700 ring-1 ring-emerald-600/25">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[0.71875rem] font-bold text-emerald-700 ring-1 ring-emerald-600/25">
       <BadgeCheck className="h-3.5 w-3.5" /> {t("verifiedBadge")}
     </span>
   );
@@ -1035,7 +1042,7 @@ export function VerifiedBadge({ verified, t }: { verified: boolean; t: T }) {
 /** "Private" privacy badge — rendered UNDER the client name. */
 export function PrivateBadge({ t }: { t: T }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-bold text-slate-600 ring-1 ring-white/15">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[0.71875rem] font-bold text-slate-600 ring-1 ring-white/15">
       <Lock className="h-3 w-3" /> {t("privateBadge")}
     </span>
   );

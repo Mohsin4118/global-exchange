@@ -609,3 +609,21 @@ Work Log:
 
 Stage Summary:
 - Confirmed with hard evidence that the Source of Funds IS a separate first-class client dashboard card using the EXACT same design system as Total Balance, admin-editable with instant client sync, read-only for clients, responsive 375→1440, EN+AR. The user's report most likely stemmed from a stale tab (pre-fix bundle), an empty-SOF client (placeholder state), or testing before the Task 41 fix landed — a hard refresh of the preview shows the correct UI.
+
+---
+Task ID: 43
+Agent: Main agent (Super Z)
+Task: SOURCE card promoted to FIRST financial card directly above Total Balance (EN "SOURCE" / AR "مصدر", NOT "Resources"/"مصدر الأموال") + slight global font increase across the whole website
+
+Work Log:
+- i18n: sourceOfFunds label EN "Source of Funds"→"Source", AR "مصدر الأموال"→"مصدر" (exactly as specified; no "Resources" anywhere)
+- Admin back office: New Client modal label "Source of Funds"→"Source"; edit form label →"Source (free text, shown on the client account)"; textarea stays multiline free text, auto-populated on open (verified in browser)
+- SourceOfFundsCard (dashboard-parts.tsx): value typography now mirrors the Total Balance value slot — bold (700), tight tracking, slate-900, 17/20px for short entries; empty state stays small muted italic; long entries (>72 chars) wrap compactly at 13.5/14px semibold so free text never balloons a card
+- Card MOVED into the KPI grid as the FIRST child, directly above Total Balance (client-dashboard.tsx OverviewSection). Adaptive layout: short text → SOURCE shares the grid (grid-cols-1 → sm:2-col → xl:4-across, all equal 234px slots verified); long text → SOURCE renders full-width above a 3-across KPI row (fixes a real bug found in testing: 221-char text at 20px bold in a 234px column produced a 678px card that stretched the whole grid row — now 986×166 full-width, row stays even 144px)
+- Fixed a runtime crash I introduced mid-refactor: sofLong was computed in ClientDashboard where `c` is not in scope (ReferenceError → Next.js "Application error" page); moved the const into OverviewSection after `const c = view.client`
+- GLOBAL FONT: html{font-size:106.25%} (16→17px root, +6.25% slight) + converted ALL 441 px-based font sizes (text-[Npx]) to exact rem equivalents (N/16rem) across 20 files (site + admin + ui) via scripts/px_to_rem.py — identical rendering at 16px root, uniform proportional scaling after the bump; spacing utilities are rem-based so proportions hold; no transform/zoom tricks
+- VERIFIED (scripts/verify43/, 9 screenshots): client dashboard EN 375/390/393/414/430 — SOURCE found, ABOVE Total Balance, adjacent, same width, zero computed-style diffs on card surface, welcome visible at scrollY=0, no overflow anywhere; AR @390: title "مصدر", RTL mirrored, old "مصدر الأموال" gone; desktop 1440 short: 4-across equal 234px; desktop long: full-width SOURCE + even 3-col row; mobile long: 356×237 compact with 17px page margins; homepage 375/768/1440 + admin 390/1440 — no overflow; admin edit form shows "Source" label pre-filled; live sync re-proven (admin API update → client card text changed within the 4s poll, no reload); value typography parity: weight 700/700, same color/tracking family vs Total Balance
+- lint 0 errors (46 warnings = baseline), tsc clean for src/, console clean on fresh load
+
+Stage Summary:
+- SOURCE (مصدر) is now the first financial dashboard card, directly above Total Balance, using the identical card design system and grid slots; content is Super Admin free text stored per client in the DB, read-only for clients, live-synced, EN+AR with adaptive typography (big bold value for short entries, compact wrap for long ones). The entire website's font size is slightly larger via a true root-font-size increase with every px text size converted to rem — no fake scaling, no overflow at 375/390/393/414/430/768/1440 in either language.

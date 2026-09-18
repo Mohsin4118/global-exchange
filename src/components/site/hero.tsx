@@ -36,7 +36,7 @@ export function Hero({
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#00E5A0]/35 bg-[#00E5A0]/[0.06] text-[#00E5A0]">
             <Icon className="h-4 w-4" />
           </span>
-          <span className="text-[13.5px] font-semibold text-white/80">{label}</span>
+          <span className="text-[0.84375rem] font-semibold text-white/80">{label}</span>
         </span>
       ))}
     </div>
@@ -46,14 +46,14 @@ export function Hero({
     <div className="flex flex-wrap items-center gap-3">
       <button
         onClick={onLogin}
-        className="group inline-flex items-center gap-2 rounded-full bg-[#00E5A0] px-7 py-3 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_36px_-8px_rgba(0,229,160,0.65)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+        className="group inline-flex items-center gap-2 rounded-full bg-[#00E5A0] px-7 py-3 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_36px_-8px_rgba(0,229,160,0.65)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
       >
         {t("signIn")}
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
       </button>
       <button
         onClick={onLogin}
-        className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[14.5px] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
+        className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[0.90625rem] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
       >
         {t("login")}
       </button>
@@ -88,19 +88,19 @@ export function Hero({
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="relative isolate min-w-0"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-3 py-1.5 text-[10.5px] font-medium text-[#00E5A0] sm:px-4 sm:text-[12.5px]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-3 py-1.5 text-[0.65625rem] font-medium text-[#00E5A0] sm:px-4 sm:text-[0.78125rem]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
               {t("heroBadge")}
             </span>
 
-            <h1 className="mt-4 text-[28px] sm:mt-5 sm:text-4xl lg:text-5xl xl:text-[64px] font-bold tracking-tight text-white leading-[1.04]">
+            <h1 className="mt-4 text-[1.75rem] sm:mt-5 sm:text-4xl lg:text-5xl xl:text-[4rem] font-bold tracking-tight text-white leading-[1.04]">
               {t("heroTitle1")}
               <span className="block text-[#00E5A0] drop-shadow-[0_0_28px_rgba(0,229,160,0.35)]">
                 {t("heroTitle2")}
               </span>
             </h1>
 
-            <p className="mt-3 max-w-lg text-[14px] sm:mt-5 sm:text-[15.5px] leading-relaxed text-white/60">
+            <p className="mt-3 max-w-lg text-[0.875rem] sm:mt-5 sm:text-[0.96875rem] leading-relaxed text-white/60">
               {t("heroSub")}
             </p>
 
@@ -150,16 +150,16 @@ export function Hero({
                 <CoinBadge glyph={btc.glyph} gradient={btc.gradient} className="h-8 w-8 text-sm" />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-bold text-white">{btc.symbol}</p>
-                <p className="text-[11.5px] text-white/40">{btc.name}</p>
-                <p className="mt-1.5 font-mono text-[26px] leading-none font-bold text-white tabular-nums">
+                <p className="text-[0.8125rem] font-bold text-white">{btc.symbol}</p>
+                <p className="text-[0.71875rem] text-white/40">{btc.name}</p>
+                <p className="mt-1.5 font-mono text-[1.625rem] leading-none font-bold text-white tabular-nums">
                   {formatPrice(btc.price)}
                 </p>
               </div>
               <span
                 dir="ltr"
                 className={cn(
-                  "ms-auto lg:ms-4 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-mono text-[12.5px] font-bold tabular-nums",
+                  "ms-auto lg:ms-4 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-mono text-[0.78125rem] font-bold tabular-nums",
                   up ? "bg-[#00E5A0]/12 text-[#00E5A0]" : "bg-amber-400/12 text-amber-400"
                 )}
               >
@@ -178,7 +178,7 @@ export function Hero({
                     key={r}
                     onClick={() => setRange(r)}
                     className={cn(
-                      "rounded-full px-3 py-1 font-mono text-[11px] font-bold transition-colors",
+                      "rounded-full px-3 py-1 font-mono text-[0.6875rem] font-bold transition-colors",
                       r === range
                         ? "bg-[#00E5A0]/15 text-[#00E5A0] border border-[#00E5A0]/30"
                         : "text-white/40 hover:text-white/75 border border-transparent"
@@ -559,7 +559,7 @@ export function TaglineStrip({ t, lang }: { t: (k: StringKey) => string; lang: L
       </svg>
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-7 flex items-center gap-4">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-white/15" aria-hidden="true" />
-        <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.35em] text-white/35" dir="ltr">
+        <p className="whitespace-nowrap text-[0.625rem] font-semibold uppercase tracking-[0.35em] text-white/35" dir="ltr">
           {lang === "ar" ? (
             <span dir="rtl">
               {brand} <span className="text-[#00E5A0]/50">·</span> {t("tagline")}

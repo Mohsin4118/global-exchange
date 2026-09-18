@@ -103,7 +103,7 @@ export function ContactButtonsCard({ subtitle, className, variant = "light" }: {
           </span>
           <span className="min-w-0">
             <span className={cn("block text-sm font-bold transition-colors", dark ? "text-white group-hover:text-[#00E5A0]" : "text-slate-900 group-hover:text-emerald-600")}>{c.label}</span>
-            <span className={cn("block truncate text-[11.5px]", dark ? "text-white/40" : "text-slate-500")}>{subtitle ?? "Chat now"}</span>
+            <span className={cn("block truncate text-[0.71875rem]", dark ? "text-white/40" : "text-slate-500")}>{subtitle ?? "Chat now"}</span>
           </span>
         </a>
       ))}
@@ -142,7 +142,7 @@ export function FloatingContactDock() {
           >
             <ContactIcon id={c.id} className={cn("h-5 w-5", c.id === "imo" && "h-[70%] w-[70%]")} />
             {/* hover label (desktop) */}
-            <span className="pointer-events-none absolute end-full me-2 hidden whitespace-nowrap rounded-lg bg-[#031019]/95 px-2.5 py-1 text-[11.5px] font-bold text-white opacity-0 shadow-lg ring-1 ring-white/10 transition-opacity duration-200 group-hover:opacity-100 lg:block">
+            <span className="pointer-events-none absolute end-full me-2 hidden whitespace-nowrap rounded-lg bg-[#031019]/95 px-2.5 py-1 text-[0.71875rem] font-bold text-white opacity-0 shadow-lg ring-1 ring-white/10 transition-opacity duration-200 group-hover:opacity-100 lg:block">
               {c.label}
             </span>
           </a>

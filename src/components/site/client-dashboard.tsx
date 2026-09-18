@@ -308,17 +308,17 @@ export function ClientDashboard({
             </button>
             <LogoMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
             <div className="min-w-0">
-              <p className="truncate text-[13.5px] font-bold leading-tight text-slate-900 sm:text-[14px]">CryptoWise</p>
-              <p className="truncate text-[10.5px] font-semibold text-emerald-600 sm:text-[11px]">{t("clientArea")}</p>
+              <p className="truncate text-[0.84375rem] font-bold leading-tight text-slate-900 sm:text-[0.875rem]">CryptoWise</p>
+              <p className="truncate text-[0.65625rem] font-semibold text-emerald-600 sm:text-[0.6875rem]">{t("clientArea")}</p>
             </div>
-            <span className="ms-1 hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-white/10 md:inline-block" dir="ltr">
+            <span className="ms-1 hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[0.6875rem] font-bold text-slate-500 ring-1 ring-white/10 md:inline-block" dir="ltr">
               {t("accountNo")} {c.accountNo}
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
               onClick={onLangToggle}
-              className="flex h-9 items-center rounded-lg border border-slate-200 px-2.5 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3 sm:text-[12px]"
+              className="flex h-9 items-center rounded-lg border border-slate-200 px-2.5 text-[0.71875rem] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3 sm:text-[0.75rem]"
               aria-label="Toggle language"
             >
               {lang === "en" ? "العربية" : "EN"}
@@ -330,20 +330,20 @@ export function ClientDashboard({
             >
               <Bell className="h-4 w-4" />
               {unread > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9.5px] font-bold text-[#022c20]">{unread}</span>
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[0.59375rem] font-bold text-[#022c20]">{unread}</span>
               )}
             </button>
             <div className="hidden items-center gap-2.5 rounded-full border border-slate-200 py-1 pe-3 ps-1 sm:flex">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00E5A0] text-[11px] font-bold text-[#022c20]">{initials(c.name)}</span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00E5A0] text-[0.6875rem] font-bold text-[#022c20]">{initials(c.name)}</span>
               <span className="hidden text-left leading-tight md:block" dir="auto">
-                <span className="block max-w-[120px] truncate text-[12px] font-bold text-slate-900">{c.name}</span>
-                <span className="block text-[10.5px] font-semibold text-slate-500">{t("privateClient")}</span>
+                <span className="block max-w-[120px] truncate text-[0.75rem] font-bold text-slate-900">{c.name}</span>
+                <span className="block text-[0.65625rem] font-semibold text-slate-500">{t("privateClient")}</span>
               </span>
             </div>
             <button
               onClick={signOut}
               aria-label={t("signOut")}
-              className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-[0.75rem] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden md:inline">{t("signOut")}</span>
@@ -363,27 +363,27 @@ export function ClientDashboard({
                 onClick={() => go(item.id)}
                 aria-current={section === item.id ? "page" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors",
+                  "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[0.8125rem] font-semibold transition-colors",
                   section === item.id ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                 )}
               >
                 {item.icon}
                 <span className="flex-1 text-start">{item.label}</span>
                 {!!item.badge && item.badge > 0 && (
-                  <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#022c20]">{item.badge}</span>
+                  <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[0.625rem] font-bold text-[#022c20]">{item.badge}</span>
                 )}
               </button>
             ))}
             <div className="my-2 h-px bg-slate-100" />
             <button
               onClick={signOut}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[0.8125rem] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
             >
               <LogOut className="h-4 w-4" />
               <span className="flex-1 text-start">{t("signOut")}</span>
             </button>
           </nav>
-          <p className="mt-3 px-3 text-[10.5px] leading-relaxed text-slate-400" dir="ltr">
+          <p className="mt-3 px-3 text-[0.65625rem] leading-relaxed text-slate-400" dir="ltr">
             {t("accountNo")} {c.accountNo}
           </p>
         </aside>
@@ -440,7 +440,7 @@ export function ClientDashboard({
                     <button
                       key={key}
                       onClick={() => setTxFilter(key)}
-                      className={cn("rounded-md px-2.5 py-1.5 text-[11.5px] font-bold transition-colors", txFilter === key ? "bg-emerald-100 text-emerald-600" : "text-slate-500 hover:text-slate-900")}
+                      className={cn("rounded-md px-2.5 py-1.5 text-[0.71875rem] font-bold transition-colors", txFilter === key ? "bg-emerald-100 text-emerald-600" : "text-slate-500 hover:text-slate-900")}
                     >
                       {label}
                     </button>
@@ -450,11 +450,11 @@ export function ClientDashboard({
                   <button
                     onClick={() => !suspended && setReqModal("deposit")}
                     disabled={suspended}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#00E5A0] px-3 py-2 text-[11.5px] font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#00E5A0] px-3 py-2 text-[0.71875rem] font-bold text-[#022c20] transition-colors hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus className="h-3.5 w-3.5" /> {t("newRequest")}
                   </button>
-                  <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+                  <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-[0.71875rem] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
                     <Download className="h-3.5 w-3.5" /> CSV
                   </button>
                 </div>
@@ -465,11 +465,11 @@ export function ClientDashboard({
                     <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : cancelRequest} />
                   ))}
                   {filteredTxs.length === 0 && (
-                    <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noTx")}</li>
+                    <li className="px-6 py-12 text-center text-[0.8125rem] text-slate-500">{t("noTx")}</li>
                   )}
                 </ul>
                 {filteredTxs.length > 12 && (
-                  <button onClick={() => setShowAllTxs((v) => !v)} className="w-full border-t border-slate-200/70 py-3 text-[12.5px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
+                  <button onClick={() => setShowAllTxs((v) => !v)} className="w-full border-t border-slate-200/70 py-3 text-[0.78125rem] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
                     {showAllTxs ? "−" : "+"} {t("viewAllTx")} ({filteredTxs.length})
                   </button>
                 )}
@@ -501,7 +501,7 @@ export function ClientDashboard({
           )}
 
           {/* support footer */}
-          <p className="mb-2 mt-8 text-center text-[11.5px] text-slate-400">
+          <p className="mb-2 mt-8 text-center text-[0.71875rem] text-slate-400">
             {t("supportTitle")} ·{" "}
             <a href={SITE_PHONE_TEL} className="font-semibold text-slate-500 hover:text-emerald-600" dir="ltr">
               {SITE_PHONE_DISPLAY}
@@ -538,8 +538,8 @@ export function ClientDashboard({
                 <div className="flex items-center gap-2.5">
                   <LogoMark className="h-8 w-8" />
                   <div>
-                    <p className="text-[13.5px] font-bold leading-tight text-slate-900">CryptoWise</p>
-                    <p className="text-[10.5px] font-semibold text-emerald-600">{t("clientArea")}</p>
+                    <p className="text-[0.84375rem] font-bold leading-tight text-slate-900">CryptoWise</p>
+                    <p className="text-[0.65625rem] font-semibold text-emerald-600">{t("clientArea")}</p>
                   </div>
                 </div>
                 <button onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">
@@ -548,10 +548,10 @@ export function ClientDashboard({
               </div>
               <div className="border-b border-slate-200/80 px-4 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00E5A0] text-[12px] font-bold text-[#022c20]">{initials(c.name)}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00E5A0] text-[0.75rem] font-bold text-[#022c20]">{initials(c.name)}</span>
                   <div className="min-w-0" dir="auto">
-                    <p className="truncate text-[13px] font-bold text-slate-900">{c.name}</p>
-                    <p className="text-[10.5px] font-semibold text-slate-400" dir="ltr">
+                    <p className="truncate text-[0.8125rem] font-bold text-slate-900">{c.name}</p>
+                    <p className="text-[0.65625rem] font-semibold text-slate-400" dir="ltr">
                       {t("accountNo")} {c.accountNo}
                     </p>
                   </div>
@@ -564,14 +564,14 @@ export function ClientDashboard({
                     onClick={() => go(item.id)}
                     aria-current={section === item.id ? "page" : undefined}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold transition-colors",
+                      "flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[0.84375rem] font-semibold transition-colors",
                       section === item.id ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                     )}
                   >
                     {item.icon}
                     <span className="flex-1 text-start">{item.label}</span>
                     {!!item.badge && item.badge > 0 && (
-                      <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#022c20]">{item.badge}</span>
+                      <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[0.625rem] font-bold text-[#022c20]">{item.badge}</span>
                     )}
                   </button>
                 ))}
@@ -579,7 +579,7 @@ export function ClientDashboard({
               <div className="border-t border-slate-200/80 p-2">
                 <button
                   onClick={signOut}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[0.84375rem] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="flex-1 text-start">{t("signOut")}</span>
@@ -600,8 +600,8 @@ export function ClientDashboard({
 function SectionHeading({ title, sub }: { title: string; sub?: string }) {
   return (
     <div>
-      <h1 className="text-[20px] font-bold tracking-tight text-slate-900 sm:text-[24px]">{title}</h1>
-      {sub && <p className="mt-1 text-[13px] text-slate-500">{sub}</p>}
+      <h1 className="text-[1.25rem] font-bold tracking-tight text-slate-900 sm:text-[1.5rem]">{title}</h1>
+      {sub && <p className="mt-1 text-[0.8125rem] text-slate-500">{sub}</p>}
     </div>
   );
 }
@@ -654,6 +654,10 @@ function OverviewSection({
   onGo: (s: Section) => void;
 }) {
   const c = view.client;
+  /* SOURCE free text — short entries share the KPI grid slot; longer
+     compliance texts promote the card to full width above the KPI row so a
+     long entry can never balloon a narrow desktop column. */
+  const sofLong = (c.sourceOfFunds ?? "").trim().length > 72;
   const recent = view.txs.slice(0, 5);
 
   return (
@@ -662,7 +666,7 @@ function OverviewSection({
       <div className="flex flex-wrap items-end justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-            <h1 className="min-w-0 text-[20px] font-bold leading-snug tracking-tight text-slate-900 sm:text-[24px] sm:leading-tight lg:text-[28px]">
+            <h1 className="min-w-0 text-[1.25rem] font-bold leading-snug tracking-tight text-slate-900 sm:text-[1.5rem] sm:leading-tight lg:text-[1.75rem]">
               {t("welcomeTitle")}{" "}
               <span className="whitespace-normal break-words" dir="auto">
                 {c.name}
@@ -676,8 +680,8 @@ function OverviewSection({
             <PrivateBadge t={t} />
             {c.tier !== "Private" && <TierBadge tier={c.tier} t={t} />}
           </div>
-          <p className="mt-2.5 text-[13px] text-slate-500 sm:text-[13.5px]">{t("welcomeSub")}</p>
-          <p className="mt-1 text-[12px] font-semibold text-slate-500 sm:text-[12.5px]">
+          <p className="mt-2.5 text-[0.8125rem] text-slate-500 sm:text-[0.84375rem]">{t("welcomeSub")}</p>
+          <p className="mt-1 text-[0.75rem] font-semibold text-slate-500 sm:text-[0.78125rem]">
             {t("accountNo")}{" "}
             <span dir="ltr" className="font-mono text-slate-600">
               {c.accountNo}
@@ -688,14 +692,14 @@ function OverviewSection({
           <button
             onClick={onDeposit}
             disabled={suspended}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[13px] font-bold text-[#022c20] shadow-[0_8px_24px_-10px_rgba(0,229,160,0.7)] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[0.8125rem] font-bold text-[#022c20] shadow-[0_8px_24px_-10px_rgba(0,229,160,0.7)] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
           >
             <ArrowDownLeft className="h-4 w-4" /> {t("deposit")}
           </button>
           <button
             onClick={onWithdraw}
             disabled={suspended}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[0.8125rem] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
           >
             <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
           </button>
@@ -704,8 +708,8 @@ function OverviewSection({
 
       {c.managerNote && !suspended && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 sm:px-5 sm:py-3.5">
-          <p className="text-[12px] font-bold text-emerald-600 sm:text-[12.5px]">{t("managerNoteTitle")}</p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-slate-600 sm:text-[13px]">{c.managerNote}</p>
+          <p className="text-[0.75rem] font-bold text-emerald-600 sm:text-[0.78125rem]">{t("managerNoteTitle")}</p>
+          <p className="mt-1 text-[0.78125rem] leading-relaxed text-slate-600 sm:text-[0.8125rem]">{c.managerNote}</p>
         </div>
       )}
 
@@ -713,46 +717,77 @@ function OverviewSection({
         <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3.5 sm:px-5">
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
           <div>
-            <p className="text-[13px] font-bold text-amber-800">{t("suspendedBanner")}</p>
-            <p className="mt-0.5 text-[12.5px] text-amber-700">{t("suspendedSub")}</p>
+            <p className="text-[0.8125rem] font-bold text-amber-800">{t("suspendedBanner")}</p>
+            <p className="mt-0.5 text-[0.78125rem] text-amber-700">{t("suspendedSub")}</p>
           </div>
         </div>
       )}
 
-      {/* three financial cards — every value is real, from the server ledger.
-          Mobile: full-width compact stack (2.5 gap); sm+: 3-across grid. */}
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
-        <KpiCard
-          label={t("totalBalance")}
-          value={money(total)}
-          sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
-          subTone={portfolioChange >= 0 ? "up" : "down"}
-          icon={<Wallet className="h-4 w-4" />}
-        />
-        <KpiCard
-          label={t("cashAvailable")}
-          value={money(cash)}
-          sub={`${t("availableFunds")}: ${money(available)}`}
-          icon={<ArrowDownLeft className="h-4 w-4" />}
-        />
-        <KpiCard
-          label={t("invested")}
-          value={money(invested)}
-          sub={`${t("totalDeposits")}: ${money(totalDeposits)}`}
-          icon={<PieChart className="h-4 w-4" />}
-        />
-      </div>
+      {/* financial cards — SOURCE is ALWAYS the FIRST card, directly above
+          Total Balance, identical card design system, real server values.
+          Short text: SOURCE shares the KPI grid (4-across on desktop).
+          Long text: SOURCE renders full-width above a 3-across KPI row.
+          Mobile stacks in the required order either way. */}
+      {sofLong ? (
+        <>
+          <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+            <KpiCard
+              label={t("totalBalance")}
+              value={money(total)}
+              sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
+              subTone={portfolioChange >= 0 ? "up" : "down"}
+              icon={<Wallet className="h-4 w-4" />}
+            />
+            <KpiCard
+              label={t("cashAvailable")}
+              value={money(cash)}
+              sub={`${t("availableFunds")}: ${money(available)}`}
+              icon={<ArrowDownLeft className="h-4 w-4" />}
+            />
+            <KpiCard
+              label={t("invested")}
+              value={money(invested)}
+              sub={`${t("totalDeposits")}: ${money(totalDeposits)}`}
+              icon={<PieChart className="h-4 w-4" />}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
+          <KpiCard
+            label={t("totalBalance")}
+            value={money(total)}
+            sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
+            subTone={portfolioChange >= 0 ? "up" : "down"}
+            icon={<Wallet className="h-4 w-4" />}
+          />
+          <KpiCard
+            label={t("cashAvailable")}
+            value={money(cash)}
+            sub={`${t("availableFunds")}: ${money(available)}`}
+            icon={<ArrowDownLeft className="h-4 w-4" />}
+          />
+          <KpiCard
+            label={t("invested")}
+            value={money(invested)}
+            sub={`${t("totalDeposits")}: ${money(totalDeposits)}`}
+            icon={<PieChart className="h-4 w-4" />}
+          />
+        </div>
+      )}
 
       {/* display currency — switching it re-formats every figure from ONE source (#10) */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2 shadow-sm sm:px-3.5 sm:py-2.5">
         <label className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 sm:text-[12px]">{t("displayCurrency")}</span>
+          <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-slate-400 sm:text-[0.75rem]">{t("displayCurrency")}</span>
           <select
             value={cur}
             onChange={(e) => onCurrency(e.target.value as CurrencyCode)}
             aria-label={t("displayCurrency")}
             dir="ltr"
-            className="h-9 max-w-[190px] rounded-lg border border-slate-200 bg-white px-2.5 text-[16px] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-[13px]"
+            className="h-9 max-w-[190px] rounded-lg border border-slate-200 bg-white px-2.5 text-[1rem] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-[0.8125rem]"
           >
             {CURRENCIES.map((code) => (
               <option key={code} value={code}>
@@ -761,7 +796,7 @@ function OverviewSection({
             ))}
           </select>
         </label>
-        <p className="hidden text-[10.5px] leading-snug text-slate-400 sm:block">{t("currencyNote")}</p>
+        <p className="hidden text-[0.65625rem] leading-snug text-slate-400 sm:block">{t("currencyNote")}</p>
       </div>
 
       {/* chart + market */}
@@ -769,10 +804,6 @@ function OverviewSection({
         <PerformanceChart history={history} t={t} money={money} />
         <MarketStrip coins={coins} stocks={stocks} t={t} singleColumn money={money} />
       </div>
-
-      {/* Source of Funds — its own proper dashboard card (#9), same design
-          system as the KPI cards, placed right after Portfolio Performance */}
-      <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
 
       {/* holdings preview + allocation + contacts */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
@@ -786,7 +817,7 @@ function OverviewSection({
             <SectionTitle
               title={t("recentTransactions")}
               right={
-                <button onClick={() => onGo("transactions")} className="rounded-lg px-2 py-1 text-[11.5px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
+                <button onClick={() => onGo("transactions")} className="rounded-lg px-2 py-1 text-[0.71875rem] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
                   {t("viewAll")}
                 </button>
               }
@@ -798,18 +829,18 @@ function OverviewSection({
                     {tx.type === "CREDIT" ? <ArrowDownLeft className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12.5px] font-semibold text-slate-900">{tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}</p>
-                    <p className="text-[10.5px] text-slate-400" dir="ltr">
+                    <p className="truncate text-[0.78125rem] font-semibold text-slate-900">{tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}</p>
+                    <p className="text-[0.65625rem] text-slate-400" dir="ltr">
                       {tx.dateISO}
                     </p>
                   </div>
-                  <span className={cn("shrink-0 whitespace-nowrap text-[12.5px] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-600" : "text-amber-600")} dir="ltr">
+                  <span className={cn("shrink-0 whitespace-nowrap text-[0.78125rem] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                     {tx.type === "CREDIT" ? "+" : "−"}
                     {money(tx.amount)}
                   </span>
                 </li>
               ))}
-              {recent.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-slate-500">{t("noTx")}</li>}
+              {recent.length === 0 && <li className="px-6 py-8 text-center text-[0.8125rem] text-slate-500">{t("noTx")}</li>}
             </ul>
           </div>
           <ContactCard t={t} />
@@ -847,7 +878,7 @@ function DepositsSection({
         <button
           onClick={onDeposit}
           disabled={suspended}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[13px] font-bold text-[#022c20] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[0.8125rem] font-bold text-[#022c20] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ArrowDownLeft className="h-4 w-4" /> {t("deposit")}
         </button>
@@ -861,7 +892,7 @@ function DepositsSection({
           {deposits.map((tx) => (
             <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : onCancel} />
           ))}
-          {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noDeposits")}</li>}
+          {deposits.length === 0 && <li className="px-6 py-12 text-center text-[0.8125rem] text-slate-500">{t("noDeposits")}</li>}
         </ul>
       </div>
     </div>
@@ -900,7 +931,7 @@ function WithdrawalsSection({
         <button
           onClick={onWithdraw}
           disabled={suspended}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[0.8125rem] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
         </button>
@@ -915,7 +946,7 @@ function WithdrawalsSection({
           {withdrawals.map((tx) => (
             <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : onCancel} />
           ))}
-          {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("withdrawalsEmpty")}</li>}
+          {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[0.8125rem] text-slate-500">{t("withdrawalsEmpty")}</li>}
         </ul>
       </div>
     </div>

@@ -6,7 +6,7 @@ export function PageHeader({ title, subtitle, right }: { title: string; subtitle
   return (
     <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900">{title}</h1>
         <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
       </div>
       {right && <div className="flex items-center gap-3">{right}</div>}
@@ -58,11 +58,11 @@ export function StatCard({
           {icon}
         </span>
       )}
-      <p className="text-[15px] font-medium text-slate-600">{label}</p>
-      <p className="mt-2 text-[28px] font-bold leading-tight tracking-tight text-slate-900">{value}</p>
-      <p className="mt-2 text-[13px] text-slate-500">{sub}</p>
-      {highlight && <div className="mt-1 text-[13px] font-semibold">{highlight}</div>}
-      {link && <div className="mt-1 text-[13px] font-semibold">{link}</div>}
+      <p className="text-[0.9375rem] font-medium text-slate-600">{label}</p>
+      <p className="mt-2 text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900">{value}</p>
+      <p className="mt-2 text-[0.8125rem] text-slate-500">{sub}</p>
+      {highlight && <div className="mt-1 text-[0.8125rem] font-semibold">{highlight}</div>}
+      {link && <div className="mt-1 text-[0.8125rem] font-semibold">{link}</div>}
     </div>
   );
 }
@@ -231,7 +231,7 @@ export function TextInput({
 }) {
   return (
     <label className={cn("block", className)}>
-      <span className="mb-1.5 block text-[13px] font-medium text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">{label}</span>
       <input
         type={type}
         value={value}
@@ -302,5 +302,5 @@ function XIcon() {
 
 /** Truncated monospace id like "cmu0wdwt..." */
 export function MonoId({ id }: { id: string }) {
-  return <span className="font-mono text-[13px] text-slate-600">{id.length > 11 ? `${id.slice(0, 9)}...` : id}</span>;
+  return <span className="font-mono text-[0.8125rem] text-slate-600">{id.length > 11 ? `${id.slice(0, 9)}...` : id}</span>;
 }

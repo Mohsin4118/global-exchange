@@ -56,13 +56,13 @@ function TxActions({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCtx; on
         <>
           <button
             onClick={() => ctx.runAction({ action: "set-transaction-status", id: tx.id, status: "COMPLETED" }, { title: "Approved & completed", description: `${tx.clientName}'s ${tx.kind} ${tx.reference} is completed — balances updated everywhere.` })}
-            className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-emerald-700"
+            className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1.5 text-[0.75rem] font-bold text-white transition-colors hover:bg-emerald-700"
           >
             <Check className="h-3.5 w-3.5" /> Approve
           </button>
           <button
             onClick={() => ctx.runAction({ action: "set-transaction-status", id: tx.id, status: "REJECTED" }, { title: "Rejected", description: `${tx.clientName} will see the decision on their dashboard.` })}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[12px] font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[0.75rem] font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <X className="h-3.5 w-3.5" /> Reject
           </button>
@@ -94,7 +94,7 @@ function HistoryRow({ ev }: { ev: TxEvent }) {
         <span className={cn("h-2.5 w-2.5 rounded-full", isEdit ? "bg-slate-300" : ev.to === "COMPLETED" ? "bg-emerald-500" : ev.to === "REJECTED" || ev.to === "CANCELLED" ? "bg-slate-400" : "bg-amber-500")} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-semibold text-slate-800">
+        <p className="text-[0.8125rem] font-semibold text-slate-800">
           {isEdit ? (
             <>Details updated{ev.changes?.length ? <span className="font-normal text-slate-500"> · {ev.changes.join(", ")}</span> : null}</>
           ) : (
@@ -102,12 +102,12 @@ function HistoryRow({ ev }: { ev: TxEvent }) {
               {ev.from ? statusLabel(ev.from) : "Submitted"} <span className="text-slate-400">→</span> {statusLabel(ev.to)}
             </>
           )}
-          {ev.internalNote && <span className="ms-2 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-500">Internal</span>}
+          {ev.internalNote && <span className="ms-2 rounded bg-indigo-50 px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-indigo-500">Internal</span>}
         </p>
-        <p className="mt-0.5 text-[11.5px] text-slate-400">
+        <p className="mt-0.5 text-[0.71875rem] text-slate-400">
           {fmtWhen(ev.at)} · {ev.byRole === "admin" ? "Super Admin" : ev.byRole === "client" ? ev.by : "System"}
         </p>
-        {(ev.note || ev.internalNote) && <p className={cn("mt-1 rounded-md px-2.5 py-1.5 text-[12px] leading-relaxed", ev.internalNote ? "bg-indigo-50/60 text-indigo-700" : "bg-slate-50 text-slate-600")}>{ev.internalNote ?? ev.note}</p>}
+        {(ev.note || ev.internalNote) && <p className={cn("mt-1 rounded-md px-2.5 py-1.5 text-[0.75rem] leading-relaxed", ev.internalNote ? "bg-indigo-50/60 text-indigo-700" : "bg-slate-50 text-slate-600")}>{ev.internalNote ?? ev.note}</p>}
       </div>
     </li>
   );
@@ -159,40 +159,40 @@ function RequestManager({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCt
       {/* status decision box — the admin's control panel for this request */}
       <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="me-1 text-[12px] font-bold uppercase tracking-wide text-slate-400">Quick decision:</span>
-          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "UNDER_REVIEW"} onClick={() => decide("UNDER_REVIEW")}>
+          <span className="me-1 text-[0.75rem] font-bold uppercase tracking-wide text-slate-400">Quick decision:</span>
+          <OutlineButton className="px-3 py-1.5 text-[0.78125rem]" disabled={busy || tx.status === "UNDER_REVIEW"} onClick={() => decide("UNDER_REVIEW")}>
             Under Review
           </OutlineButton>
-          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "APPROVED"} onClick={() => decide("APPROVED")}>
+          <OutlineButton className="px-3 py-1.5 text-[0.78125rem]" disabled={busy || tx.status === "APPROVED"} onClick={() => decide("APPROVED")}>
             Approved
           </OutlineButton>
-          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "PROCESSING"} onClick={() => decide("PROCESSING")}>
+          <OutlineButton className="px-3 py-1.5 text-[0.78125rem]" disabled={busy || tx.status === "PROCESSING"} onClick={() => decide("PROCESSING")}>
             Processing
           </OutlineButton>
-          <PrimaryButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "COMPLETED"} onClick={() => decide("COMPLETED")}>
+          <PrimaryButton className="px-3 py-1.5 text-[0.78125rem]" disabled={busy || tx.status === "COMPLETED"} onClick={() => decide("COMPLETED")}>
             <Check className="h-3.5 w-3.5" /> Complete
           </PrimaryButton>
-          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "REJECTED"} onClick={() => decide("REJECTED")}>
+          <OutlineButton className="px-3 py-1.5 text-[0.78125rem]" disabled={busy || tx.status === "REJECTED"} onClick={() => decide("REJECTED")}>
             <X className="h-3.5 w-3.5" /> Reject
           </OutlineButton>
-          <OutlineButton className="px-3 py-1.5 text-[12.5px]" disabled={busy || tx.status === "CANCELLED"} onClick={() => decide("CANCELLED")}>
+          <OutlineButton className="px-3 py-1.5 text-[0.78125rem]" disabled={busy || tx.status === "CANCELLED"} onClick={() => decide("CANCELLED")}>
             Cancelled
           </OutlineButton>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Set status manually</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Set status manually</span>
             <Select value={status} onChange={(v) => setStatus(v as TxStatus)} options={TX_STATUS_OPTIONS} />
           </div>
           <TextInput label="Note for the client (visible)" value={clientNote} onChange={setClientNote} placeholder="e.g. Processed via bank transfer" />
           <TextInput label="Internal note (private)" value={internalNote} onChange={setInternalNote} placeholder="e.g. KYC re-checked before approving" />
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[11.5px] leading-relaxed text-slate-400">
+          <p className="text-[0.71875rem] leading-relaxed text-slate-400">
             Only <span className="font-semibold text-slate-600">Completed</span> moves the client&apos;s balance — submitting or reviewing a request never does. The client is
             notified with the reference on every decision; internal notes stay private.
           </p>
-          <PrimaryButton className="px-4 py-2 text-[13px]" disabled={busy || (status === tx.status && !clientNote.trim() && !internalNote.trim())} onClick={() => decide(status, clientNote.trim(), internalNote.trim())}>
+          <PrimaryButton className="px-4 py-2 text-[0.8125rem]" disabled={busy || (status === tx.status && !clientNote.trim() && !internalNote.trim())} onClick={() => decide(status, clientNote.trim(), internalNote.trim())}>
             Apply Decision
           </PrimaryButton>
         </div>
@@ -200,7 +200,7 @@ function RequestManager({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCt
 
       {/* status history / audit trail */}
       <div>
-        <p className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-slate-400">
+        <p className="mb-3 flex items-center gap-1.5 text-[0.75rem] font-bold uppercase tracking-wide text-slate-400">
           <Clock className="h-3.5 w-3.5" /> Status history — full audit trail
         </p>
         {history.length > 0 ? (
@@ -210,17 +210,17 @@ function RequestManager({ tx, ctx, onEdit, onDelete }: { tx: TxRow; ctx: AdminCt
             ))}
           </ol>
         ) : (
-          <p className="text-[12.5px] text-slate-400">No recorded history for this legacy record.</p>
+          <p className="text-[0.78125rem] text-slate-400">No recorded history for this legacy record.</p>
         )}
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-        <OutlineButton className="px-3 py-1.5 text-[12.5px]" onClick={onEdit}>
+        <OutlineButton className="px-3 py-1.5 text-[0.78125rem]" onClick={onEdit}>
           <Pencil className="h-3.5 w-3.5" /> Edit details
         </OutlineButton>
         <button
           onClick={onDelete}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.78125rem] font-semibold text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
         >
           <Trash2 className="h-3.5 w-3.5" /> Delete request
         </button>
@@ -249,7 +249,7 @@ function Detail({ label, value, mono }: { label: string; value: string; mono?: b
   return (
     <div>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
-      <p className={cn("mt-1 break-words text-sm text-slate-800", mono && "font-mono text-[13px]")}>{value}</p>
+      <p className={cn("mt-1 break-words text-sm text-slate-800", mono && "font-mono text-[0.8125rem]")}>{value}</p>
     </div>
   );
 }
@@ -348,7 +348,7 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="w-10 px-4 py-4" />
                 <th className="px-2 py-4 font-medium">ID</th>
                 <th className="px-4 py-4 font-medium">Date</th>
@@ -372,7 +372,7 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
                     <td className="px-2 py-4"><MonoId id={t.id} /></td>
                     <td className="whitespace-nowrap px-4 py-4 text-slate-600">{t.dateISO}</td>
                     <td className="max-w-[280px] truncate px-4 py-4 font-semibold text-slate-900">{t.clientName}</td>
-                    <td className={cn("px-4 py-4 text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>{t.type}</td>
+                    <td className={cn("px-4 py-4 text-[0.8125rem] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>{t.type}</td>
                     <td className={cn("whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")} dir="ltr">
                       {t.type === "CREDIT" ? "+" : "-"}{usd(t.amount)}
                     </td>
@@ -398,14 +398,14 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
           </table>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
-          <p className="text-[13px] text-slate-500">
+          <p className="text-[0.8125rem] text-slate-500">
             Showing {filtered.length === 0 ? 0 : safePage * PAGE_SIZE + 1}–{Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length} transactions
           </p>
           <div className="flex items-center gap-2">
-            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage === 0} onClick={() => setPageIdx((p) => Math.max(0, p - 1))}>
+            <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" disabled={safePage === 0} onClick={() => setPageIdx((p) => Math.max(0, p - 1))}>
               <ArrowLeft className="h-3.5 w-3.5" /> Prev
             </OutlineButton>
-            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage >= pageCount - 1} onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}>
+            <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" disabled={safePage >= pageCount - 1} onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}>
               Next <ChevronRightIcon />
             </OutlineButton>
           </div>
@@ -474,7 +474,7 @@ function NewTxModal({ open, onClose, ctx }: { open: boolean; onClose: () => void
     <Modal open={open} onClose={onClose} title="New Transaction">
       <div className="space-y-4">
         <div>
-          <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Client *</span>
+          <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Client *</span>
           <Select
             value={clientId}
             onChange={setClientId}
@@ -484,7 +484,7 @@ function NewTxModal({ open, onClose, ctx }: { open: boolean; onClose: () => void
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Type *</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Type *</span>
             <Select
               value={type}
               onChange={(v) => {
@@ -498,12 +498,12 @@ function NewTxModal({ open, onClose, ctx }: { open: boolean; onClose: () => void
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Kind</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Kind</span>
             <Select value={kind} onChange={(v) => setKind(v as TxKind)} options={KIND_OPTIONS} />
           </div>
           <TextInput label="Amount (USD) *" type="number" value={amount} onChange={setAmount} placeholder="0.00" />
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Status</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Status</span>
             <Select value={status} onChange={(v) => setStatus(v as TxStatus)} options={TX_STATUS_OPTIONS} />
           </div>
           <TextInput label="Date" type="date" value={date} onChange={setDate} />
@@ -569,22 +569,22 @@ function EditTxModal({ tx, onClose, ctx }: { tx: TxRow | null; onClose: () => vo
     <Modal open={!!tx} onClose={close} title="Edit Transaction" panelClassName="max-w-lg">
       {tx && (
         <div className="space-y-4">
-          <p className="rounded-lg bg-slate-50 px-3.5 py-2.5 text-[12.5px] text-slate-500">
+          <p className="rounded-lg bg-slate-50 px-3.5 py-2.5 text-[0.78125rem] text-slate-500">
             {tx.clientName} · <span className="font-mono">{tx.reference}</span>
           </p>
           <div className="grid grid-cols-2 gap-4">
             <TextInput label="Date" type="date" value={dateISO} onChange={setDateISO} />
             <TextInput label="Amount (USD) *" type="number" value={amount} onChange={setAmount} />
             <div>
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Direction</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Direction</span>
               <Select value={type} onChange={(v) => setType(v as TxType)} options={[{ value: "CREDIT", label: "Credit (money in)" }, { value: "DEBIT", label: "Debit (money out)" }]} />
             </div>
             <div>
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Kind</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Kind</span>
               <Select value={kind} onChange={(v) => setKind(v as TxKind)} options={KIND_OPTIONS} />
             </div>
             <div>
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Status</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Status</span>
               <Select value={status} onChange={(v) => setStatus(v as TxStatus)} options={TX_STATUS_OPTIONS} />
             </div>
             <TextInput label="Method" value={method} onChange={setMethod} />
@@ -633,13 +633,13 @@ export function DepositsPage({ ctx }: { ctx: AdminCtx }) {
 
       <Card className="mt-5">
         <div className="flex items-center justify-between px-6 py-4">
-          <p className="text-[13px] text-slate-500">{filtered.length} deposits</p>
+          <p className="text-[0.8125rem] text-slate-500">{filtered.length} deposits</p>
           <p className="text-sm font-bold text-emerald-600" dir="ltr">+{usd(total)} completed</p>
         </div>
         <div className="overflow-x-auto border-t border-slate-100">
           <table className="w-full min-w-[860px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-4 py-4 font-medium">Client</th>
                 <th className="px-4 py-4 font-medium">Reference</th>
@@ -653,7 +653,7 @@ export function DepositsPage({ ctx }: { ctx: AdminCtx }) {
                 <tr key={t.id} className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60">
                   <td className="whitespace-nowrap px-6 py-4 text-slate-600">{t.dateISO}</td>
                   <td className="max-w-[240px] truncate px-4 py-4 font-semibold text-slate-900">{t.clientName}</td>
-                  <td className="px-4 py-4 font-mono text-[13px] text-slate-500">{t.reference}</td>
+                  <td className="px-4 py-4 font-mono text-[0.8125rem] text-slate-500">{t.reference}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums text-emerald-500" dir="ltr">+{usd(t.amount)}</td>
                   <td className="px-4 py-4"><StatusBadge status={t.status} /></td>
                   <td className="px-6 py-4 text-right"><TxActions tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} /></td>
@@ -733,13 +733,13 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
 
       <Card className="mt-5">
         <div className="flex items-center justify-between px-6 py-4">
-          <p className="text-[13px] text-slate-500">{filtered.filter((t) => t.status === "PENDING" || t.status === "PROCESSING").length} awaiting review</p>
+          <p className="text-[0.8125rem] text-slate-500">{filtered.filter((t) => t.status === "PENDING" || t.status === "PROCESSING").length} awaiting review</p>
           <p className="text-sm font-bold text-amber-600" dir="ltr">−{usd(pendingTotal)} pending</p>
         </div>
         <div className="overflow-x-auto border-t border-slate-100">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="w-10 px-4 py-4" />
                 <th className="px-2 py-4 font-medium">Date</th>
                 <th className="px-4 py-4 font-medium">Client</th>
@@ -759,21 +759,21 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
                     <td className="whitespace-nowrap px-2 py-4 text-slate-600">{w.dateISO}</td>
                     <td className="px-4 py-4 font-semibold text-slate-900">{w.clientName}</td>
                     <td className="px-4 py-4 font-medium text-slate-700">{w.method}</td>
-                    <td className="whitespace-nowrap px-4 py-4 text-right font-mono text-[13px] tabular-nums text-slate-900" dir="ltr">−{usd(w.amount)}</td>
+                    <td className="whitespace-nowrap px-4 py-4 text-right font-mono text-[0.8125rem] tabular-nums text-slate-900" dir="ltr">−{usd(w.amount)}</td>
                     <td className="px-4 py-4"><StatusBadge status={w.status} /></td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-2">
                         {(w.status === "PENDING" || w.status === "PROCESSING") && (
                           <>
-                            <PrimaryButton className="px-3 py-1.5 text-[13px]" onClick={() => ctx.runAction({ action: "set-transaction-status", id: w.id, status: "COMPLETED" }, { title: "Withdrawal approved", description: `${usd(w.amount)} debited from ${w.clientName} — every dashboard updated.` })}>
+                            <PrimaryButton className="px-3 py-1.5 text-[0.8125rem]" onClick={() => ctx.runAction({ action: "set-transaction-status", id: w.id, status: "COMPLETED" }, { title: "Withdrawal approved", description: `${usd(w.amount)} debited from ${w.clientName} — every dashboard updated.` })}>
                               <Check className="h-3.5 w-3.5" /> Approve
                             </PrimaryButton>
-                            <OutlineButton className="px-3 py-1.5 text-[13px]" onClick={() => ctx.runAction({ action: "set-transaction-status", id: w.id, status: "REJECTED" }, { title: "Withdrawal rejected", description: `${w.clientName} will see the decision on their dashboard.` })}>
+                            <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" onClick={() => ctx.runAction({ action: "set-transaction-status", id: w.id, status: "REJECTED" }, { title: "Withdrawal rejected", description: `${w.clientName} will see the decision on their dashboard.` })}>
                               <X className="h-3.5 w-3.5" /> Reject
                             </OutlineButton>
                           </>
                         )}
-                        <OutlineButton className="px-3 py-1.5 text-[13px]" onClick={() => setEditing(w)}>
+                        <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" onClick={() => setEditing(w)}>
                           <Pencil className="h-3.5 w-3.5" /> Update
                         </OutlineButton>
                       </div>
@@ -844,7 +844,7 @@ function UpdateWithdrawalModal({
             {withdrawal.clientName} — <span dir="ltr">{usd(withdrawal.amount)}</span> · {withdrawal.method} · <span className="font-mono">{withdrawal.reference}</span>
           </p>
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">New Status *</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">New Status *</span>
             <Select
               value={status}
               onChange={setStatus}
@@ -853,7 +853,7 @@ function UpdateWithdrawalModal({
             />
           </div>
           <div>
-            <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Note for the client (visible on their dashboard)</span>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Note for the client (visible on their dashboard)</span>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -905,13 +905,13 @@ export function BalancesPage({ ctx }: { ctx: AdminCtx }) {
 
       <Card className="mt-5">
         <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4">
-          <p className="text-[13px] text-slate-500">{filtered.length} accounts</p>
+          <p className="text-[0.8125rem] text-slate-500">{filtered.length} accounts</p>
           <p className="text-sm font-bold text-slate-900" dir="ltr">{usd(totalBalance)} total</p>
         </div>
         <div className="overflow-x-auto border-t border-slate-100">
           <table className="w-full min-w-[1000px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="px-6 py-4 font-medium">Client</th>
                 <th className="px-4 py-4 text-right font-medium">Opening</th>
                 <th className="px-4 py-4 text-right font-medium">Credits</th>
@@ -936,7 +936,7 @@ export function BalancesPage({ ctx }: { ctx: AdminCtx }) {
                   <td className="whitespace-nowrap px-4 py-4 text-right font-bold tabular-nums text-slate-900" dir="ltr">{usd(c.financials.balance)}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-right font-semibold tabular-nums text-slate-700" dir="ltr">{usd(c.financials.available)}</td>
                   <td className="whitespace-nowrap px-6 py-4 text-right">
-                    <OutlineButton className="px-3 py-1.5 text-[13px]" onClick={() => setAdjusting(c)}>
+                    <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" onClick={() => setAdjusting(c)}>
                       <Pencil className="h-3.5 w-3.5" /> Adjust
                     </OutlineButton>
                   </td>
@@ -971,7 +971,7 @@ function RatesCard({ ctx }: { ctx: AdminCtx }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Currency Reference Rates</h2>
-          <p className="mt-0.5 text-[13px] text-slate-500">
+          <p className="mt-0.5 text-[0.8125rem] text-slate-500">
             Indicative USD-based rates used by the client dashboard display-currency selector. The ledger base (USD) is locked to 1.
           </p>
         </div>
@@ -995,7 +995,7 @@ function RatesCard({ ctx }: { ctx: AdminCtx }) {
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {CURRENCY_CODES.map((code) => (
           <label key={code} className="block">
-            <span className="mb-1 block text-[12px] font-semibold text-slate-500">{code}</span>
+            <span className="mb-1 block text-[0.75rem] font-semibold text-slate-500">{code}</span>
             <input
               type="number"
               step="any"

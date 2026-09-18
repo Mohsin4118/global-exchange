@@ -123,6 +123,11 @@
      (56px client topbar on mobile, 64px desktop) — the top section of
      the dashboard can never hide underneath a sticky header. */
   html {
+    /* SLIGHT global font increase (+6.25% => 17px root). Every rem-based
+       size (Tailwind scale + converted text-[Nrem]) scales uniformly across
+       homepage, client dashboard, admin panel, EN + AR — layout proportions
+       are preserved because spacing utilities are rem-based too. */
+    font-size: 106.25%;
     scroll-padding-top: 72px;
   }
 }

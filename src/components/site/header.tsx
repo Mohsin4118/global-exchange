@@ -90,7 +90,7 @@ export function Header({
                 key={item.key}
                 onClick={() => go(item.href, item.key)}
                 className={cn(
-                  "relative rounded-lg px-3.5 py-2 text-[13.5px] font-medium transition-colors",
+                  "relative rounded-lg px-3.5 py-2 text-[0.84375rem] font-medium transition-colors",
                   active === item.key ? "text-white" : "text-white/55 hover:text-white hover:bg-white/[0.035]"
                 )}
               >
@@ -106,7 +106,7 @@ export function Header({
             {/* phone number (requested) */}
             <a
               href={SITE_PHONE_TEL}
-              className="hidden xl:inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] font-semibold text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
+              className="hidden xl:inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[0.8125rem] font-semibold text-white/70 hover:text-[#00E5A0] hover:border-[#00E5A0]/30 transition-colors"
               aria-label={`${t("phone")}: ${SITE_PHONE_DISPLAY}`}
             >
               <Phone className="w-3.5 h-3.5 text-[#00E5A0]" />
@@ -115,13 +115,13 @@ export function Header({
 
             <button
               onClick={onLogin}
-              className="hidden md:inline-flex rounded-lg px-4 py-2 text-[13.5px] font-semibold text-white/80 hover:text-white transition-colors"
+              className="hidden md:inline-flex rounded-lg px-4 py-2 text-[0.84375rem] font-semibold text-white/80 hover:text-white transition-colors"
             >
               {t("login")}
             </button>
             <button
               onClick={onRegister}
-              className="hidden md:inline-flex items-center rounded-lg bg-[#00E5A0] px-4 py-2 text-[13.5px] font-bold text-[#022c20] shadow-[0_0_24px_-6px_rgba(0,229,160,0.55)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+              className="hidden md:inline-flex items-center rounded-lg bg-[#00E5A0] px-4 py-2 text-[0.84375rem] font-bold text-[#022c20] shadow-[0_0_24px_-6px_rgba(0,229,160,0.55)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
             >
               {t("getStarted")}
             </button>
@@ -132,7 +132,7 @@ export function Header({
             <div className="relative" ref={langRef}>
               <button
                 onClick={() => setLangOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 sm:px-3 py-2 text-[13px] font-semibold text-white/70 hover:text-white hover:border-white/20 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 sm:px-3 py-2 text-[0.8125rem] font-semibold text-white/70 hover:text-white hover:border-white/20 transition-colors"
                 aria-label="Select language"
                 aria-haspopup="menu"
                 aria-expanded={langOpen}
@@ -159,13 +159,13 @@ export function Header({
                         aria-checked={lang === l.code}
                         onClick={() => pickLang(l.code)}
                         className={cn(
-                          "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-colors",
+                          "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-[0.84375rem] font-medium transition-colors",
                           lang === l.code ? "bg-[#00E5A0]/[0.08] text-[#00E5A0]" : "text-white/70 hover:bg-white/[0.05] hover:text-white",
                         )}
                       >
                         <span className="flex flex-col items-start leading-tight">
                           <span dir="auto">{l.label}</span>
-                          <span className="text-[11px] text-white/40" dir="ltr">
+                          <span className="text-[0.6875rem] text-white/40" dir="ltr">
                             {l.short}
                           </span>
                         </span>
@@ -231,7 +231,7 @@ export function Header({
                     setOpen(false);
                     onLogin();
                   }}
-                  className="flex-1 rounded-lg border border-white/10 px-4 py-2 text-[13.5px] font-semibold text-white/85"
+                  className="flex-1 rounded-lg border border-white/10 px-4 py-2 text-[0.84375rem] font-semibold text-white/85"
                 >
                   {t("login")}
                 </button>
@@ -240,7 +240,7 @@ export function Header({
                     setOpen(false);
                     onRegister();
                   }}
-                  className="flex-1 rounded-lg bg-[#00E5A0] px-4 py-2 text-[13.5px] font-bold text-[#022c20]"
+                  className="flex-1 rounded-lg bg-[#00E5A0] px-4 py-2 text-[0.84375rem] font-bold text-[#022c20]"
                 >
                   {t("getStarted")}
                 </button>

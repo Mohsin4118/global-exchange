@@ -78,8 +78,8 @@ export function LoginView({
         />
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-[12.5px] font-medium text-slate-600">{t("password")}</label>
-            <button type="button" onClick={() => toast({ title: t("forgotPassword") })} className="text-[12px] font-medium text-emerald-600 hover:underline">
+            <label className="text-[0.78125rem] font-medium text-slate-600">{t("password")}</label>
+            <button type="button" onClick={() => toast({ title: t("forgotPassword") })} className="text-[0.75rem] font-medium text-emerald-600 hover:underline">
               {t("forgotPassword")}
             </button>
           </div>
@@ -98,7 +98,7 @@ export function LoginView({
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-slate-600">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[0.8125rem] text-slate-600">
           <input
             type="checkbox"
             checked={remember}
@@ -111,7 +111,7 @@ export function LoginView({
         <button
           type="submit"
           disabled={busy}
-          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[15px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
+          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[0.9375rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
         >
           {busy ? "…" : t("signIn")}
         </button>
@@ -119,7 +119,7 @@ export function LoginView({
         {onClientSuccess && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 text-[0.71875rem] font-bold uppercase tracking-wide text-emerald-700">
                 <Sparkles className="h-3.5 w-3.5" />
                 {t("demoAccess")}
               </span>
@@ -129,18 +129,18 @@ export function LoginView({
                   setEmail(DEMO_EMAIL);
                   setPassword(DEMO_PASSWORD);
                 }}
-                className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11.5px] font-bold text-white hover:bg-emerald-700 transition-colors"
+                className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[0.71875rem] font-bold text-white hover:bg-emerald-700 transition-colors"
               >
                 {t("demoUse")}
               </button>
             </div>
-            <p className="mt-2 font-mono text-[11.5px] leading-relaxed text-slate-600" dir="ltr">
+            <p className="mt-2 font-mono text-[0.71875rem] leading-relaxed text-slate-600" dir="ltr">
               {DEMO_EMAIL} · {DEMO_PASSWORD}
             </p>
           </div>
         )}
 
-        <p className="text-center text-[13.5px] text-slate-500">
+        <p className="text-center text-[0.84375rem] text-slate-500">
           {t("noAccount")}{" "}
           <button type="button" onClick={onSwitchToRegister} className="font-semibold text-emerald-600 hover:underline">
             {t("createOne")}
@@ -151,7 +151,7 @@ export function LoginView({
           <button
             type="button"
             onClick={onAdminGate}
-            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-500 hover:text-amber-600 hover:border-amber-300 transition-colors"
+            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[0.75rem] font-semibold text-slate-500 hover:text-amber-600 hover:border-amber-300 transition-colors"
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             {t("adminBadge")}
@@ -221,7 +221,7 @@ export function RegisterView({
         <Field icon={<Mail className="h-4 w-4" />} label={t("emailAddress")} type="email" value={email} onChange={setEmail} placeholder="name@example.com" autoComplete="email" required />
         <Field icon={<Phone className="h-4 w-4" />} label={`${t("phone")} (${t("optional")})`} type="tel" value={phone} onChange={setPhone} placeholder="+44 ..." autoComplete="tel" />
         <div>
-          <label className="mb-1.5 block text-[12.5px] font-medium text-slate-600">
+          <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
             {t("password")} <span className="text-emerald-600">*</span>
           </label>
           <div className="relative">
@@ -232,7 +232,7 @@ export function RegisterView({
           </div>
         </div>
         <div>
-          <label className="mb-1.5 block text-[12.5px] font-medium text-slate-600">
+          <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
             {t("confirmPassword")} <span className="text-emerald-600">*</span>
           </label>
           <div className="relative">
@@ -246,19 +246,19 @@ export function RegisterView({
         <button
           type="submit"
           disabled={busy}
-          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[15px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
+          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[0.9375rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
         >
           {busy ? "…" : t("createAccount")}
         </button>
 
-        <p className="text-center text-[13.5px] text-slate-500">
+        <p className="text-center text-[0.84375rem] text-slate-500">
           {t("haveAccount")}{" "}
           <button type="button" onClick={onSwitchToLogin} className="font-semibold text-emerald-600 hover:underline">
             {t("signIn")}
           </button>
         </p>
       </form>
-      <p className="mt-5 text-center text-[11.5px] leading-relaxed text-slate-400">{t("dataProtected")}</p>
+      <p className="mt-5 text-center text-[0.71875rem] leading-relaxed text-slate-400">{t("dataProtected")}</p>
     </AuthShell>
   );
 }
@@ -284,7 +284,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[12.5px] font-medium text-slate-600">
+      <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
         {label} {required && <span className="text-emerald-600">*</span>}
       </label>
       <div className="relative">
@@ -329,7 +329,7 @@ function AuthShell({
           <Logo lang={lang} tagline={t("tagline")} onClick={onBack} tone="light" />
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[0.8125rem] font-semibold text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("backHome")}
@@ -350,11 +350,11 @@ function AuthShell({
                 <ShieldCheck className="h-6 w-6" />
               </span>
               <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
-              <p className="mt-1.5 text-[13.5px] text-slate-500">{subtitle}</p>
+              <p className="mt-1.5 text-[0.84375rem] text-slate-500">{subtitle}</p>
             </div>
             {children}
           </div>
-          <p className="mt-5 text-center text-[11.5px] text-slate-400">{t("privatePortal")}</p>
+          <p className="mt-5 text-center text-[0.71875rem] text-slate-400">{t("privatePortal")}</p>
         </motion.div>
       </main>
     </div>

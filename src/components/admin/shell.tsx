@@ -156,7 +156,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
         </div>
         {(!collapsed || mobile) && (
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-bold leading-tight text-white">CryptoWise</p>
+            <p className="truncate text-[0.9375rem] font-bold leading-tight text-white">CryptoWise</p>
             <p className="truncate text-xs text-slate-400">Administration</p>
           </div>
         )}
@@ -183,7 +183,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
                 <>
                   <span className="truncate">{item.label}</span>
                   {badge !== null && (
-                    <span className="ms-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-[#451a03]">{badge}</span>
+                    <span className="ms-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[0.625rem] font-bold text-[#451a03]">{badge}</span>
                   )}
                 </>
               )}
@@ -285,7 +285,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-[#451a03]">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[0.625rem] font-bold text-[#451a03]">
                   {unreadCount}
                 </span>
               )}

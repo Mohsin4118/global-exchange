@@ -130,7 +130,7 @@ export function ClientsPage({ ctx }: { ctx: AdminCtx }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="px-6 py-4 font-medium">Name</th>
                 <th className="px-4 py-4 font-medium">Email</th>
                 <th className="px-4 py-4 font-medium">Country</th>
@@ -146,7 +146,7 @@ export function ClientsPage({ ctx }: { ctx: AdminCtx }) {
                 <tr key={c.id} className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60">
                   <td className="max-w-[300px] truncate px-6 py-4 font-semibold text-slate-900">
                     {c.name}
-                    {c.isDemo && <span className="ms-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">DEMO</span>}
+                    {c.isDemo && <span className="ms-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[0.625rem] font-bold text-emerald-600">DEMO</span>}
                   </td>
                   <td className="max-w-[240px] truncate px-4 py-4 text-slate-600">{c.email}</td>
                   <td className="px-4 py-4 text-slate-600">{c.country || "—"}</td>
@@ -158,13 +158,13 @@ export function ClientsPage({ ctx }: { ctx: AdminCtx }) {
                     <div className="inline-flex items-center gap-1">
                       <button
                         onClick={() => ctx.navigate("client-detail", c.id)}
-                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.8125rem] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
                       >
                         <Eye className="h-4 w-4" /> View
                       </button>
                       <button
                         onClick={() => ctx.navigate("client-detail", c.id)}
-                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[0.8125rem] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
                       >
                         <Pencil className="h-4 w-4" /> Edit
                       </button>
@@ -192,14 +192,14 @@ export function ClientsPage({ ctx }: { ctx: AdminCtx }) {
           </table>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
-          <p className="text-[13px] text-slate-500">
+          <p className="text-[0.8125rem] text-slate-500">
             Showing {filtered.length === 0 ? 0 : safePage * PAGE_SIZE + 1}–{Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length} clients
           </p>
           <div className="flex items-center gap-2">
-            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage === 0} onClick={() => setPageIdx((p) => Math.max(0, p - 1))}>
+            <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" disabled={safePage === 0} onClick={() => setPageIdx((p) => Math.max(0, p - 1))}>
               <ArrowLeft className="h-3.5 w-3.5" /> Prev
             </OutlineButton>
-            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage >= pageCount - 1} onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}>
+            <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" disabled={safePage >= pageCount - 1} onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}>
               Next <ArrowRightIcon />
             </OutlineButton>
           </div>
@@ -283,10 +283,10 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
         <TextInput label="Full Name *" value={name} onChange={setName} placeholder="e.g. Charlie Williams" />
         <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="client@email.com" />
         <div>
-          <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Portal Password *</span>
+          <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Portal Password *</span>
           <PasswordInput theme="light" value={password} onChange={setPassword} placeholder="Client sign-in password (min. 6 chars)" autoComplete="new-password" />
         </div>
-        <p className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-500">
+        <p className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3.5 py-2.5 text-[0.78125rem] leading-relaxed text-slate-500">
           The client signs in on the website with this email and password — their dashboard opens with the opening balance below.
         </p>
         <div className="grid grid-cols-2 gap-4">
@@ -296,7 +296,7 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
         <TextInput label="Address" value={address} onChange={setAddress} placeholder="Optional" />
         <TextInput label="Opening Balance (USD)" type="number" value={balance} onChange={setBalance} />
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Source of Funds</span>
+          <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Source</span>
           <textarea
             rows={3}
             value={sof}
@@ -304,7 +304,7 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
             placeholder="Enter the source of the client's funds… e.g. Salary, business income, investment, savings, company funds, inheritance."
             className="w-full resize-y rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
           />
-          <span className="mt-1.5 block text-[12px] leading-relaxed text-slate-400">
+          <span className="mt-1.5 block text-[0.75rem] leading-relaxed text-slate-400">
             Free text (English or Arabic) — stored on the client record and shown on their account. You can change it at any time.
           </span>
         </label>
@@ -513,7 +513,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="flex flex-wrap items-center gap-2 text-[28px] font-bold leading-tight tracking-tight text-slate-900">
+            <h1 className="flex flex-wrap items-center gap-2 text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900">
               {client.name}
               {client.isDemo && <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">DEMO</span>}
               <StatusBadge status={client.status === "active" ? "ACTIVE" : "SUSPENDED"} />
@@ -542,7 +542,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
         {/* Personal information */}
         <Card className="p-6">
           <h2 className="text-lg font-bold text-slate-900">Personal Information</h2>
-          <p className="mt-0.5 text-[13px] text-slate-500">Saved changes appear everywhere — client dashboard, statements, reports.</p>
+          <p className="mt-0.5 text-[0.8125rem] text-slate-500">Saved changes appear everywhere — client dashboard, statements, reports.</p>
           <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextInput label="Full Name" value={f.name} onChange={(v) => set("name", v)} />
             <TextInput label="Email (sign-in)" type="email" value={f.email} onChange={(v) => set("email", v)} />
@@ -555,7 +555,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
             </div>
             <TextInput label="Account No. (client reference)" value={f.accountNo} onChange={(v) => set("accountNo", v)} />
             <div>
-              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Assigned Agent</span>
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Assigned Agent</span>
               <Select
                 value={f.agent}
                 onChange={(v) => set("agent", v)}
@@ -576,7 +576,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
         <div className="grid grid-cols-1 content-start gap-6">
           <Card className="p-6">
             <h2 className="text-lg font-bold text-slate-900">Financial Summary</h2>
-            <p className="mt-0.5 text-[13px] text-slate-500">Always calculated live from the transaction ledger.</p>
+            <p className="mt-0.5 text-[0.8125rem] text-slate-500">Always calculated live from the transaction ledger.</p>
             <div className="mt-4 divide-y divide-slate-100">
               <SummaryRow icon={<Wallet className="h-4 w-4 text-slate-400" />} label="Current Balance" value={usd(client.financials.balance)} valueClass="font-bold text-slate-900" />
               <SummaryRow icon={<Wallet className="h-4 w-4 text-slate-400" />} label="Available Funds" value={usd(client.financials.available)} valueClass="font-semibold text-slate-700" />
@@ -600,26 +600,26 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
             {access && (
               <div className="mt-5 space-y-4">
                 <div>
-                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Reset Portal Password</span>
+                  <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Reset Portal Password</span>
                   <PasswordInput theme="light" value={access.password} onChange={(v) => setAccess({ ...access, password: v })} placeholder="Leave empty to keep current password" autoComplete="new-password" />
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
-                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Tier</span>
+                    <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Tier</span>
                     <Select value={access.tier} onChange={(v) => setAccess({ ...access, tier: v })} options={TIER_OPTIONS} />
                   </div>
                   <div>
-                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Account Status</span>
+                    <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Account Status</span>
                     <Select value={access.status} onChange={(v) => setAccess({ ...access, status: v })} options={STATUS_OPTIONS} />
                   </div>
                   <div>
-                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Verification</span>
+                    <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Verification</span>
                     <Select value={access.kyc} onChange={(v) => setAccess({ ...access, kyc: v })} options={KYC_OPTIONS} />
                   </div>
                 </div>
                 <TextInput label="Opening Balance (USD)" type="number" value={access.opening} onChange={(v) => setAccess({ ...access, opening: v })} />
                 <label className="block">
-                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Manager Note (shown on the client dashboard)</span>
+                  <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Manager Note (shown on the client dashboard)</span>
                   <textarea
                     rows={2}
                     value={access.note}
@@ -629,7 +629,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Source of Funds (free text, shown on the client account)</span>
+                  <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Source (free text, shown on the client account)</span>
                   <textarea
                     rows={2}
                     value={access.sof}
@@ -640,11 +640,11 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
                 </label>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Display Currency (client dashboard)</span>
+                    <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Display Currency (client dashboard)</span>
                     <Select value={access.currency} onChange={(v) => setAccess({ ...access, currency: v })} options={CURRENCY_OPTIONS} />
                   </label>
                   <div className="flex items-end pb-1">
-                    <p className="text-[12px] leading-relaxed text-slate-400">Currency, note and source of funds sync to the client dashboard within seconds.</p>
+                    <p className="text-[0.75rem] leading-relaxed text-slate-400">Currency, note and source of funds sync to the client dashboard within seconds.</p>
                   </div>
                 </div>
                 <div className="flex justify-end">
@@ -657,7 +657,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
           {/* Holdings */}
           <Card className="p-6">
             <h2 className="text-lg font-bold text-slate-900">Holdings</h2>
-            <p className="mt-0.5 text-[13px] text-slate-500">Units per asset — valued on the dashboard with live market prices.</p>
+            <p className="mt-0.5 text-[0.8125rem] text-slate-500">Units per asset — valued on the dashboard with live market prices.</p>
             {holdings && (
               <div className="mt-4 space-y-2">
                 {holdings.map((h, i) => {
@@ -713,7 +713,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
       {/* Statement / transactions editor */}
       <Card className="mt-6 p-6">
         <h2 className="text-lg font-bold text-slate-900">Transactions &amp; Statement</h2>
-        <p className="mt-0.5 text-[13px] text-slate-500">Add, edit or remove ledger lines — balances, statistics and the client dashboard update instantly.</p>
+        <p className="mt-0.5 text-[0.8125rem] text-slate-500">Add, edit or remove ledger lines — balances, statistics and the client dashboard update instantly.</p>
 
         {/* add line */}
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
@@ -753,7 +753,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
               placeholder="Method"
               className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:w-40"
             />
-            <PrimaryButton className="shrink-0 px-4 py-2 text-[13px]" onClick={addTx}>
+            <PrimaryButton className="shrink-0 px-4 py-2 text-[0.8125rem]" onClick={addTx}>
               <Plus className="h-4 w-4" /> Add Line
             </PrimaryButton>
           </div>
@@ -763,7 +763,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="px-3 py-3 font-medium">Date</th>
                 <th className="px-3 py-3 font-medium">Description</th>
                 <th className="px-3 py-3 font-medium">Kind</th>
@@ -778,10 +778,10 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
                 editingTx === t.id && txDraft ? (
                   <tr key={t.id} className="border-b border-slate-50 bg-emerald-50/30">
                     <td className="px-3 py-3">
-                      <input type="date" value={txDraft.dateISO} onChange={(e) => setTxDraft({ ...txDraft, dateISO: e.target.value })} className="h-9 rounded-md border border-slate-200 px-2 text-[13px]" />
+                      <input type="date" value={txDraft.dateISO} onChange={(e) => setTxDraft({ ...txDraft, dateISO: e.target.value })} className="h-9 rounded-md border border-slate-200 px-2 text-[0.8125rem]" />
                     </td>
                     <td className="px-3 py-3">
-                      <input value={txDraft.label} onChange={(e) => setTxDraft({ ...txDraft, label: e.target.value })} className="h-9 w-52 rounded-md border border-slate-200 px-2 text-[13px]" placeholder="Description" />
+                      <input value={txDraft.label} onChange={(e) => setTxDraft({ ...txDraft, label: e.target.value })} className="h-9 w-52 rounded-md border border-slate-200 px-2 text-[0.8125rem]" placeholder="Description" />
                     </td>
                     <td className="px-3 py-3">
                       <Select className="w-32" value={txDraft.kind} onChange={(v) => setTxDraft({ ...txDraft, kind: v as TxKind })} options={KIND_OPTIONS.map((k) => ({ value: k.value, label: k.label }))} />
@@ -789,22 +789,22 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-end gap-1.5">
                         <Select className="w-24" value={txDraft.type} onChange={(v) => setTxDraft({ ...txDraft, type: v as TxType })} options={[{ value: "CREDIT", label: "In" }, { value: "DEBIT", label: "Out" }]} />
-                        <input type="number" min="0" step="any" value={txDraft.amount} onChange={(e) => setTxDraft({ ...txDraft, amount: e.target.value })} className="h-9 w-28 rounded-md border border-slate-200 px-2 text-[13px]" dir="ltr" />
+                        <input type="number" min="0" step="any" value={txDraft.amount} onChange={(e) => setTxDraft({ ...txDraft, amount: e.target.value })} className="h-9 w-28 rounded-md border border-slate-200 px-2 text-[0.8125rem]" dir="ltr" />
                       </div>
                     </td>
                     <td className="px-3 py-3">
                       <Select className="w-32" value={txDraft.status} onChange={(v) => setTxDraft({ ...txDraft, status: v as TxStatus })} options={TX_STATUS_OPTIONS} />
                     </td>
-                    <td className="px-3 py-3 text-end text-[13px] text-slate-400">auto</td>
+                    <td className="px-3 py-3 text-end text-[0.8125rem] text-slate-400">auto</td>
                     <td className="px-3 py-3 text-end">
                       <div className="inline-flex items-center gap-1">
-                        <button onClick={saveEditTx} className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-[12px] font-bold text-white hover:bg-emerald-700">Save</button>
+                        <button onClick={saveEditTx} className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-[0.75rem] font-bold text-white hover:bg-emerald-700">Save</button>
                         <button
                           onClick={() => {
                             setEditingTx(null);
                             setTxDraft(null);
                           }}
-                          className="rounded-md px-2 py-1.5 text-[12px] font-semibold text-slate-500 hover:bg-slate-100"
+                          className="rounded-md px-2 py-1.5 text-[0.75rem] font-semibold text-slate-500 hover:bg-slate-100"
                         >
                           Cancel
                         </button>
@@ -818,7 +818,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
                       <span className="font-medium text-slate-800">{t.label}</span>
                       {t.notes && t.notes !== "—" && <span className="text-slate-400"> · {t.notes}</span>}
                     </td>
-                    <td className="px-3 py-3.5 text-[13px] capitalize text-slate-500">{t.kind}</td>
+                    <td className="px-3 py-3.5 text-[0.8125rem] capitalize text-slate-500">{t.kind}</td>
                     <td className={cn("whitespace-nowrap px-3 py-3.5 text-right font-semibold tabular-nums", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")} dir="ltr">
                       {t.type === "CREDIT" ? "+" : "−"}
                       {usd(t.amount)}
@@ -880,7 +880,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
               <Inbox className="h-6 w-6 text-slate-400" />
             </span>
-            <p className="mt-4 text-[15px] font-bold text-slate-900">No comments yet</p>
+            <p className="mt-4 text-[0.9375rem] font-bold text-slate-900">No comments yet</p>
             <p className="mt-1 text-sm text-slate-500">Notes left by staff about this client will appear here.</p>
           </div>
         ) : (

@@ -36,7 +36,7 @@ export function Logo({
       <span className="flex flex-col items-start leading-tight">
         <span
           className={cn(
-            "font-semibold tracking-tight text-[17px]",
+            "font-semibold tracking-tight text-[1.0625rem]",
             tone === "light" ? "text-slate-900" : "text-white",
             lang === "ar" && "text-base"
           )}
@@ -45,7 +45,7 @@ export function Logo({
         </span>
         <span
           className={cn(
-            "text-[10px] tracking-[0.22em] font-medium uppercase",
+            "text-[0.625rem] tracking-[0.22em] font-medium uppercase",
             tone === "light" ? "text-emerald-600" : "text-[#00E5A0]/80"
           )}
         >

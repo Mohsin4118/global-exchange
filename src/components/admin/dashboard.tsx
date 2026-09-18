@@ -102,7 +102,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
           <div className="flex items-center justify-between px-6 pt-5">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Requests awaiting action</h2>
-              <p className="text-[13px] text-slate-500">Submitted by clients from their portals — open Transactions to review, decide and add notes.</p>
+              <p className="text-[0.8125rem] text-slate-500">Submitted by clients from their portals — open Transactions to review, decide and add notes.</p>
             </div>
             <button onClick={() => ctx.navigate("transactions")} className="shrink-0 text-sm font-medium text-emerald-600 transition-colors hover:text-emerald-700">
               Open requests
@@ -111,7 +111,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
           <div className="mt-4 overflow-x-auto px-2 pb-4">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+                <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                   <th className="px-4 py-2.5 font-medium">Reference</th>
                   <th className="px-4 py-2.5 font-medium">Client</th>
                   <th className="px-4 py-2.5 font-medium">Kind</th>
@@ -123,7 +123,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
               <tbody>
                 {pendingRequests.slice(0, 6).map((t) => (
                   <tr key={t.id} className="cursor-pointer border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60" onClick={() => ctx.navigate("transactions")}>
-                    <td className="px-4 py-3.5 font-mono text-[13px] text-slate-600">{t.reference}</td>
+                    <td className="px-4 py-3.5 font-mono text-[0.8125rem] text-slate-600">{t.reference}</td>
                     <td className="max-w-[200px] truncate px-4 py-3.5 font-semibold text-slate-900">{t.clientName}</td>
                     <td className="px-4 py-3.5 capitalize text-slate-600">{t.kind}</td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold tabular-nums text-slate-900" dir="ltr">{usd(t.amount)}</td>
@@ -150,7 +150,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
               <TrendingUp className="h-5 w-5 text-emerald-400" />
             </span>
             <div>
-              <p className="text-[15px] font-bold text-white">Client Growth</p>
+              <p className="text-[0.9375rem] font-bold text-white">Client Growth</p>
               <p className="text-xs text-slate-400">Last 6 months</p>
             </div>
           </div>
@@ -171,7 +171,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
           <div className="mt-4 flex-1 overflow-x-auto px-2 pb-4">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+                <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                   <th className="px-4 py-2.5 font-medium">ID</th>
                   <th className="px-4 py-2.5 font-medium">Date</th>
                   <th className="px-4 py-2.5 font-medium">Type</th>
@@ -184,7 +184,7 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
                     <td className="px-4 py-3.5"><MonoId id={t.id} /></td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{t.dateISO}</td>
                     <td className="px-4 py-3.5">
-                      <span className={cn("text-[13px] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>
+                      <span className={cn("text-[0.8125rem] font-semibold", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")}>
                         {t.type}
                       </span>
                     </td>
@@ -351,10 +351,10 @@ export function FinancialPage({ ctx }: { ctx: AdminCtx }) {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900">Monthly Transaction Volume</h2>
-            <span className="text-[13px] text-slate-400">Last 6 months</span>
+            <span className="text-[0.8125rem] text-slate-400">Last 6 months</span>
           </div>
           <VolumeBarChart months={months} values={monthlyCredits} />
-          <div className="mt-2 flex items-center justify-center gap-6 text-[13px] text-slate-600">
+          <div className="mt-2 flex items-center justify-center gap-6 text-[0.8125rem] text-slate-600">
             <span className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-[3px] bg-emerald-500" /> Credits
             </span>
@@ -368,12 +368,12 @@ export function FinancialPage({ ctx }: { ctx: AdminCtx }) {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900">Transaction Types Distribution</h2>
-            <span className="text-[13px] text-slate-400">All time</span>
+            <span className="text-[0.8125rem] text-slate-400">All time</span>
           </div>
           <div className="flex items-center justify-center py-10">
             <Donut pct={creditPct} />
           </div>
-          <div className="flex items-center justify-center gap-6 text-[13px] text-slate-600">
+          <div className="flex items-center justify-center gap-6 text-[0.8125rem] text-slate-600">
             <span className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Credits {creditPct.toFixed(0)}%
             </span>
@@ -388,12 +388,12 @@ export function FinancialPage({ ctx }: { ctx: AdminCtx }) {
       <Card className="mt-6 p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">Top Clients by Balance</h2>
-          <span className="text-[13px] text-slate-400">Top 5</span>
+          <span className="text-[0.8125rem] text-slate-400">Top 5</span>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+              <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="py-2.5 pr-4 font-medium">#</th>
                 <th className="py-2.5 pr-4 font-medium">Client</th>
                 <th className="py-2.5 text-right font-medium">Balance</th>
@@ -519,7 +519,7 @@ export function MarketPage({ ctx: _ctx }: { ctx: AdminCtx }) {
               key={r}
               onClick={() => setRange(r)}
               className={cn(
-                "rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors",
+                "rounded-md px-3 py-1.5 text-[0.8125rem] font-semibold transition-colors",
                 range === r ? "bg-emerald-500 text-white shadow-sm" : "text-slate-500 hover:text-slate-800",
               )}
             >
@@ -540,7 +540,7 @@ export function MarketPage({ ctx: _ctx }: { ctx: AdminCtx }) {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <span
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-[15px] font-bold text-white"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-[0.9375rem] font-bold text-white"
                     style={{ backgroundColor: coin.color }}
                   >
                     {coin.glyph}

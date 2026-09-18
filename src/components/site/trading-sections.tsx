@@ -27,7 +27,7 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
+            <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
               {t("infraBadge")}
             </span>
             <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
@@ -36,13 +36,13 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
                 {t("infraTitle2")}
               </span>
             </h2>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55">{t("infraSub")}</p>
+            <p className="mt-4 max-w-xl text-[0.9375rem] leading-relaxed text-white/55">{t("infraSub")}</p>
 
             <div className="mt-6 grid grid-cols-2 gap-3 max-w-md">
               {badges.map(({ icon: Icon, label }) => (
                 <span
                   key={label}
-                  className="inline-flex items-center gap-2.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3.5 py-2.5 text-[13px] font-medium text-white/75"
+                  className="inline-flex items-center gap-2.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3.5 py-2.5 text-[0.8125rem] font-medium text-white/75"
                 >
                   <Icon className="h-4 w-4 shrink-0 text-[#00E5A0]" />
                   {label}
@@ -53,13 +53,13 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 onClick={onRegister}
-                className="rounded-xl bg-[#00E5A0] px-6 py-3 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+                className="rounded-xl bg-[#00E5A0] px-6 py-3 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
               >
                 {t("getStarted")}
               </button>
               <button
                 onClick={onLogin}
-                className="rounded-xl border border-white/12 bg-white/[0.04] px-6 py-3 text-[14.5px] font-semibold text-white/85 hover:bg-white/[0.08] transition-colors"
+                className="rounded-xl border border-white/12 bg-white/[0.04] px-6 py-3 text-[0.90625rem] font-semibold text-white/85 hover:bg-white/[0.08] transition-colors"
               >
                 {t("login")}
               </button>
@@ -81,7 +81,7 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
               </p>
             </div>
             <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 flex flex-col justify-between min-h-[150px]">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#00E5A0]/70">100%</span>
+              <span className="font-mono text-[0.6875rem] font-bold uppercase tracking-widest text-[#00E5A0]/70">100%</span>
               <p className="text-base font-semibold text-white leading-snug">{t("yourFunds")}</p>
             </div>
             <div className="sm:col-span-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 flex items-center justify-between gap-4">
@@ -95,7 +95,7 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
                     />
                   )
                 )}
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#04121c] bg-white/10 text-[10px] font-bold text-white/80">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#04121c] bg-white/10 text-[0.625rem] font-bold text-white/80">
                   +
                 </span>
               </div>
@@ -151,16 +151,16 @@ export function TradingSection({
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6 }}
           >
-            <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
+            <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
               {t("tradingBadge")}
             </span>
             <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
               {t("tradingTitle")}
             </h2>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/55">{t("tradingSub")}</p>
+            <p className="mt-4 max-w-xl text-[0.9375rem] leading-relaxed text-white/55">{t("tradingSub")}</p>
             <ul className="mt-6 flex flex-col gap-3">
               {features.map((f) => (
-                <li key={f} className="flex items-start gap-3 text-[14.5px] text-white/75">
+                <li key={f} className="flex items-start gap-3 text-[0.90625rem] text-white/75">
                   <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-[#00E5A0]" />
                   {f}
                 </li>
@@ -168,7 +168,7 @@ export function TradingSection({
             </ul>
             <button
               onClick={onLogin}
-              className="mt-8 inline-flex items-center rounded-xl bg-[#00E5A0] px-6 py-3 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+              className="mt-8 inline-flex items-center rounded-xl bg-[#00E5A0] px-6 py-3 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
             >
               {t("startTrading")}
             </button>
@@ -186,8 +186,8 @@ export function TradingSection({
             <div className="relative rounded-2xl border border-white/[0.08] bg-[#071923]/90 p-5 sm:p-6 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)]" dir="ltr">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[15px] font-semibold text-white">{t("swapCrypto")}</p>
-                  <p className="text-[11.5px] font-medium text-[#00E5A0]">{t("liveRates")}</p>
+                  <p className="text-[0.9375rem] font-semibold text-white">{t("swapCrypto")}</p>
+                  <p className="text-[0.71875rem] font-medium text-[#00E5A0]">{t("liveRates")}</p>
                 </div>
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.05] text-white/60">
                   <ArrowDownUp className="h-4 w-4" />
@@ -196,7 +196,7 @@ export function TradingSection({
 
               {/* you send */}
               <div className="mt-5 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-white/40">{t("youSend")}</p>
+                <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-white/40">{t("youSend")}</p>
                 <div className="mt-2 flex items-center gap-3">
                   <input
                     value={amount}
@@ -233,8 +233,8 @@ export function TradingSection({
                   </select>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <CoinBadge glyph={send.glyph} gradient={send.gradient} className="h-4 w-4 text-[8px]" />
-                  <span className="font-mono text-[11px] text-white/35">{send.name}</span>
+                  <CoinBadge glyph={send.glyph} gradient={send.gradient} className="h-4 w-4 text-[0.5rem]" />
+                  <span className="font-mono text-[0.6875rem] text-white/35">{send.name}</span>
                 </div>
               </div>
 
@@ -254,7 +254,7 @@ export function TradingSection({
 
               {/* you receive */}
               <div className="rounded-xl border border-[#00E5A0]/20 bg-[#00e5a014] p-4">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[#00E5A0]/70">{t("youReceive")}</p>
+                <p className="text-[0.6875rem] font-medium uppercase tracking-wide text-[#00E5A0]/70">{t("youReceive")}</p>
                 <div className="mt-2 flex items-center gap-3">
                   <p className="min-w-0 flex-1 truncate font-mono text-2xl font-bold text-white tabular-nums">
                     {receive > 0 ? `${t("approx")} ${receive.toFixed(receive >= 100 ? 4 : 6)}` : `${t("approx")} 0.00`}
@@ -286,13 +286,13 @@ export function TradingSection({
                   </select>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <CoinBadge glyph={recv.glyph} gradient={recv.gradient} className="h-4 w-4 text-[8px]" />
-                  <span className="font-mono text-[11px] text-white/35">{recv.name}</span>
+                  <CoinBadge glyph={recv.glyph} gradient={recv.gradient} className="h-4 w-4 text-[0.5rem]" />
+                  <span className="font-mono text-[0.6875rem] text-white/35">{recv.name}</span>
                 </div>
               </div>
 
               {/* details */}
-              <div className="mt-5 flex flex-col gap-2.5 border-t border-white/[0.06] pt-4 text-[12.5px]">
+              <div className="mt-5 flex flex-col gap-2.5 border-t border-white/[0.06] pt-4 text-[0.78125rem]">
                 <div className="flex items-center justify-between">
                   <span className="text-white/45">{t("exchangeRate")}</span>
                   <span className="font-mono font-semibold text-white/85 tabular-nums" dir="ltr">
@@ -311,11 +311,11 @@ export function TradingSection({
 
               <button
                 onClick={onLogin}
-                className="mt-5 w-full rounded-xl bg-[#00E5A0] py-3.5 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.55)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all"
+                className="mt-5 w-full rounded-xl bg-[#00E5A0] py-3.5 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.55)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all"
               >
                 {t("exchangeNow")}
               </button>
-              <p className="mt-3 text-center text-[11.5px] text-white/35">{t("swapNote")}</p>
+              <p className="mt-3 text-center text-[0.71875rem] text-white/35">{t("swapNote")}</p>
             </div>
           </motion.div>
         </div>
@@ -343,7 +343,7 @@ export function WhyChooseUs({ t, onRegister }: { t: (k: StringKey) => string; on
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <span className="text-[12.5px] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">{t("whyUs")}</span>
+          <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">{t("whyUs")}</span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("whyUsTitle")}</h2>
         </motion.div>
 
@@ -360,8 +360,8 @@ export function WhyChooseUs({ t, onRegister }: { t: (k: StringKey) => string; on
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#00E5A0]/12 text-lg text-[#00E5A0]">
                 {c.glyph}
               </span>
-              <h3 className="mt-4 text-[16px] font-semibold text-white">{c.title}</h3>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-white/50">{c.desc}</p>
+              <h3 className="mt-4 text-[1rem] font-semibold text-white">{c.title}</h3>
+              <p className="mt-2 text-[0.84375rem] leading-relaxed text-white/50">{c.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -369,7 +369,7 @@ export function WhyChooseUs({ t, onRegister }: { t: (k: StringKey) => string; on
         <div className="mt-10 text-center">
           <button
             onClick={onRegister}
-            className="rounded-xl bg-[#00E5A0] px-8 py-3.5 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+            className="rounded-xl bg-[#00E5A0] px-8 py-3.5 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
           >
             {t("getStarted")}
           </button>
@@ -410,14 +410,14 @@ export function Steps({ t, onRegister }: { t: (k: StringKey) => string; onRegist
               transition={{ duration: 0.55, delay: i * 0.1 }}
               className="relative rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-transparent p-7"
             >
-              <span className="font-mono text-[40px] font-bold leading-none text-[#00E5A0]/15 select-none" aria-hidden="true">
+              <span className="font-mono text-[2.5rem] font-bold leading-none text-[#00E5A0]/15 select-none" aria-hidden="true">
                 {s.n}
               </span>
               <h3 className="mt-4 text-lg font-semibold text-white">
-                <span className="me-2 font-mono text-[13px] font-bold text-[#00E5A0]">{s.n}</span>
+                <span className="me-2 font-mono text-[0.8125rem] font-bold text-[#00E5A0]">{s.n}</span>
                 {s.title}
               </h3>
-              <p className="mt-2.5 text-[14px] leading-relaxed text-white/50">{s.desc}</p>
+              <p className="mt-2.5 text-[0.875rem] leading-relaxed text-white/50">{s.desc}</p>
               {i < 2 && (
                 <span className="absolute top-1/2 -end-4 lg:-end-6 hidden md:block h-px w-8 lg:w-12 bg-gradient-to-r from-[#00E5A0]/40 to-transparent" aria-hidden="true" />
               )}
@@ -428,7 +428,7 @@ export function Steps({ t, onRegister }: { t: (k: StringKey) => string; onRegist
         <div className="mt-10 text-center">
           <button
             onClick={onRegister}
-            className="rounded-xl border border-[#00E5A0]/35 bg-[#00e5a014] px-8 py-3.5 text-[14.5px] font-bold text-[#00E5A0] hover:bg-[#00E5A0]/15 transition-colors"
+            className="rounded-xl border border-[#00E5A0]/35 bg-[#00e5a014] px-8 py-3.5 text-[0.90625rem] font-bold text-[#00E5A0] hover:bg-[#00E5A0]/15 transition-colors"
           >
             {t("step1Title")}
           </button>

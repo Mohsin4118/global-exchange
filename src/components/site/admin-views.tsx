@@ -58,11 +58,11 @@ export function AdminLoginView({
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <LogoMark className="h-10 w-10" />
-            <span className="rounded-md bg-amber-400/12 px-2 py-0.5 text-[11px] font-bold text-amber-400">{t("adminBadge")}</span>
+            <span className="rounded-md bg-amber-400/12 px-2 py-0.5 text-[0.6875rem] font-bold text-amber-400">{t("adminBadge")}</span>
           </div>
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[13px] font-semibold text-white/70 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[0.8125rem] font-semibold text-white/70 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("backHome")}
@@ -83,12 +83,12 @@ export function AdminLoginView({
                 <ShieldCheck className="h-6 w-6" />
               </span>
               <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">{t("adminLoginTitle")}</h1>
-              <p className="mt-1.5 text-[13px] text-white/50">{t("adminLoginSub")}</p>
+              <p className="mt-1.5 text-[0.8125rem] text-white/50">{t("adminLoginSub")}</p>
             </div>
 
             <form onSubmit={submit} className="flex flex-col gap-4">
               <div>
-                <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">{t("emailAddress")}</label>
+                <label className="mb-1.5 block text-[0.78125rem] font-medium text-white/60">{t("emailAddress")}</label>
                 <input
                   type="email"
                   value={email}
@@ -103,7 +103,7 @@ export function AdminLoginView({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">{t("password")}</label>
+                <label className="mb-1.5 block text-[0.78125rem] font-medium text-white/60">{t("password")}</label>
                 <div className="relative">
                   <input
                     type={showPw ? "text" : "password"}
@@ -126,13 +126,13 @@ export function AdminLoginView({
                     {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {error && <p className="mt-1.5 text-[12px] font-medium text-amber-400">{t("adminWrong")}</p>}
+                {error && <p className="mt-1.5 text-[0.75rem] font-medium text-amber-400">{t("adminWrong")}</p>}
               </div>
 
               <button
                 type="submit"
                 disabled={busy}
-                className="mt-1 h-12 rounded-xl bg-amber-400 text-[15px] font-bold text-[#2a1a02] shadow-[0_8px_32px_-8px_rgba(251,191,36,0.5)] hover:bg-amber-300 active:scale-[0.99] transition-all disabled:opacity-60"
+                className="mt-1 h-12 rounded-xl bg-amber-400 text-[0.9375rem] font-bold text-[#2a1a02] shadow-[0_8px_32px_-8px_rgba(251,191,36,0.5)] hover:bg-amber-300 active:scale-[0.99] transition-all disabled:opacity-60"
               >
                 {busy ? "…" : t("signIn")}
               </button>
@@ -140,12 +140,12 @@ export function AdminLoginView({
 
             <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/35" />
-              <p className="text-[11.5px] leading-relaxed text-white/45" dir="ltr">
+              <p className="text-[0.71875rem] leading-relaxed text-white/45" dir="ltr">
                 <span className="font-bold text-white/60">{t("adminHint")}:</span> {ADMIN_EMAIL} / {ADMIN_PASSWORD}
               </p>
             </div>
           </div>
-          <p className="mt-5 text-center text-[11.5px] text-white/30">{t("privatePortal")}</p>
+          <p className="mt-5 text-center text-[0.71875rem] text-white/30">{t("privatePortal")}</p>
         </motion.div>
       </main>
       <span className="hidden">{lang}</span>
