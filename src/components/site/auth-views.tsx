@@ -78,17 +78,17 @@ export function LoginView({
         />
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-[12.5px] font-medium text-white/60">{t("password")}</label>
-            <button type="button" onClick={() => toast({ title: t("forgotPassword") })} className="text-[12px] font-medium text-[#00E5A0] hover:underline">
+            <label className="text-[12.5px] font-medium text-slate-600">{t("password")}</label>
+            <button type="button" onClick={() => toast({ title: t("forgotPassword") })} className="text-[12px] font-medium text-emerald-600 hover:underline">
               {t("forgotPassword")}
             </button>
           </div>
           <div className="relative">
-            <span className="absolute inset-y-0 start-3 flex items-center text-white/30">
+            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
               <Lock className="h-4 w-4" />
             </span>
             <PasswordInput
-              theme="dark"
+              theme="light"
               value={password}
               onChange={setPassword}
               placeholder="••••••••"
@@ -98,12 +98,12 @@ export function LoginView({
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-white/60">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-slate-600">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="h-4 w-4 rounded border-white/20 bg-white/5 accent-[#00E5A0]"
+            className="h-4 w-4 rounded border-slate-300 bg-white accent-[#00E5A0]"
           />
           {t("rememberMe")}
         </label>
@@ -117,9 +117,9 @@ export function LoginView({
         </button>
 
         {onClientSuccess && (
-          <div className="rounded-xl border border-[#00E5A0]/20 bg-[#00E5A0]/[0.05] p-3.5">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-[#00E5A0]">
+              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-emerald-700">
                 <Sparkles className="h-3.5 w-3.5" />
                 {t("demoAccess")}
               </span>
@@ -129,20 +129,20 @@ export function LoginView({
                   setEmail(DEMO_EMAIL);
                   setPassword(DEMO_PASSWORD);
                 }}
-                className="rounded-lg bg-[#00E5A0]/15 px-2.5 py-1 text-[11.5px] font-bold text-[#00E5A0] hover:bg-[#00E5A0]/25 transition-colors"
+                className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11.5px] font-bold text-white hover:bg-emerald-700 transition-colors"
               >
                 {t("demoUse")}
               </button>
             </div>
-            <p className="mt-2 font-mono text-[11.5px] leading-relaxed text-white/55" dir="ltr">
+            <p className="mt-2 font-mono text-[11.5px] leading-relaxed text-slate-600" dir="ltr">
               {DEMO_EMAIL} · {DEMO_PASSWORD}
             </p>
           </div>
         )}
 
-        <p className="text-center text-[13.5px] text-white/50">
+        <p className="text-center text-[13.5px] text-slate-500">
           {t("noAccount")}{" "}
-          <button type="button" onClick={onSwitchToRegister} className="font-semibold text-[#00E5A0] hover:underline">
+          <button type="button" onClick={onSwitchToRegister} className="font-semibold text-emerald-600 hover:underline">
             {t("createOne")}
           </button>
         </p>
@@ -151,7 +151,7 @@ export function LoginView({
           <button
             type="button"
             onClick={onAdminGate}
-            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-white/45 hover:text-amber-400 hover:border-amber-400/30 transition-colors"
+            className="mx-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-500 hover:text-amber-600 hover:border-amber-300 transition-colors"
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             {t("adminBadge")}
@@ -221,25 +221,25 @@ export function RegisterView({
         <Field icon={<Mail className="h-4 w-4" />} label={t("emailAddress")} type="email" value={email} onChange={setEmail} placeholder="name@example.com" autoComplete="email" required />
         <Field icon={<Phone className="h-4 w-4" />} label={`${t("phone")} (${t("optional")})`} type="tel" value={phone} onChange={setPhone} placeholder="+44 ..." autoComplete="tel" />
         <div>
-          <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">
-            {t("password")} <span className="text-[#00E5A0]">*</span>
+          <label className="mb-1.5 block text-[12.5px] font-medium text-slate-600">
+            {t("password")} <span className="text-emerald-600">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 start-3 flex items-center text-white/30">
+            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
               <Lock className="h-4 w-4" />
             </span>
-            <PasswordInput theme="dark" value={password} onChange={setPassword} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
+            <PasswordInput theme="light" value={password} onChange={setPassword} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
           </div>
         </div>
         <div>
-          <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">
-            {t("confirmPassword")} <span className="text-[#00E5A0]">*</span>
+          <label className="mb-1.5 block text-[12.5px] font-medium text-slate-600">
+            {t("confirmPassword")} <span className="text-emerald-600">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 start-3 flex items-center text-white/30">
+            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
               <Lock className="h-4 w-4" />
             </span>
-            <PasswordInput theme="dark" value={confirm} onChange={setConfirm} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
+            <PasswordInput theme="light" value={confirm} onChange={setConfirm} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
           </div>
         </div>
 
@@ -251,14 +251,14 @@ export function RegisterView({
           {busy ? "…" : t("createAccount")}
         </button>
 
-        <p className="text-center text-[13.5px] text-white/50">
+        <p className="text-center text-[13.5px] text-slate-500">
           {t("haveAccount")}{" "}
-          <button type="button" onClick={onSwitchToLogin} className="font-semibold text-[#00E5A0] hover:underline">
+          <button type="button" onClick={onSwitchToLogin} className="font-semibold text-emerald-600 hover:underline">
             {t("signIn")}
           </button>
         </p>
       </form>
-      <p className="mt-5 text-center text-[11.5px] leading-relaxed text-white/35">{t("dataProtected")}</p>
+      <p className="mt-5 text-center text-[11.5px] leading-relaxed text-slate-400">{t("dataProtected")}</p>
     </AuthShell>
   );
 }
@@ -284,18 +284,18 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[12.5px] font-medium text-white/60">
-        {label} {required && <span className="text-[#00E5A0]">*</span>}
+      <label className="mb-1.5 block text-[12.5px] font-medium text-slate-600">
+        {label} {required && <span className="text-emerald-600">*</span>}
       </label>
       <div className="relative">
-        <span className="absolute inset-y-0 start-3 flex items-center text-white/30">{icon}</span>
+        <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">{icon}</span>
         <input
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete}
-          className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.03] ps-10 pe-4 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15 transition"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white ps-10 pe-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition"
         />
       </div>
     </div>
@@ -318,18 +318,18 @@ function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#04121c]">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#f5f7fa] [color-scheme:light]">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute -top-32 start-1/3 h-[420px] w-[420px] rounded-full bg-[#00E5A0]/[0.06] blur-[130px]" />
-        <div className="absolute bottom-0 end-10 h-[320px] w-[320px] rounded-full bg-teal-400/[0.04] blur-[120px]" />
+        <div className="absolute -top-32 start-1/3 h-[420px] w-[420px] rounded-full bg-emerald-300/25 blur-[130px]" />
+        <div className="absolute bottom-0 end-10 h-[320px] w-[320px] rounded-full bg-teal-300/25 blur-[120px]" />
       </div>
 
-      <header className="relative z-10 border-b border-white/[0.06] bg-[#031019]/90 backdrop-blur-xl">
+      <header className="relative z-10 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Logo lang={lang} tagline={t("tagline")} onClick={onBack} />
+          <Logo lang={lang} tagline={t("tagline")} onClick={onBack} tone="light" />
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[13px] font-semibold text-white/70 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("backHome")}
@@ -344,17 +344,17 @@ function AuthShell({
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="w-full max-w-md"
         >
-          <div className="rounded-2xl border border-white/[0.08] bg-[#071923]/90 p-6 sm:p-8 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-[0_30px_80px_-32px_rgba(15,23,42,0.28)]">
             <div className="mb-6 text-center">
-              <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#00E5A0]/12 text-[#00E5A0]">
+              <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                 <ShieldCheck className="h-6 w-6" />
               </span>
-              <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">{title}</h1>
-              <p className="mt-1.5 text-[13.5px] text-white/50">{subtitle}</p>
+              <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+              <p className="mt-1.5 text-[13.5px] text-slate-500">{subtitle}</p>
             </div>
             {children}
           </div>
-          <p className="mt-5 text-center text-[11.5px] text-white/30">{t("privatePortal")}</p>
+          <p className="mt-5 text-center text-[11.5px] text-slate-400">{t("privatePortal")}</p>
         </motion.div>
       </main>
     </div>

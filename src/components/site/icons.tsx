@@ -18,10 +18,13 @@ export function Logo({
   lang,
   tagline,
   onClick,
+  tone = "dark",
 }: {
   lang: "en" | "ar";
   tagline: string;
   onClick?: () => void;
+  /** background tone the logo sits on — "light" renders slate text for white surfaces */
+  tone?: "dark" | "light";
 }) {
   return (
     <button
@@ -31,10 +34,21 @@ export function Logo({
     >
       <LogoMark className="w-10 h-10 shrink-0 transition-transform duration-300 group-hover:scale-105" />
       <span className="flex flex-col items-start leading-tight">
-        <span className={cn("font-semibold tracking-tight text-white text-[17px]", lang === "ar" && "text-base")}>
+        <span
+          className={cn(
+            "font-semibold tracking-tight text-[17px]",
+            tone === "light" ? "text-slate-900" : "text-white",
+            lang === "ar" && "text-base"
+          )}
+        >
           {lang === "ar" ? "كريبتو وايز" : "CryptoWise"}
         </span>
-        <span className="text-[10px] tracking-[0.22em] text-[#00E5A0]/80 font-medium uppercase">
+        <span
+          className={cn(
+            "text-[10px] tracking-[0.22em] font-medium uppercase",
+            tone === "light" ? "text-emerald-600" : "text-[#00E5A0]/80"
+          )}
+        >
           {tagline}
         </span>
       </span>

@@ -95,17 +95,19 @@ export function Hero({
             </div>
           </motion.div>
 
-          {/* right visual — glowing globe + enlarged GOLD Bitcoin coin + orbiting official logos.
-              The graphic lives in its own grid cell (desktop) / below the copy (mobile),
-              so it can never overlap the headline, description or buttons (client request). */}
+          {/* right visual — one coherent premium crypto illustration: a LARGE metallic
+              gold 3D Bitcoin coin with 3D official-logo coins minted around it.
+              The graphic lives in its own grid cell (desktop, right of the copy) /
+              below the copy (mobile), so it can never overlap the headline,
+              description or buttons (client request). */}
           <motion.div
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.15, ease: "easeOut" }}
-            className="relative mx-auto w-full max-w-[480px]"
+            className="relative mx-auto w-full max-w-[520px]"
             dir="ltr"
           >
-            <GlobeVisual />
+            <CryptoScene />
             <HeroSatellites />
           </motion.div>
         </div>
@@ -183,224 +185,331 @@ export function Hero({
   );
 }
 
-/* ---------------- Orbiting official-logo satellites around the Bitcoin coin ---------------- */
+/* ------------------------------------------------------------------ */
+/*  Premium crypto composition — LARGE metallic-gold 3D Bitcoin coin   */
+/*  surrounded by 3D official-logo coins (client reference style).     */
+/*  One coherent illustration: shared top-left light source, metallic  */
+/*  rims, minted faces, orbit rings and depth shadows — NOT flat       */
+/*  icons floating randomly.                                           */
+/* ------------------------------------------------------------------ */
 
-// Official brand logo files (public/logos) — real marks, no generic glyphs (client request).
-// Positioned with physical insets inside a dir="ltr" wrapper so they never mirror, never clip
-// at the edges and never reach the hero copy (the visual is a separate grid cell / stacked
-// below the text on mobile — rebuilt responsively, no CSS scale).
-const SATELLITES = [
-  { logo: "/logos/ethereum.svg", imgClass: "h-[62%] w-auto", label: "Ethereum", pos: "left-[16%] top-[5%]", float: 4.6, delay: 0.55 },
-  { logo: "/logos/tether.svg", imgClass: "w-[64%] h-auto", label: "USDT/Tether", pos: "right-[16%] top-[8%]", float: 5.4, delay: 0.75 },
-  { logo: "/logos/aramco.svg", imgClass: "h-[76%] w-[76%] rounded-full", label: "Aramco", pos: "left-[16%] top-[46%]", float: 5.0, delay: 0.95 },
-  { logo: "/logos/salik.svg", imgClass: "w-[66%] h-auto", label: "Salek", pos: "right-[16%] top-[52%]", float: 5.8, delay: 1.15 },
+// Official Bitcoin "B" glyph — the white path of the official bitcoin.svg mark
+// (public/logos/bitcoin.svg, viewBox 0 0 4091.27 4091.73), reused verbatim.
+const BTC_B_PATH =
+  "M2947.77 1754.38c40.72,-272.26 -166.56,-418.61 -450,-516.24l91.95 -368.8 -224.5 -55.94 -89.51 359.09c-59.02,-14.72 -119.63,-28.59 -179.87,-42.34l90.16 -361.46 -224.36 -55.94 -92 368.68c-48.84,-11.12 -96.81,-22.11 -143.35,-33.69l0.26 -1.16 -309.59 -77.31 -59.72 239.78c0,0 166.56,38.18 163.05,40.53 90.91,22.69 107.35,82.87 104.62,130.57l-104.74 420.15c6.26,1.59 14.38,3.89 23.34,7.49 -7.49,-1.86 -15.46,-3.89 -23.73,-5.87l-146.81 588.57c-11.11,27.62 -39.31,69.07 -102.87,53.33 2.25,3.26 -163.17,-40.72 -163.17,-40.72l-111.46 256.98 292.15 72.83c54.35,13.63 107.61,27.89 160.06,41.3l-92.9 373.03 224.24 55.94 92 -369.07c61.26,16.63 120.71,31.97 178.91,46.43l-91.69 367.33 224.51 55.94 92.89 -372.33c382.82,72.45 670.67,43.24 791.83,-303.02 97.63,-278.78 -4.86,-439.58 -206.26,-544.44 146.69,-33.83 257.18,-130.31 286.64,-329.61l-0.07 -0.05zm-512.93 719.26c-69.38,278.78 -538.76,128.08 -690.94,90.29l123.28 -494.2c152.17,37.99 640.17,113.17 567.67,403.91zm69.43 -723.3c-63.29,253.58 -453.96,124.75 -580.69,93.16l111.77 -448.21c126.73,31.59 534.85,90.55 468.94,355.05l-0.02 0z";
+
+// Four-point sparkle star (reused at different scales/positions).
+const SPARK_PATH =
+  "M0,-16 C1.8,-4.5 4.5,-1.8 16,0 C4.5,1.8 1.8,4.5 0,16 C-1.8,4.5 -4.5,1.8 -16,0 C-4.5,-1.8 -1.8,-4.5 0,-16 Z";
+
+type Satellite = {
+  logo: string;
+  pos: string;
+  size: string;
+  rim: string; // metallic coin-edge gradient
+  face: string; // minted coin-face gradient (brand colour)
+  imgClass: string;
+  float: number;
+  delay: number;
+};
+
+// Premium 3D mini-coins orbiting the Bitcoin — official brand marks only
+// (public/logos). Positions/sizes are % of the square composition, so the
+// cluster scales fluidly on every viewport (no scale hacks, no overflow,
+// no clipping: max extents stay inside the 560×560 box).
+const SATELLITES: Satellite[] = [
+  {
+    logo: "/logos/ethereum.svg",
+    pos: "left-[7%] top-[4%]",
+    size: "21%",
+    rim: "linear-gradient(135deg,#FBFDFF 0%,#C9D2DE 28%,#7E8A9C 55%,#EEF3F9 80%,#93A0B2 100%)",
+    face: "linear-gradient(145deg,#9CA8BE 0%,#5E6A82 48%,#313B4F 100%)",
+    imgClass: "h-[56%] w-auto",
+    float: 5.2,
+    delay: 0.5,
+  },
+  {
+    logo: "/logos/tether.svg",
+    pos: "right-[5%] top-[9%]",
+    size: "19%",
+    rim: "linear-gradient(135deg,#EAFFF7 0%,#A2E9D0 30%,#3F9D7D 55%,#C2F4E0 80%,#5FB093 100%)",
+    face: "linear-gradient(145deg,#41C69B 0%,#26A17B 50%,#116E52 100%)",
+    imgClass: "w-[58%] h-auto",
+    float: 6.0,
+    delay: 0.8,
+  },
+  {
+    logo: "/logos/aramco.svg",
+    pos: "left-[2%] top-[47%]",
+    size: "17.5%",
+    rim: "linear-gradient(135deg,#FFF7DC 0%,#FFDF7E 30%,#C08A18 55%,#FFE9A8 80%,#A8700E 100%)",
+    face: "linear-gradient(145deg,#FFFFFF 0%,#EDF3F7 55%,#CFDEE6 100%)",
+    imgClass: "h-[76%] w-auto",
+    float: 5.6,
+    delay: 1.0,
+  },
+  {
+    logo: "/logos/solana.svg",
+    pos: "right-[7%] bottom-[8%]",
+    size: "21%",
+    rim: "linear-gradient(135deg,#C2FFEC 0%,#00FFA3 26%,#7FA6E8 52%,#C86BFF 76%,#DC1FFF 92%,#9A2BC4 100%)",
+    face: "linear-gradient(145deg,#252933 0%,#13161C 55%,#0A0C10 100%)",
+    imgClass: "w-[56%] h-auto",
+    float: 6.4,
+    delay: 1.2,
+  },
+  {
+    logo: "/logos/salik.svg",
+    pos: "left-[15%] bottom-[3%]",
+    size: "15.5%",
+    rim: "linear-gradient(135deg,#FFF7DC 0%,#FFDF7E 30%,#C08A18 55%,#FFE9A8 80%,#A8700E 100%)",
+    face: "linear-gradient(145deg,#FFFFFF 0%,#F4F6F8 55%,#DDE3E8 100%)",
+    imgClass: "w-[58%] h-auto",
+    float: 5.0,
+    delay: 1.4,
+  },
 ];
 
 function HeroSatellites() {
   return (
     <div className="pointer-events-none absolute inset-0 z-10" aria-hidden="true">
-      {SATELLITES.map((a) => (
+      {SATELLITES.map((s) => (
         <motion.div
-          key={a.label}
-          className={cn("absolute flex flex-col items-center", a.pos)}
-          initial={{ opacity: 0, scale: 0.6 }}
+          key={s.logo}
+          className={cn("absolute", s.pos)}
+          style={{ width: s.size }}
+          initial={{ opacity: 0, scale: 0.55, y: 14 }}
           animate={{ opacity: 1, scale: 1, y: [0, -7, 0] }}
           transition={{
-            opacity: { duration: 0.5, delay: a.delay, ease: "easeOut" },
-            scale: { duration: 0.5, delay: a.delay, ease: "easeOut" },
-            y: { duration: a.float, repeat: Infinity, ease: "easeInOut", delay: a.delay },
+            opacity: { duration: 0.55, delay: s.delay, ease: "easeOut" },
+            scale: { duration: 0.55, delay: s.delay, ease: "easeOut" },
+            y: { duration: s.float, repeat: Infinity, ease: "easeInOut", delay: s.delay },
           }}
         >
-          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/25 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.8)] sm:h-12 sm:w-12">
-            <img src={a.logo} alt="" aria-hidden="true" loading="lazy" className={a.imgClass} />
-          </span>
-          <span
-            dir="ltr"
-            className="mt-1 whitespace-nowrap rounded-full border border-white/10 bg-[#04121c]/90 px-1.5 py-px text-[8px] font-semibold leading-tight text-white/70"
+          {/* metallic rim */}
+          <div
+            className="relative aspect-square w-full rounded-full"
+            style={{
+              background: s.rim,
+              boxShadow: "0 18px 38px -10px rgba(0,0,0,0.75), 0 2px 8px rgba(0,0,0,0.45)",
+            }}
           >
-            {a.label}
-          </span>
+            {/* minted brand face */}
+            <div
+              className="absolute inset-[6.5%] overflow-hidden rounded-full"
+              style={{
+                background: s.face,
+                boxShadow: "inset 0 2px 4px rgba(255,255,255,0.35), inset 0 -6px 12px rgba(0,0,0,0.4)",
+              }}
+            >
+              <img
+                src={s.logo}
+                alt=""
+                loading="lazy"
+                draggable={false}
+                className={cn("absolute inset-0 m-auto", s.imgClass)}
+              />
+              {/* glass shine (top-left light) + lower shading = 3D coin lighting */}
+              <span className="absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_28%_16%,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0.14)_30%,transparent_50%)]" />
+              <span className="absolute inset-0 rounded-full bg-[linear-gradient(200deg,transparent_58%,rgba(0,0,0,0.3)_100%)]" />
+            </div>
+          </div>
         </motion.div>
       ))}
     </div>
   );
 }
 
-/* ---------------- Globe + coin visual (drawn from scratch) ---------------- */
+/* ---------------- Large metallic-gold Bitcoin scene ---------------- */
 
-function GlobeVisual() {
+function CryptoScene() {
   return (
     <div className="relative">
-      <div className="pointer-events-none absolute inset-0 rounded-full bg-[#00E5A0]/[0.08] blur-[90px]" aria-hidden="true" />
-      <svg viewBox="0 0 480 440" className="relative w-full h-auto" aria-hidden="true">
+      {/* warm stage glow behind the whole composition */}
+      <div
+        className="pointer-events-none absolute inset-[-10%] blur-2xl"
+        style={{
+          background:
+            "radial-gradient(46% 46% at 52% 44%, rgba(247,183,51,0.20) 0%, rgba(0,229,160,0.06) 55%, transparent 78%)",
+        }}
+        aria-hidden="true"
+      />
+      <svg viewBox="0 0 560 560" className="relative h-auto w-full" aria-hidden="true">
         <defs>
-          <radialGradient id="globeBody" cx="38%" cy="30%" r="80%">
-            <stop offset="0%" stopColor="#0f3d30" />
-            <stop offset="55%" stopColor="#0a2b21" />
-            <stop offset="100%" stopColor="#051711" />
+          <radialGradient id="btcFace" cx="36%" cy="28%" r="88%">
+            <stop offset="0%" stopColor="#FFFBE6" />
+            <stop offset="25%" stopColor="#FFE9A8" />
+            <stop offset="52%" stopColor="#FFD34E" />
+            <stop offset="78%" stopColor="#EFA81C" />
+            <stop offset="100%" stopColor="#C6810C" />
           </radialGradient>
-          <radialGradient id="coinFace" cx="35%" cy="28%" r="85%">
-            <stop offset="0%" stopColor="#134234" />
-            <stop offset="60%" stopColor="#0a2b21" />
-            <stop offset="100%" stopColor="#06180f" />
+          <radialGradient id="btcFaceShade" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#6B4405" stopOpacity="0" />
+            <stop offset="62%" stopColor="#6B4405" stopOpacity="0" />
+            <stop offset="100%" stopColor="#6B4405" stopOpacity="0.4" />
           </radialGradient>
-          <linearGradient id="orbitGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#00E5A0" stopOpacity="0" />
-            <stop offset="45%" stopColor="#00E5A0" stopOpacity="0.75" />
-            <stop offset="100%" stopColor="#00E5A0" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="coneGrad" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor="#F7B733" stopOpacity="0.20" />
-            <stop offset="100%" stopColor="#F7B733" stopOpacity="0" />
-          </linearGradient>
-          {/* metallic gold for the Bitcoin mark (client request: GOLD / METALLIC GOLD B) */}
-          <linearGradient id="btcGold" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="btcRim" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#FFF7DC" />
-            <stop offset="20%" stopColor="#FFE89A" />
-            <stop offset="45%" stopColor="#F7B733" />
-            <stop offset="70%" stopColor="#DE9A12" />
+            <stop offset="20%" stopColor="#FFDF7E" />
+            <stop offset="45%" stopColor="#D99A17" />
+            <stop offset="62%" stopColor="#8A5A12" />
+            <stop offset="82%" stopColor="#FFD977" />
+            <stop offset="100%" stopColor="#A8700E" />
+          </linearGradient>
+          <linearGradient id="btcEdge" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#E8A317" />
+            <stop offset="45%" stopColor="#B9770E" />
+            <stop offset="100%" stopColor="#6E4B06" />
+          </linearGradient>
+          <linearGradient id="btcGold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFFBE6" />
+            <stop offset="22%" stopColor="#FFE89A" />
+            <stop offset="50%" stopColor="#F7B733" />
+            <stop offset="75%" stopColor="#DE9A12" />
             <stop offset="100%" stopColor="#B9770E" />
           </linearGradient>
-          <linearGradient id="coinRim" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FFE89A" />
-            <stop offset="55%" stopColor="#E8A317" />
-            <stop offset="100%" stopColor="#9C6A0B" />
+          <linearGradient id="orbitGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#F7B733" stopOpacity="0" />
+            <stop offset="40%" stopColor="#F7B733" stopOpacity="0.55" />
+            <stop offset="70%" stopColor="#00E5A0" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#00E5A0" stopOpacity="0" />
           </linearGradient>
-          <filter id="coinHalo" x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="16" />
+          <filter id="blurBig" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="22" />
           </filter>
-          <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="6" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+          <filter id="blurMid" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="7" />
+          </filter>
+          <filter id="blurSm" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" />
           </filter>
         </defs>
 
-        {/* globe sphere + graticule */}
-        <circle cx="240" cy="185" r="150" fill="url(#globeBody)" stroke="#00E5A0" strokeOpacity="0.18" />
-        <g fill="none" stroke="#00E5A0">
-          <ellipse cx="240" cy="185" rx="150" ry="54" strokeOpacity="0.13" />
-          <ellipse cx="240" cy="185" rx="150" ry="104" strokeOpacity="0.09" />
-          <ellipse cx="240" cy="185" rx="54" ry="150" strokeOpacity="0.13" />
-          <ellipse cx="240" cy="185" rx="104" ry="150" strokeOpacity="0.09" />
-          <path d="M90,185 H390" strokeOpacity="0.13" />
-        </g>
-        {/* dotted landmass hints */}
-        <g fill="#00E5A0" opacity="0.16">
-          <circle cx="185" cy="130" r="1.6" /><circle cx="205" cy="122" r="1.2" /><circle cx="222" cy="136" r="1.4" />
-          <circle cx="285" cy="215" r="1.6" /><circle cx="300" cy="228" r="1.2" /><circle cx="270" cy="232" r="1.2" />
-          <circle cx="160" cy="230" r="1.4" /><circle cx="320" cy="150" r="1.4" /><circle cx="338" cy="162" r="1.1" />
-          <circle cx="240" cy="90" r="1.2" /><circle cx="255" cy="80" r="1.4" /><circle cx="205" cy="250" r="1.3" />
-        </g>
+        {/* warm halo + cool counter-glow */}
+        <circle cx="284" cy="276" r="212" fill="#F7B733" opacity="0.2" filter="url(#blurBig)" />
+        <circle cx="140" cy="446" r="86" fill="#00E5A0" opacity="0.07" filter="url(#blurBig)" />
 
-        {/* orbit rings */}
-        <g transform="rotate(-14 240 210)">
-          <ellipse cx="240" cy="210" rx="222" ry="64" fill="none" stroke="url(#orbitGrad)" strokeWidth="1.6" />
-          <ellipse cx="240" cy="210" rx="180" ry="42" fill="none" stroke="#00E5A0" strokeOpacity="0.14" />
+        {/* orbit rings tying the cluster into one system */}
+        <g transform="rotate(-14 280 280)">
+          <ellipse cx="280" cy="280" rx="266" ry="94" fill="none" stroke="url(#orbitGrad)" strokeWidth="1.5" />
+          <ellipse cx="280" cy="280" rx="238" ry="76" fill="none" stroke="#F7B733" strokeOpacity="0.16" strokeWidth="1.4" strokeDasharray="2 9" />
           <motion.circle
-            cx="462"
-            cy="210"
-            r="4.5"
+            cx="46"
+            cy="280"
+            r="4"
+            fill="#F7B733"
+            filter="url(#blurSm)"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </g>
+        <g transform="rotate(22 280 280)">
+          <ellipse cx="280" cy="280" rx="250" ry="128" fill="none" stroke="#00E5A0" strokeOpacity="0.1" strokeWidth="1.2" />
+          <motion.circle
+            cx="530"
+            cy="280"
+            r="3.6"
             fill="#2cf0b5"
-            filter="url(#softGlow)"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            filter="url(#blurSm)"
+            animate={{ opacity: [0.35, 0.95, 0.35] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
           />
         </g>
 
-        {/* light cone from podium to coin */}
-        <polygon points="170,330 310,330 272,205 208,205" fill="url(#coneGrad)" />
-
-        {/* podium */}
-        <g>
-          <path d="M152,322 v22 a88,20 0 0 0 176,0 v-22" fill="#07211a" stroke="#00E5A0" strokeOpacity="0.2" />
-          <ellipse cx="240" cy="322" rx="88" ry="20" fill="#0a2b21" stroke="#00E5A0" strokeOpacity="0.4" />
-          <ellipse cx="240" cy="322" rx="60" ry="13" fill="none" stroke="#F7B733" strokeOpacity="0.45" strokeDasharray="3 5" />
-        </g>
-
-        {/* floating BTC coin — ENLARGED with a metallic GOLD “B” as the hero focus (client request) */}
+        {/* two small distant gold coins on the orbits — depth */}
         <motion.g
-          animate={{ y: [0, -9, 0] }}
-          transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
         >
-          {/* warm gold halo behind the coin */}
-          <circle cx="240" cy="150" r="92" fill="#F7B733" opacity="0.16" filter="url(#coinHalo)" />
-          {/* dashed mint orbit */}
-          <circle cx="240" cy="150" r="102" fill="none" stroke="#00E5A0" strokeOpacity="0.22" strokeDasharray="2 7" />
-          {/* coin face + gold rim */}
-          <circle cx="240" cy="150" r="86" fill="url(#coinFace)" stroke="url(#coinRim)" strokeWidth="3.5" />
-          {/* inner gold ring */}
-          <circle cx="240" cy="150" r="70" fill="none" stroke="#F7B733" strokeOpacity="0.32" />
-          {/* embossed depth layer */}
-          <text
-            x="240"
-            y="155"
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize="124"
-            fontWeight="800"
-            fill="#7A5407"
-            opacity="0.55"
-            fontFamily="ui-sans-serif, system-ui, sans-serif"
-          >
-            ₿
-          </text>
-          {/* metallic gold B — much larger, perfectly centered */}
-          <text
-            x="240"
-            y="150"
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize="124"
-            fontWeight="800"
-            fill="url(#btcGold)"
-            fontFamily="ui-sans-serif, system-ui, sans-serif"
-          >
-            ₿
-          </text>
-          {/* specular highlight arc on the coin rim */}
-          <path d="M192,108 A62,62 0 0 1 288,108" fill="none" stroke="#FFF7DC" strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="96" cy="150" r="13" fill="url(#btcFace)" stroke="url(#btcRim)" strokeWidth="3" />
+          <circle cx="96" cy="150" r="7.5" fill="none" stroke="#B9770E" strokeOpacity="0.55" strokeWidth="1.2" />
+        </motion.g>
+        <motion.g
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
+        >
+          <circle cx="486" cy="390" r="10" fill="url(#btcFace)" stroke="url(#btcRim)" strokeWidth="2.6" />
+          <circle cx="486" cy="390" r="5.5" fill="none" stroke="#B9770E" strokeOpacity="0.55" strokeWidth="1" />
         </motion.g>
 
-        {/* sparkles — mint ambient + gold accents near the coin */}
-        <g>
-          <motion.circle
-            cx="105" cy="95" r="2"
-            fill="#2cf0b5"
-            animate={{ opacity: [0.15, 0.9, 0.15] }}
-            transition={{ duration: 3, repeat: Infinity, delay: 0.4 }}
+        {/* ===== THE Bitcoin — dominant, metallic gold, 3D ===== */}
+        <motion.g
+          animate={{ y: [0, -11, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          {/* coin edge (thickness) + reeded milling */}
+          <circle cx="280" cy="293" r="178" fill="url(#btcEdge)" />
+          <circle cx="280" cy="293" r="178" fill="none" stroke="#6E4B06" strokeWidth="9" strokeDasharray="3.2 5.6" opacity="0.5" />
+          {/* face + metallic rim */}
+          <circle cx="280" cy="278" r="178" fill="url(#btcFace)" />
+          <circle cx="280" cy="278" r="178" fill="none" stroke="url(#btcRim)" strokeWidth="9" />
+          <circle cx="280" cy="278" r="184.5" fill="none" stroke="#FFF7DC" strokeOpacity="0.32" strokeWidth="1.3" />
+          {/* face milling + engraved rings */}
+          <circle cx="280" cy="278" r="163" fill="none" stroke="#C98A0F" strokeWidth="6" strokeDasharray="2 7.4" opacity="0.3" />
+          <circle cx="280" cy="278" r="152" fill="none" stroke="#B9770E" strokeOpacity="0.55" strokeWidth="2.2" />
+          <circle cx="280" cy="278" r="146" fill="none" stroke="#FFF3C4" strokeOpacity="0.32" strokeWidth="1.4" />
+          <circle cx="280" cy="278" r="170" fill="url(#btcFaceShade)" />
+          {/* official Bitcoin B — embossed relief layer + metallic gold face */}
+          <g transform="translate(281 285) scale(0.092) translate(-2045.64 -2045.87)">
+            <path d={BTC_B_PATH} fill="#7A5407" opacity="0.55" />
+          </g>
+          <g transform="translate(280 278) scale(0.092) translate(-2045.64 -2045.87)">
+            <path d={BTC_B_PATH} fill="url(#btcGold)" stroke="#8A5A12" strokeWidth="14" strokeOpacity="0.28" />
+          </g>
+          {/* specular highlights */}
+          <path
+            d="M163.6,180.3 A152,152 0 0 1 367.2,153.5"
+            fill="none"
+            stroke="#FFFEF5"
+            strokeOpacity="0.5"
+            strokeWidth="11"
+            strokeLinecap="round"
+            filter="url(#blurMid)"
           />
-          <motion.circle
-            cx="395" cy="120" r="2.4"
-            fill="#2cf0b5"
-            animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{ duration: 3.6, repeat: Infinity, delay: 1.1 }}
+          <path
+            d="M396.4,375.7 A152,152 0 0 1 319.3,424.9"
+            fill="none"
+            stroke="#FFD977"
+            strokeOpacity="0.18"
+            strokeWidth="7"
+            strokeLinecap="round"
+            filter="url(#blurMid)"
           />
-          <motion.circle
-            cx="365" cy="300" r="1.8"
-            fill="#2cf0b5"
-            animate={{ opacity: [0.15, 0.8, 0.15] }}
-            transition={{ duration: 2.8, repeat: Infinity, delay: 1.8 }}
+        </motion.g>
+
+        {/* sparkles */}
+        <g fill="#FFE89A">
+          <motion.path
+            d={SPARK_PATH}
+            transform="translate(296 46) scale(0.9)"
+            animate={{ opacity: [0.25, 0.95, 0.25] }}
+            transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           />
-          <motion.circle
-            cx="130" cy="285" r="1.8"
-            fill="#2cf0b5"
-            animate={{ opacity: [0.1, 0.7, 0.1] }}
-            transition={{ duration: 3.2, repeat: Infinity, delay: 0.9 }}
+          <motion.path
+            d={SPARK_PATH}
+            transform="translate(206 74) scale(0.5)"
+            animate={{ opacity: [0.2, 0.85, 0.2] }}
+            transition={{ duration: 2.7, repeat: Infinity, ease: "easeInOut", delay: 1.3 }}
           />
-          <motion.circle
-            cx="338" cy="64" r="2.4"
-            fill="#F7B733"
-            animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{ duration: 3.1, repeat: Infinity, delay: 0.6 }}
+          <motion.path
+            d={SPARK_PATH}
+            transform="translate(60 400) scale(0.7)"
+            animate={{ opacity: [0.2, 0.8, 0.2] }}
+            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.9 }}
           />
-          <motion.circle
-            cx="148" cy="212" r="2"
-            fill="#F7B733"
-            animate={{ opacity: [0.15, 0.85, 0.15] }}
-            transition={{ duration: 3.4, repeat: Infinity, delay: 1.4 }}
+        </g>
+        <g fill="#2cf0b5">
+          <motion.path
+            d={SPARK_PATH}
+            transform="translate(486 250) scale(0.55)"
+            animate={{ opacity: [0.2, 0.8, 0.2] }}
+            transition={{ duration: 3.3, repeat: Infinity, ease: "easeInOut", delay: 1.7 }}
+          />
+          <motion.path
+            d={SPARK_PATH}
+            transform="translate(322 516) scale(0.6)"
+            animate={{ opacity: [0.15, 0.75, 0.15] }}
+            transition={{ duration: 2.9, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
           />
         </g>
       </svg>

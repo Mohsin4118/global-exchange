@@ -395,3 +395,20 @@ Work Log:
 Stage Summary:
 - Homepage = DARK marketing site (gold Bitcoin, mint accents); Client Account = WHITE professional banking dashboard — two distinct experiences sharing the same brand (logo, typography, mint/emerald accents), zero dark inheritance on the account side
 - Hero CTA is now [ Sign In ] [ Login ], both functional → login page; Arabic keeps the Bitcoin B on the LEFT with full RTL coherence
+
+---
+Task ID: 22
+Agent: Main agent (Super Z)
+Task: FINAL homepage hero — coherent premium crypto composition (large 3D metallic-gold Bitcoin + premium 3D satellite coins incl. official Solana), account pages stay WHITE/LIGHT, full 13-point visual QA (client final spec)
+
+Work Log:
+- Added official Solana mark (public/logos/solana.svg — three-bar path, official #00FFA3→#DC1FFF gradient)
+- hero.tsx rebuilt visual: removed globe/graticule/podium/light-cone + flat white satellite circles; new CryptoScene (viewBox 560²) = large gold 3D Bitcoin (r=178 face + offset dark-gold edge with reeded milling, metallic rim gradient, radial gold face, engraved rings + face milling, vignette, OFFICIAL bitcoin.svg "B" path embedded at scale .092 with embossed relief layer + metallic gold gradient + dark outline, blurred specular arcs), 2 tilted orbit rings (gold→mint gradient + dashed) with glowing satellites, 2 small distant gold coins (depth), twinkling 4-point sparkles; warm gold stage glow + teal counter-glow
+- Satellites → premium 3D coins (no labels, no flat circles): metallic rim gradient + minted brand face + official logo + glass shine + lower shading + deep drop shadow; ETH (slate/silver), Tether (brand green), Aramco (white/gold rim), Solana (near-black face + cyan→purple rim), Salik (white/gold); %-based positions/sizes (7/5/2/15% insets — max extents inside the box, no clipping), staggered float animations; composition wrapper max-w 480→520
+- Account gateway pages now light too (client: "accounts should NOT be Dark Mode"): auth-views.tsx LoginView+RegisterView+AuthShell+Field re-themed to white banking (bg #f5f7fa [color-scheme:light], white card + slate-200 border + soft shadow, slate-900/600/400 text, emerald-600 accents, mint primary button kept, PasswordInput theme="light" ×3, light demo box, light admin chip, light header + back button); icons.tsx Logo gained tone="light" variant (slate-900 text + emerald tagline) for white surfaces
+- Verification (scripts/verify22/, 10 screenshots): desktop 1440 EN hero — BIG metallic gold Bitcoin RIGHT, coins correctly placed, zero overlap with "Crypto Made / Simple.", description, chips or [Sign In][Login]; full scroll — sections uncovered, dock visible top/mid/bottom, footer + Companies House 16728292 + Super Admin intact; mobile 390 EN — no overflow (390==390), composition stacks below copy, coins legible; AR desktop — RTL coherent, whole composition mirrored LEFT (Bitcoin B on the LEFT per client), dock bottom-left; AR mobile 390 — no overflow; Login + Register pages WHITE (light card, dark text, emerald accents); demo login → WHITE dashboard (Welcome + name + Verified + Private + Account No. + Total/Cash/Invested + 8-item menu) desktop + mobile, AR dashboard RTL + light; session-restore → dashboard light on reload; sign out → hero Login button → login page → register page all functional; 0 page errors, 0 console errors; lint 0 errors (42 pre-existing warnings), tsc clean for src/
+- Zip rebuilt: download/cryptowiseuk-project.zip
+
+Stage Summary:
+- Homepage hero is now one coherent premium crypto illustration matching the reference style: dominant LARGE metallic-gold 3D Bitcoin (official B) on the RIGHT with premium 3D official-logo coins (Ethereum, USDT/Tether, Solana, Aramco, Salik) minted around it — no flat/random icons, no labels, no overlap, dark theme preserved
+- Complete design separation holds: Homepage = dark marketing site; ALL account surfaces (login, register, client dashboard, EN + AR, desktop + mobile) = WHITE/LIGHT professional banking
