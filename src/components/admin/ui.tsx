@@ -268,12 +268,12 @@ export function Modal({
       <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={onClose} />
       <div
         className={cn(
-          "relative z-10 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl",
+          "relative z-10 flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl",
           wide ? "max-w-lg" : "max-w-md",
           panelClassName,
         )}
       >
-        <div className="flex items-start justify-between p-6 pb-0">
+        <div className="flex shrink-0 items-start justify-between p-6 pb-0">
           <h3 className="text-lg font-bold text-slate-900">{title}</h3>
           <button
             onClick={onClose}
@@ -283,7 +283,10 @@ export function Modal({
             <XIcon />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        {/* Internally scrollable body: tall forms (e.g. New Client with Source
+            of Funds) stay fully reachable by normal scrolling on every
+            viewport — nothing is clipped behind the modal edges. */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">{children}</div>
       </div>
     </div>
   );

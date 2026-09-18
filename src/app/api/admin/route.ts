@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
         kycStatus: "unverified",
         agent: "Super Admin",
         managerNote: "",
-        sourceOfFunds: "",
+        sourceOfFunds: input.sourceOfFunds?.trim() ?? "",
         currency: "USD",
         createdAtISO: new Date().toISOString().slice(0, 10),
       });

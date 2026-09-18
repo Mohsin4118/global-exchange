@@ -858,7 +858,7 @@ export function ProfileCard({
         <div className="mt-5 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-4">
           <p className="text-[12px] font-bold uppercase tracking-wide text-emerald-700">{t("sourceOfFunds")}</p>
           <p className="mt-1 text-[12px] text-slate-500">{t("sourceOfFundsSub")}</p>
-          <p className="mt-2 break-words text-[13px] font-semibold leading-relaxed text-slate-700" dir="auto">
+          <p className="mt-2 whitespace-pre-wrap break-words text-[13px] font-semibold leading-relaxed text-slate-700" dir="auto">
             {c.sourceOfFunds?.trim() ? c.sourceOfFunds : <span className="font-normal italic text-slate-400">{t("sourceOfFundsEmpty")}</span>}
           </p>
         </div>

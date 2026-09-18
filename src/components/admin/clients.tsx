@@ -247,6 +247,7 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
   const [country, setCountry] = useState("");
   const [address, setAddress] = useState("");
   const [balance, setBalance] = useState("0.00");
+  const [sof, setSof] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -262,7 +263,7 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
     const ok = await ctx.runAction(
       {
         action: "create-client",
-        client: { name: name.trim(), email: email.trim(), password: password.trim(), phone: phone.trim(), country: country.trim(), address: address.trim(), openingBalance: parseFloat(balance) || 0 },
+        client: { name: name.trim(), email: email.trim(), password: password.trim(), phone: phone.trim(), country: country.trim(), address: address.trim(), openingBalance: parseFloat(balance) || 0, sourceOfFunds: sof.trim() },
       },
       {
         title: "Client created",
@@ -271,7 +272,7 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
     );
     setBusy(false);
     if (ok) {
-      setName(""); setEmail(""); setPassword(""); setPhone(""); setCountry(""); setAddress(""); setBalance("0.00");
+      setName(""); setEmail(""); setPassword(""); setPhone(""); setCountry(""); setAddress(""); setBalance("0.00"); setSof("");
       onClose();
     }
   };
@@ -294,6 +295,19 @@ function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => 
         </div>
         <TextInput label="Address" value={address} onChange={setAddress} placeholder="Optional" />
         <TextInput label="Opening Balance (USD)" type="number" value={balance} onChange={setBalance} />
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Source of Funds</span>
+          <textarea
+            rows={3}
+            value={sof}
+            onChange={(e) => setSof(e.target.value)}
+            placeholder="Enter the source of the client's funds… e.g. Salary, business income, investment, savings, company funds, inheritance."
+            className="w-full resize-y rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+          />
+          <span className="mt-1.5 block text-[12px] leading-relaxed text-slate-400">
+            Free text (English or Arabic) — stored on the client record and shown on their account. You can change it at any time.
+          </span>
+        </label>
         <div className="flex justify-end gap-3 pt-2">
           <OutlineButton onClick={onClose}>Cancel</OutlineButton>
           <PrimaryButton onClick={submit} disabled={busy}>

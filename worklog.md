@@ -524,3 +524,24 @@ Work Log:
 
 Stage Summary:
 - The dashboard now genuinely fits the viewport with proper margins at every width — no zoom, no cropping, no scale hacks; Source of Funds + functional display currency are live, admin-controlled, and synced through the one ledger; iOS focus-zoom eliminated
+
+---
+Task ID: 39
+Agent: Main agent (Super Z)
+Task: Super Admin — "Source of Funds" field (client create/edit form → DB → client dashboard, single value, full sync)
+
+Work Log:
+- Audited existing state: edit path already wired (Client.sourceOfFunds type + DB migration `c.sourceOfFunds ??= ""` + update-client API patch + ClientDetailPage textarea + client ProfileCard display with EN/AR i18n); the CREATE path was missing
+- shared-types.ts: NewClientInput gained optional `sourceOfFunds` (free-text compliance note)
+- /api/admin create-client now stores `input.sourceOfFunds?.trim() ?? ""` on the new client record (previously hardcoded "")
+- NewClientModal (create form): added proper multiline textarea (rows=3, resize-y, w-full) under Opening Balance with free-text placeholder (salary/business/investment/savings/company funds/inheritance as examples only), helper caption, wired into create-client payload and reset after success
+- admin/ui.tsx Modal hardened: panel is now flex-col with max-h-[calc(100dvh-2rem)] and an internally scrollable body (min-h-0 flex-1 overflow-y-auto overscroll-contain) — tall forms keep every field AND the action buttons reachable by normal scrolling on any viewport (explicit requirement: field must not hide behind form bottom/buttons/fixed footer)
+- Client display (dashboard-parts.tsx): Source of Funds paragraph now `whitespace-pre-wrap break-words` — multiline free text keeps its line breaks, long unbroken tokens wrap, dir="auto" renders Arabic RTL; client has NO edit control (server /api/client update-profile whitelists phone/country/address/city/postcode only — sourceOfFunds cannot be modified from the client side)
+- 15-step final test via agent-browser (scripts/verify39/, 8 screenshots):
+  1-3 Created "Charlie Williams" via New Client modal with Source of Funds "Salary and business income" → client row appears; 4 reopened client → existing value auto-populates the textarea; 5-7 edited to "Business income and personal savings" → Save Access & Portal → data/db.json stores the new value; 8-9 client login → Account & Settings shows "SOURCE OF FUNDS / Business income and personal savings"; 10-11 full page reload → value persists; 12 long English text (511 chars, 4 sentences incl. compliance wording) → admin save → client renders fully, docScrollW==innerW (no overflow), block fits viewport; 13 Arabic multiline (4 lines with \n) → DB keeps newlines, client AR view shows "مصدر الأموال" header, computed direction rtl, all 4 lines preserved, no overflow; 14 mobile 390px — client card margins 33px both sides + admin New Client modal internally scrollable (panel 812px ≤ viewport, body 905>758 scrollable, SOF field and Create button reachable, complete form usable → created "Layla Hassan" from the mobile modal, value stored); 15 no horizontal overflow or cropping anywhere (desktop 1440 / mobile 390, EN + AR)
+- Cross-tab persistence: full reload → fresh server snapshot → Layla's value appears in the edit form
+- Opening-balance sanity check on the same form (real typing → 2500 opening tx created) — form healthy; throwaway test client deleted afterwards
+- lint 0 errors (46 warnings — identical to pre-change baseline, verified via git stash), tsc clean for src/, 0 page/console errors; zip rebuilt
+
+Stage Summary:
+- Source of Funds is now a first-class management field across the whole flow: Super Admin create form (multiline textarea) + edit form (auto-populated, editable at any time) → stored in the client record in data/db.json → displayed read-only on the client Account & Settings view (EN + AR, multiline + wrap-safe). ONE value everywhere, admin-controlled, client-visible only, persisted across refresh/logout/relogin/other tabs.

@@ -298,6 +298,7 @@ export interface NewClientInput {
   city?: string;
   postcode?: string;
   openingBalance?: number;
+  sourceOfFunds?: string; // free-text compliance note, stored on the client record
 }
 
 export interface UpdateClientInput {

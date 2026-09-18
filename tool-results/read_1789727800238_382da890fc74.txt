@@ -1,0 +1,925 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useMemo, useState } from "react";
+     4→import {
+     5→  ArrowDownCircle,
+     6→  ArrowLeft,
+     7→  ArrowUpCircle,
+     8→  Eye,
+     9→  Inbox,
+    10→  MessageSquare,
+    11→  Pencil,
+    12→  Plus,
+    13→  ShieldAlert,
+    14→  Trash2,
+    15→  TrendingUp,
+    16→  UserCog,
+    17→  Wallet,
+    18→  X,
+    19→} from "lucide-react";
+    20→import { INITIAL_COINS, STOCKS } from "@/lib/market";
+    21→import { usd } from "@/lib/admin-data";
+    22→import { PasswordInput } from "@/components/ui/password-input";
+    23→import type { AdminCtx } from "./types";
+    24→import type { TxKind, TxStatus, TxType } from "@/lib/shared-types";
+    25→import { Card, Modal, OutlineButton, PageHeader, PrimaryButton, SearchInput, Select, StatusBadge, TextInput } from "./ui";
+    26→import { cn } from "@/lib/utils";
+    27→
+    28→const PAGE_SIZE = 10;
+    29→
+    30→const ASSET_OPTIONS = [...INITIAL_COINS, ...STOCKS].map((c) => ({ value: c.id, label: `${c.name} (${c.symbol})` }));
+    31→const TIER_OPTIONS = [
+    32→  { value: "Standard", label: "Standard" },
+    33→  { value: "Premium", label: "Premium" },
+    34→  { value: "Private", label: "Private" },
+    35→];
+    36→const STATUS_OPTIONS = [
+    37→  { value: "active", label: "Active" },
+    38→  { value: "suspended", label: "Suspended" },
+    39→];
+    40→const KYC_OPTIONS = [
+    41→  { value: "verified", label: "Verified" },
+    42→  { value: "pending", label: "Pending" },
+    43→  { value: "unverified", label: "Unverified" },
+    44→];
+    45→const CURRENCY_OPTIONS = [
+    46→  { value: "USD", label: "USD · US Dollar" },
+    47→  { value: "SAR", label: "SAR · Saudi Riyal" },
+    48→  { value: "KWD", label: "KWD · Kuwaiti Dinar" },
+    49→  { value: "AED", label: "AED · UAE Dirham" },
+    50→  { value: "QAR", label: "QAR · Qatari Riyal" },
+    51→  { value: "OMR", label: "OMR · Omani Rial" },
+    52→  { value: "GBP", label: "GBP · British Pound" },
+    53→];
+    54→const KIND_OPTIONS: { value: TxKind; label: string }[] = [
+    55→  { value: "deposit", label: "Deposit" },
+    56→  { value: "withdrawal", label: "Withdrawal" },
+    57→  { value: "trade", label: "Trade" },
+    58→  { value: "adjustment", label: "Admin adjustment" },
+    59→  { value: "opening", label: "Opening deposit" },
+    60→];
+    61→const TX_STATUS_OPTIONS: { value: TxStatus; label: string }[] = [
+    62→  { value: "COMPLETED", label: "Completed" },
+    63→  { value: "PENDING", label: "Pending" },
+    64→  { value: "PROCESSING", label: "Processing" },
+    65→  { value: "REJECTED", label: "Rejected" },
+    66→];
+    67→
+    68→function todayISO(): string {
+    69→  return new Date().toISOString().slice(0, 10);
+    70→}
+    71→
+    72→/* ================= CLIENTS LIST ================= */
+    73→
+    74→export function ClientsPage({ ctx }: { ctx: AdminCtx }) {
+    75→  const [query, setQuery] = useState("");
+    76→  const [status, setStatus] = useState("");
+    77→  const [pageIdx, setPageIdx] = useState(0);
+    78→  const [newOpen, setNewOpen] = useState(false);
+    79→  const [toDelete, setToDelete] = useState<AdminCtx["state"]["clients"][number] | null>(null);
+    80→
+    81→  const filtered = useMemo(
+    82→    () =>
+    83→      ctx.state.clients.filter((c) => {
+    84→        const q = query.trim().toLowerCase();
+    85→        const matchQ =
+    86→          !q ||
+    87→          c.name.toLowerCase().includes(q) ||
+    88→          c.email.toLowerCase().includes(q) ||
+    89→          (c.phone || "").toLowerCase().includes(q) ||
+    90→          c.accountNo.toLowerCase().includes(q);
+    91→        const matchS = !status || c.status === status;
+    92→        return matchQ && matchS;
+    93→      }),
+    94→    [ctx.state.clients, query, status],
+    95→  );
+    96→
+    97→  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    98→  const safePage = Math.min(pageIdx, pageCount - 1);
+    99→  const rows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+   100→
+   101→  return (
+   102→    <div>
+   103→      <PageHeader
+   104→        title="Clients"
+   105→        subtitle="Every registered client — edit everything, control every figure they see."
+   106→        right={
+   107→          <PrimaryButton onClick={() => setNewOpen(true)}>
+   108→            <Plus className="h-4 w-4" /> New Client
+   109→          </PrimaryButton>
+   110→        }
+   111→      />
+   112→
+   113→      <Card className="p-4">
+   114→        <div className="flex flex-col gap-3 sm:flex-row">
+   115→          <SearchInput value={query} onChange={(v) => { setQuery(v); setPageIdx(0); }} placeholder="Search by name, email, phone, or account no..." />
+   116→          <Select
+   117→            className="sm:w-44"
+   118→            value={status}
+   119→            onChange={(v) => { setStatus(v); setPageIdx(0); }}
+   120→            placeholder="All Statuses"
+   121→            options={[
+   122→              { value: "active", label: "Active" },
+   123→              { value: "suspended", label: "Suspended" },
+   124→            ]}
+   125→          />
+   126→        </div>
+   127→      </Card>
+   128→
+   129→      <Card className="mt-5">
+   130→        <div className="overflow-x-auto">
+   131→          <table className="w-full min-w-[980px] text-sm">
+   132→            <thead>
+   133→              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+   134→                <th className="px-6 py-4 font-medium">Name</th>
+   135→                <th className="px-4 py-4 font-medium">Email</th>
+   136→                <th className="px-4 py-4 font-medium">Country</th>
+   137→                <th className="px-4 py-4 text-right font-medium">Balance</th>
+   138→                <th className="px-4 py-4 font-medium">Status</th>
+   139→                <th className="px-4 py-4 font-medium">Transactions</th>
+   140→                <th className="px-4 py-4 font-medium">Agent</th>
+   141→                <th className="px-6 py-4 text-right font-medium">Actions</th>
+   142→              </tr>
+   143→            </thead>
+   144→            <tbody>
+   145→              {rows.map((c) => (
+   146→                <tr key={c.id} className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/60">
+   147→                  <td className="max-w-[300px] truncate px-6 py-4 font-semibold text-slate-900">
+   148→                    {c.name}
+   149→                    {c.isDemo && <span className="ms-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">DEMO</span>}
+   150→                  </td>
+   151→                  <td className="max-w-[240px] truncate px-4 py-4 text-slate-600">{c.email}</td>
+   152→                  <td className="px-4 py-4 text-slate-600">{c.country || "—"}</td>
+   153→                  <td className="whitespace-nowrap px-4 py-4 text-right font-bold tabular-nums text-slate-900">{usd(c.financials.balance)}</td>
+   154→                  <td className="px-4 py-4"><StatusBadge status={c.status === "active" ? "ACTIVE" : "SUSPENDED"} /></td>
+   155→                  <td className="px-4 py-4 text-slate-600">{c.financials.txCount}</td>
+   156→                  <td className="px-4 py-4 text-slate-600">{c.agent || "—"}</td>
+   157→                  <td className="whitespace-nowrap px-6 py-4 text-right">
+   158→                    <div className="inline-flex items-center gap-1">
+   159→                      <button
+   160→                        onClick={() => ctx.navigate("client-detail", c.id)}
+   161→                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+   162→                      >
+   163→                        <Eye className="h-4 w-4" /> View
+   164→                      </button>
+   165→                      <button
+   166→                        onClick={() => ctx.navigate("client-detail", c.id)}
+   167→                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+   168→                      >
+   169→                        <Pencil className="h-4 w-4" /> Edit
+   170→                      </button>
+   171→                      {!c.isDemo && (
+   172→                        <button
+   173→                          onClick={() => setToDelete(c)}
+   174→                          aria-label={`Delete ${c.name}`}
+   175→                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+   176→                        >
+   177→                          <Trash2 className="h-4 w-4" />
+   178→                        </button>
+   179→                      )}
+   180→                    </div>
+   181→                  </td>
+   182→                </tr>
+   183→              ))}
+   184→              {rows.length === 0 && (
+   185→                <tr>
+   186→                  <td colSpan={8} className="px-6 py-14 text-center text-sm text-slate-500">
+   187→                    No clients match your search.
+   188→                  </td>
+   189→                </tr>
+   190→              )}
+   191→            </tbody>
+   192→          </table>
+   193→        </div>
+   194→        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+   195→          <p className="text-[13px] text-slate-500">
+   196→            Showing {filtered.length === 0 ? 0 : safePage * PAGE_SIZE + 1}–{Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length} clients
+   197→          </p>
+   198→          <div className="flex items-center gap-2">
+   199→            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage === 0} onClick={() => setPageIdx((p) => Math.max(0, p - 1))}>
+   200→              <ArrowLeft className="h-3.5 w-3.5" /> Prev
+   201→            </OutlineButton>
+   202→            <OutlineButton className="px-3 py-1.5 text-[13px]" disabled={safePage >= pageCount - 1} onClick={() => setPageIdx((p) => Math.min(pageCount - 1, p + 1))}>
+   203→              Next <ArrowRightIcon />
+   204→            </OutlineButton>
+   205→          </div>
+   206→        </div>
+   207→      </Card>
+   208→
+   209→      <NewClientModal open={newOpen} onClose={() => setNewOpen(false)} ctx={ctx} />
+   210→
+   211→      {/* delete confirmation */}
+   212→      <Modal open={toDelete !== null} onClose={() => setToDelete(null)} title="Delete Client">
+   213→        <p className="text-sm leading-relaxed text-slate-600">
+   214→          Permanently remove <span className="font-semibold text-slate-900">{toDelete?.name}</span> ({toDelete?.email})? Their dashboard access, statement, holdings
+   215→          and pending requests will be deleted. This cannot be undone.
+   216→        </p>
+   217→        <div className="mt-5 flex justify-end gap-3">
+   218→          <OutlineButton onClick={() => setToDelete(null)}>Cancel</OutlineButton>
+   219→          <PrimaryButton
+   220→            onClick={async () => {
+   221→              if (!toDelete) return;
+   222→              const ok = await ctx.runAction({ action: "delete-client", id: toDelete.id }, { title: "Client deleted", description: `${toDelete.name} can no longer sign in.` });
+   223→              if (ok) setToDelete(null);
+   224→            }}
+   225→          >
+   226→            Delete Client
+   227→          </PrimaryButton>
+   228→        </div>
+   229→      </Modal>
+   230→    </div>
+   231→  );
+   232→}
+   233→
+   234→function ArrowRightIcon() {
+   235→  return (
+   236→    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+   237→      <path d="M5 12h14M12 5l7 7-7 7" />
+   238→    </svg>
+   239→  );
+   240→}
+   241→
+   242→function NewClientModal({ open, onClose, ctx }: { open: boolean; onClose: () => void; ctx: AdminCtx }) {
+   243→  const [name, setName] = useState("");
+   244→  const [email, setEmail] = useState("");
+   245→  const [password, setPassword] = useState("");
+   246→  const [phone, setPhone] = useState("");
+   247→  const [country, setCountry] = useState("");
+   248→  const [address, setAddress] = useState("");
+   249→  const [balance, setBalance] = useState("0.00");
+   250→  const [busy, setBusy] = useState(false);
+   251→
+   252→  const submit = async () => {
+   253→    if (!name.trim() || !email.trim() || !password.trim()) {
+   254→      ctx.toast("Missing information", "Name, email and portal password are required.");
+   255→      return;
+   256→    }
+   257→    if (password.trim().length < 6) {
+   258→      ctx.toast("Weak password", "The portal password must be at least 6 characters.");
+   259→      return;
+   260→    }
+   261→    setBusy(true);
+   262→    const ok = await ctx.runAction(
+   263→      {
+   264→        action: "create-client",
+   265→        client: { name: name.trim(), email: email.trim(), password: password.trim(), phone: phone.trim(), country: country.trim(), address: address.trim(), openingBalance: parseFloat(balance) || 0 },
+   266→      },
+   267→      {
+   268→        title: "Client created",
+   269→        description: `${name.trim()} was added. Portal access is live — ${email.trim()} can sign in and open their dashboard.`,
+   270→      },
+   271→    );
+   272→    setBusy(false);
+   273→    if (ok) {
+   274→      setName(""); setEmail(""); setPassword(""); setPhone(""); setCountry(""); setAddress(""); setBalance("0.00");
+   275→      onClose();
+   276→    }
+   277→  };
+   278→
+   279→  return (
+   280→    <Modal open={open} onClose={onClose} title="New Client">
+   281→      <div className="space-y-4">
+   282→        <TextInput label="Full Name *" value={name} onChange={setName} placeholder="e.g. Charlie Williams" />
+   283→        <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="client@email.com" />
+   284→        <div>
+   285→          <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Portal Password *</span>
+   286→          <PasswordInput theme="light" value={password} onChange={setPassword} placeholder="Client sign-in password (min. 6 chars)" autoComplete="new-password" />
+   287→        </div>
+   288→        <p className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-500">
+   289→          The client signs in on the website with this email and password — their dashboard opens with the opening balance below.
+   290→        </p>
+   291→        <div className="grid grid-cols-2 gap-4">
+   292→          <TextInput label="Phone" value={phone} onChange={setPhone} placeholder="Optional" />
+   293→          <TextInput label="Country" value={country} onChange={setCountry} placeholder="Optional" />
+   294→        </div>
+   295→        <TextInput label="Address" value={address} onChange={setAddress} placeholder="Optional" />
+   296→        <TextInput label="Opening Balance (USD)" type="number" value={balance} onChange={setBalance} />
+   297→        <div className="flex justify-end gap-3 pt-2">
+   298→          <OutlineButton onClick={onClose}>Cancel</OutlineButton>
+   299→          <PrimaryButton onClick={submit} disabled={busy}>
+   300→            Create Client
+   301→          </PrimaryButton>
+   302→        </div>
+   303→      </div>
+   304→    </Modal>
+   305→  );
+   306→}
+   307→
+   308→/* ================= CLIENT PROFILE (full edit) ================= */
+   309→
+   310→type ClientRecord = AdminCtx["state"]["clients"][number];
+   311→
+   312→export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
+   313→  const client = ctx.state.clients.find((c) => c.id === ctx.selectedClientId);
+   314→  const [form, setForm] = useState<Record<string, string> | null>(null);
+   315→  const [access, setAccess] = useState<{ password: string; tier: string; status: string; kyc: string; note: string; sof: string; currency: string; opening: string } | null>(null);
+   316→  const [holdings, setHoldings] = useState<Array<{ assetId: string; units: string }> | null>(null);
+   317→  const [note, setNote] = useState("");
+   318→  const [txForm, setTxForm] = useState({ dir: "CREDIT" as TxType, kind: "deposit" as TxKind, status: "COMPLETED" as TxStatus, amount: "", label: "", date: todayISO(), method: "Bank Transfer", asset: "", notes: "" });
+   319→  const [editingTx, setEditingTx] = useState<string | null>(null);
+   320→  const [txDraft, setTxDraft] = useState<{ dateISO: string; kind: TxKind; type: TxType; amount: string; status: TxStatus; label: string; method: string; notes: string } | null>(null);
+   321→  const [confirmDeleteTx, setConfirmDeleteTx] = useState<string | null>(null);
+   322→
+   323→  // Keep drafts in sync with the server record (content-based: never clobbers
+   324→  // typing when nothing changed, always syncs after a save or external edit).
+   325→  const signature = client ? JSON.stringify([client.name, client.email, client.phone, client.country, client.address, client.city, client.postcode, client.accountNo, client.agent, client.tier, client.status, client.kycStatus, client.managerNote, client.sourceOfFunds, client.currency, client.openingBalance, client.holdings]) : "";
+   326→  useEffect(() => {
+   327→    if (!client) return;
+   328→    setForm({
+   329→      name: client.name,
+   330→      email: client.email,
+   331→      phone: client.phone,
+   332→      country: client.country,
+   333→      address: client.address,
+   334→      city: client.city,
+   335→      postcode: client.postcode,
+   336→      accountNo: client.accountNo,
+   337→      agent: client.agent,
+   338→    });
+   339→    setAccess({ password: "", tier: client.tier, status: client.status, kyc: client.kycStatus, note: client.managerNote, sof: client.sourceOfFunds ?? "", currency: client.currency ?? "USD", opening: String(client.openingBalance) });
+   340→    setHoldings(client.holdings.map((h) => ({ assetId: h.assetId, units: String(h.units) })));
+   341→    // eslint-disable-next-line react-hooks/exhaustive-deps
+   342→  }, [ctx.selectedClientId, signature]);
+   343→
+   344→  const clientTxs = useMemo(() => (client ? ctx.state.txs.filter((t) => t.clientId === client.id) : []), [ctx.state.txs, client]);
+   345→
+   346→  if (!client) {
+   347→    return (
+   348→      <Card className="p-12 text-center">
+   349→        <p className="text-sm text-slate-500">Client not found.</p>
+   350→        <OutlineButton className="mt-4" onClick={() => ctx.navigate("clients")}>Back to clients</OutlineButton>
+   351→      </Card>
+   352→    );
+   353→  }
+   354→
+   355→  const f = form ?? {
+   356→    name: client.name,
+   357→    email: client.email,
+   358→    phone: client.phone,
+   359→    country: client.country,
+   360→    address: client.address,
+   361→    city: client.city,
+   362→    postcode: client.postcode,
+   363→    accountNo: client.accountNo,
+   364→    agent: client.agent,
+   365→  };
+   366→  const set = (k: string, v: string) => setForm({ ...f, [k]: v });
+   367→
+   368→  const saveIdentity = async () => {
+   369→    const ok = await ctx.runAction(
+   370→      {
+   371→        action: "update-client",
+   372→        id: client.id,
+   373→        patch: {
+   374→          name: f.name.trim() || client.name,
+   375→          email: f.email.trim() || client.email,
+   376→          phone: f.phone.trim(),
+   377→          country: f.country.trim(),
+   378→          address: f.address.trim(),
+   379→          city: f.city.trim(),
+   380→          postcode: f.postcode.trim(),
+   381→          accountNo: f.accountNo.trim() || client.accountNo,
+   382→          agent: f.agent.trim(),
+   383→        },
+   384→      },
+   385→      { title: "Changes saved", description: "Client details were updated everywhere in the system." },
+   386→    );
+   387→    if (ok) ctx.toast("Synchronized", "The client dashboard, statements and reports now show the same details.");
+   388→  };
+   389→
+   390→  const saveAccess = async () => {
+   391→    if (!access) return;
+   392→    if (access.password && access.password.length < 6) {
+   393→      ctx.toast("Weak password", "The portal password must be at least 6 characters.");
+   394→      return;
+   395→    }
+   396→    const ok = await ctx.runAction(
+   397→      {
+   398→        action: "update-client",
+   399→        id: client.id,
+   400→        patch: {
+   401→          ...(access.password ? { password: access.password } : {}),
+   402→          tier: access.tier as ClientRecord["tier"],
+   403→          status: access.status as ClientRecord["status"],
+   404→          kycStatus: access.kyc as ClientRecord["kycStatus"],
+   405→          managerNote: access.note,
+   406→          sourceOfFunds: access.sof,
+   407→          currency: access.currency as ClientRecord["currency"],
+   408→          openingBalance: parseFloat(access.opening) || 0,
+   409→        },
+   410→      },
+   411→      { title: "Portal updated", description: "Access, tier, status, note, source of funds, currency and opening balance now match on the client dashboard." },
+   412→    );
+   413→    if (ok) setAccess((a) => (a ? { ...a, password: "" } : a));
+   414→  };
+   415→
+   416→  const saveHoldings = async () => {
+   417→    if (!holdings) return;
+   418→    const seen = new Set<string>();
+   419→    const clean = holdings
+   420→      .filter((h) => {
+   421→        if (seen.has(h.assetId)) return false;
+   422→        seen.add(h.assetId);
+   423→        return h.assetId && Number(h.units) > 0;
+   424→      })
+   425→      .map((h) => ({ assetId: h.assetId, units: Number(h.units) }));
+   426→    const ok = await ctx.runAction(
+   427→      { action: "update-client", id: client.id, patch: { holdings: clean } },
+   428→      { title: "Holdings updated", description: "The client dashboard now values these units at live market prices." },
+   429→    );
+   430→    if (ok) setHoldings(clean.map((h) => ({ assetId: h.assetId, units: String(h.units) })));
+   431→  };
+   432→
+   433→  const comments = ctx.state.comments[client.id] ?? [];
+   434→
+   435→  const addTx = async () => {
+   436→    const amount = parseFloat(txForm.amount);
+   437→    if (!Number.isFinite(amount) || amount <= 0) {
+   438→      ctx.toast("Invalid amount", "Enter a positive amount for the statement line.");
+   439→      return;
+   440→    }
+   441→    const ok = await ctx.runAction(
+   442→      {
+   443→        action: "create-transaction",
+   444→        tx: {
+   445→          clientId: client.id,
+   446→          kind: txForm.kind,
+   447→          type: txForm.dir,
+   448→          amount,
+   449→          status: txForm.status,
+   450→          label: txForm.label.trim() || undefined,
+   451→          asset: txForm.asset.trim() || undefined,
+   452→          dateISO: txForm.date || todayISO(),
+   453→          method: txForm.method.trim() || "Bank Transfer",
+   454→          notes: txForm.notes.trim() || "—",
+   455→        },
+   456→      },
+   457→      { title: "Transaction created", description: "Balances, statistics and the client dashboard updated instantly." },
+   458→    );
+   459→    if (ok) setTxForm((x) => ({ ...x, amount: "", label: "", asset: "", notes: "" }));
+   460→  };
+   461→
+   462→  const startEditTx = (tx: AdminCtx["state"]["txs"][number]) => {
+   463→    setEditingTx(tx.id);
+   464→    setTxDraft({ dateISO: tx.dateISO, kind: tx.kind, type: tx.type, amount: String(tx.amount), status: tx.status, label: tx.label, method: tx.method, notes: tx.notes === "—" ? "" : tx.notes });
+   465→  };
+   466→
+   467→  const saveEditTx = async () => {
+   468→    if (!txDraft) return;
+   469→    const amount = parseFloat(txDraft.amount);
+   470→    if (!Number.isFinite(amount) || amount <= 0) {
+   471→      ctx.toast("Invalid amount", "Enter a positive amount.");
+   472→      return;
+   473→    }
+   474→    const ok = await ctx.runAction(
+   475→      { action: "update-transaction", id: editingTx!, patch: { dateISO: txDraft.dateISO, kind: txDraft.kind, type: txDraft.type, amount, status: txDraft.status, label: txDraft.label, method: txDraft.method, notes: txDraft.notes } },
+   476→      { title: "Transaction updated", description: "Every balance, statistic and statement now reflects this change." },
+   477→    );
+   478→    if (ok) {
+   479→      setEditingTx(null);
+   480→      setTxDraft(null);
+   481→    }
+   482→  };
+   483→
+   484→  const removeTx = async (id: string) => {
+   485→    const ok = await ctx.runAction({ action: "delete-transaction", id }, { title: "Transaction deleted", description: "Totals, balances and statistics were recalculated." });
+   486→    if (ok) setConfirmDeleteTx(null);
+   487→  };
+   488→
+   489→  return (
+   490→    <div>
+   491→      {/* Header row */}
+   492→      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+   493→        <div className="flex items-center gap-4">
+   494→          <button
+   495→            onClick={() => ctx.navigate("clients")}
+   496→            aria-label="Back"
+   497→            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:text-slate-900"
+   498→          >
+   499→            <ArrowLeft className="h-5 w-5" />
+   500→          </button>
+   501→          <div>
+   502→            <h1 className="flex flex-wrap items-center gap-2 text-[28px] font-bold leading-tight tracking-tight text-slate-900">
+   503→              {client.name}
+   504→              {client.isDemo && <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">DEMO</span>}
+   505→              <StatusBadge status={client.status === "active" ? "ACTIVE" : "SUSPENDED"} />
+   506→            </h1>
+   507→            <p className="mt-0.5 text-sm text-slate-500">
+   508→              Client profile · <span className="font-mono">{client.accountNo}</span> · {client.email}
+   509→            </p>
+   510→          </div>
+   511→        </div>
+   512→        <div className="flex items-center gap-3">
+   513→          {!client.isDemo && (
+   514→            <OutlineButton
+   515→              className="!text-amber-600 hover:!bg-amber-50"
+   516→              onClick={async () => {
+   517→                const ok = await ctx.runAction({ action: "delete-client", id: client.id }, { title: "Client deleted", description: `${client.name} can no longer sign in.` });
+   518→                if (ok) ctx.navigate("clients");
+   519→              }}
+   520→            >
+   521→              <Trash2 className="h-4 w-4" /> Delete
+   522→            </OutlineButton>
+   523→          )}
+   524→        </div>
+   525→      </div>
+   526→
+   527→      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
+   528→        {/* Personal information */}
+   529→        <Card className="p-6">
+   530→          <h2 className="text-lg font-bold text-slate-900">Personal Information</h2>
+   531→          <p className="mt-0.5 text-[13px] text-slate-500">Saved changes appear everywhere — client dashboard, statements, reports.</p>
+   532→          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+   533→            <TextInput label="Full Name" value={f.name} onChange={(v) => set("name", v)} />
+   534→            <TextInput label="Email (sign-in)" type="email" value={f.email} onChange={(v) => set("email", v)} />
+   535→            <TextInput label="Phone" value={f.phone} onChange={(v) => set("phone", v)} />
+   536→            <TextInput label="Country" value={f.country} onChange={(v) => set("country", v)} />
+   537→            <TextInput label="Address" value={f.address} onChange={(v) => set("address", v)} />
+   538→            <div className="grid grid-cols-2 gap-4">
+   539→              <TextInput label="City" value={f.city} onChange={(v) => set("city", v)} />
+   540→              <TextInput label="Postcode" value={f.postcode} onChange={(v) => set("postcode", v)} />
+   541→            </div>
+   542→            <TextInput label="Account No. (client reference)" value={f.accountNo} onChange={(v) => set("accountNo", v)} />
+   543→            <div>
+   544→              <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Assigned Agent</span>
+   545→              <Select
+   546→                value={f.agent}
+   547→                onChange={(v) => set("agent", v)}
+   548→                placeholder="Unassigned"
+   549→                options={[
+   550→                  { value: "Super Admin", label: "Super Admin" },
+   551→                  { value: "Agent", label: "Agent" },
+   552→                ]}
+   553→              />
+   554→            </div>
+   555→          </div>
+   556→          <div className="mt-5 flex justify-end">
+   557→            <PrimaryButton onClick={saveIdentity}>Save Personal Information</PrimaryButton>
+   558→          </div>
+   559→        </Card>
+   560→
+   561→        {/* Financial summary — computed, never stale */}
+   562→        <div className="grid grid-cols-1 content-start gap-6">
+   563→          <Card className="p-6">
+   564→            <h2 className="text-lg font-bold text-slate-900">Financial Summary</h2>
+   565→            <p className="mt-0.5 text-[13px] text-slate-500">Always calculated live from the transaction ledger.</p>
+   566→            <div className="mt-4 divide-y divide-slate-100">
+   567→              <SummaryRow icon={<Wallet className="h-4 w-4 text-slate-400" />} label="Current Balance" value={usd(client.financials.balance)} valueClass="font-bold text-slate-900" />
+   568→              <SummaryRow icon={<Wallet className="h-4 w-4 text-slate-400" />} label="Available Funds" value={usd(client.financials.available)} valueClass="font-semibold text-slate-700" />
+   569→              <SummaryRow icon={<ArrowUpCircle className="h-4 w-4 text-emerald-500" />} label="Total Credits" value={usd(client.financials.credits)} valueClass="font-semibold text-emerald-500" />
+   570→              <SummaryRow icon={<ArrowDownCircle className="h-4 w-4 text-amber-600" />} label="Total Debits" value={usd(client.financials.debits)} valueClass="font-semibold text-amber-600" />
+   571→              <SummaryRow icon={<ShieldAlert className="h-4 w-4 text-amber-500" />} label="Pending Withdrawals" value={usd(client.financials.pendingWithdrawals)} valueClass="font-semibold text-amber-600" />
+   572→              <SummaryRow icon={<TrendingUp className="h-4 w-4 text-slate-400" />} label="Opening Balance" value={usd(client.openingBalance)} valueClass="font-semibold text-slate-600" />
+   573→              <div className="flex items-center justify-between py-4">
+   574→                <span className="text-sm text-slate-500">Total Transactions</span>
+   575→                <span className="text-sm font-bold text-slate-900">{client.financials.txCount}</span>
+   576→              </div>
+   577→            </div>
+   578→          </Card>
+   579→
+   580→          {/* Access & portal control */}
+   581→          <Card className="p-6">
+   582→            <div className="flex items-center gap-2.5">
+   583→              <UserCog className="h-5 w-5 text-slate-500" />
+   584→              <h2 className="text-lg font-bold text-slate-900">Access &amp; Portal Control</h2>
+   585→            </div>
+   586→            {access && (
+   587→              <div className="mt-5 space-y-4">
+   588→                <div>
+   589→                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Reset Portal Password</span>
+   590→                  <PasswordInput theme="light" value={access.password} onChange={(v) => setAccess({ ...access, password: v })} placeholder="Leave empty to keep current password" autoComplete="new-password" />
+   591→                </div>
+   592→                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+   593→                  <div>
+   594→                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Tier</span>
+   595→                    <Select value={access.tier} onChange={(v) => setAccess({ ...access, tier: v })} options={TIER_OPTIONS} />
+   596→                  </div>
+   597→                  <div>
+   598→                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Account Status</span>
+   599→                    <Select value={access.status} onChange={(v) => setAccess({ ...access, status: v })} options={STATUS_OPTIONS} />
+   600→                  </div>
+   601→                  <div>
+   602→                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Verification</span>
+   603→                    <Select value={access.kyc} onChange={(v) => setAccess({ ...access, kyc: v })} options={KYC_OPTIONS} />
+   604→                  </div>
+   605→                </div>
+   606→                <TextInput label="Opening Balance (USD)" type="number" value={access.opening} onChange={(v) => setAccess({ ...access, opening: v })} />
+   607→                <label className="block">
+   608→                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Manager Note (shown on the client dashboard)</span>
+   609→                  <textarea
+   610→                    rows={2}
+   611→                    value={access.note}
+   612→                    onChange={(e) => setAccess({ ...access, note: e.target.value })}
+   613→                    placeholder="e.g. Your dedicated manager is available Mon–Fri, 9am–6pm GMT."
+   614→                    className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   615→                  />
+   616→                </label>
+   617→                <label className="block">
+   618→                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Source of Funds (free text, shown on the client account)</span>
+   619→                  <textarea
+   620→                    rows={2}
+   621→                    value={access.sof}
+   622→                    onChange={(e) => setAccess({ ...access, sof: e.target.value })}
+   623→                    placeholder="e.g. Salary, savings and long-term investments."
+   624→                    className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   625→                  />
+   626→                </label>
+   627→                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+   628→                  <label className="block">
+   629→                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Display Currency (client dashboard)</span>
+   630→                    <Select value={access.currency} onChange={(v) => setAccess({ ...access, currency: v })} options={CURRENCY_OPTIONS} />
+   631→                  </label>
+   632→                  <div className="flex items-end pb-1">
+   633→                    <p className="text-[12px] leading-relaxed text-slate-400">Currency, note and source of funds sync to the client dashboard within seconds.</p>
+   634→                  </div>
+   635→                </div>
+   636→                <div className="flex justify-end">
+   637→                  <PrimaryButton onClick={saveAccess}>Save Access &amp; Portal</PrimaryButton>
+   638→                </div>
+   639→              </div>
+   640→            )}
+   641→          </Card>
+   642→
+   643→          {/* Holdings */}
+   644→          <Card className="p-6">
+   645→            <h2 className="text-lg font-bold text-slate-900">Holdings</h2>
+   646→            <p className="mt-0.5 text-[13px] text-slate-500">Units per asset — valued on the dashboard with live market prices.</p>
+   647→            {holdings && (
+   648→              <div className="mt-4 space-y-2">
+   649→                {holdings.map((h, i) => {
+   650→                  const used = holdings.map((x) => x.assetId);
+   651→                  return (
+   652→                    <div key={i} className="flex items-center gap-2">
+   653→                      <Select
+   654→                        className="flex-1"
+   655→                        value={h.assetId}
+   656→                        onChange={(v) => setHoldings(holdings.map((x, idx) => (idx === i ? { ...x, assetId: v } : x)))}
+   657→                        options={ASSET_OPTIONS.filter((o) => !used.includes(o.value) || o.value === h.assetId)}
+   658→                      />
+   659→                      <input
+   660→                        type="number"
+   661→                        min="0"
+   662→                        step="any"
+   663→                        value={h.units}
+   664→                        onChange={(e) => setHoldings(holdings.map((x, idx) => (idx === i ? { ...x, units: e.target.value } : x)))}
+   665→                        aria-label="Units"
+   666→                        dir="ltr"
+   667→                        className="h-11 w-28 rounded-lg border border-slate-200 px-3 text-sm text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   668→                      />
+   669→                      <button
+   670→                        onClick={() => setHoldings(holdings.filter((_, idx) => idx !== i))}
+   671→                        aria-label="Remove holding"
+   672→                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600"
+   673→                      >
+   674→                        <Trash2 className="h-4 w-4" />
+   675→                      </button>
+   676→                    </div>
+   677→                  );
+   678→                })}
+   679→                {ASSET_OPTIONS.some((o) => !holdings.some((h) => h.assetId === o.value)) && (
+   680→                  <OutlineButton
+   681→                    className="w-full"
+   682→                    onClick={() => {
+   683→                      const free = ASSET_OPTIONS.find((o) => !holdings.some((h) => h.assetId === o.value));
+   684→                      if (free) setHoldings([...holdings, { assetId: free.value, units: "0" }]);
+   685→                    }}
+   686→                  >
+   687→                    <Plus className="h-4 w-4" /> Add Asset
+   688→                  </OutlineButton>
+   689→                )}
+   690→                <div className="flex justify-end pt-1">
+   691→                  <PrimaryButton onClick={saveHoldings}>Save Holdings</PrimaryButton>
+   692→                </div>
+   693→              </div>
+   694→            )}
+   695→          </Card>
+   696→        </div>
+   697→      </div>
+   698→
+   699→      {/* Statement / transactions editor */}
+   700→      <Card className="mt-6 p-6">
+   701→        <h2 className="text-lg font-bold text-slate-900">Transactions &amp; Statement</h2>
+   702→        <p className="mt-0.5 text-[13px] text-slate-500">Add, edit or remove ledger lines — balances, statistics and the client dashboard update instantly.</p>
+   703→
+   704→        {/* add line */}
+   705→        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+   706→          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+   707→            <Select value={txForm.dir} onChange={(v) => setTxForm({ ...txForm, dir: v as TxType })} options={[{ value: "CREDIT", label: "Credit (in)" }, { value: "DEBIT", label: "Debit (out)" }]} />
+   708→            <Select value={txForm.kind} onChange={(v) => setTxForm({ ...txForm, kind: v as TxKind })} options={KIND_OPTIONS.map((k) => ({ value: k.value, label: k.label }))} />
+   709→            <Select value={txForm.status} onChange={(v) => setTxForm({ ...txForm, status: v as TxStatus })} options={TX_STATUS_OPTIONS} />
+   710→            <input
+   711→              type="number"
+   712→              min="0"
+   713→              step="any"
+   714→              value={txForm.amount}
+   715→              onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
+   716→              placeholder="Amount (USD)"
+   717→              aria-label="Amount (USD)"
+   718→              dir="ltr"
+   719→              className="h-11 rounded-lg border border-slate-200 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   720→            />
+   721→            <input
+   722→              type="date"
+   723→              value={txForm.date}
+   724→              onChange={(e) => setTxForm({ ...txForm, date: e.target.value })}
+   725→              aria-label="Date"
+   726→              className="h-11 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   727→            />
+   728→          </div>
+   729→          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+   730→            <input
+   731→              value={txForm.label}
+   732→              onChange={(e) => setTxForm({ ...txForm, label: e.target.value })}
+   733→              placeholder="Description (optional)"
+   734→              className="h-11 flex-1 rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   735→            />
+   736→            <input
+   737→              value={txForm.method}
+   738→              onChange={(e) => setTxForm({ ...txForm, method: e.target.value })}
+   739→              placeholder="Method"
+   740→              className="h-11 w-full rounded-lg border border-slate-200 px-3.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:w-40"
+   741→            />
+   742→            <PrimaryButton className="shrink-0 px-4 py-2 text-[13px]" onClick={addTx}>
+   743→              <Plus className="h-4 w-4" /> Add Line
+   744→            </PrimaryButton>
+   745→          </div>
+   746→        </div>
+   747→
+   748→        {/* ledger list */}
+   749→        <div className="mt-4 overflow-x-auto">
+   750→          <table className="w-full min-w-[900px] text-sm">
+   751→            <thead>
+   752→              <tr className="border-b border-slate-100 text-left text-[13px] font-medium text-slate-500">
+   753→                <th className="px-3 py-3 font-medium">Date</th>
+   754→                <th className="px-3 py-3 font-medium">Description</th>
+   755→                <th className="px-3 py-3 font-medium">Kind</th>
+   756→                <th className="px-3 py-3 text-right font-medium">Amount</th>
+   757→                <th className="px-3 py-3 font-medium">Status</th>
+   758→                <th className="px-3 py-3 text-right font-medium">Balance After</th>
+   759→                <th className="px-3 py-3 text-right font-medium">Actions</th>
+   760→              </tr>
+   761→            </thead>
+   762→            <tbody>
+   763→              {clientTxs.map((t) =>
+   764→                editingTx === t.id && txDraft ? (
+   765→                  <tr key={t.id} className="border-b border-slate-50 bg-emerald-50/30">
+   766→                    <td className="px-3 py-3">
+   767→                      <input type="date" value={txDraft.dateISO} onChange={(e) => setTxDraft({ ...txDraft, dateISO: e.target.value })} className="h-9 rounded-md border border-slate-200 px-2 text-[13px]" />
+   768→                    </td>
+   769→                    <td className="px-3 py-3">
+   770→                      <input value={txDraft.label} onChange={(e) => setTxDraft({ ...txDraft, label: e.target.value })} className="h-9 w-52 rounded-md border border-slate-200 px-2 text-[13px]" placeholder="Description" />
+   771→                    </td>
+   772→                    <td className="px-3 py-3">
+   773→                      <Select className="w-32" value={txDraft.kind} onChange={(v) => setTxDraft({ ...txDraft, kind: v as TxKind })} options={KIND_OPTIONS.map((k) => ({ value: k.value, label: k.label }))} />
+   774→                    </td>
+   775→                    <td className="px-3 py-3">
+   776→                      <div className="flex items-center justify-end gap-1.5">
+   777→                        <Select className="w-24" value={txDraft.type} onChange={(v) => setTxDraft({ ...txDraft, type: v as TxType })} options={[{ value: "CREDIT", label: "In" }, { value: "DEBIT", label: "Out" }]} />
+   778→                        <input type="number" min="0" step="any" value={txDraft.amount} onChange={(e) => setTxDraft({ ...txDraft, amount: e.target.value })} className="h-9 w-28 rounded-md border border-slate-200 px-2 text-[13px]" dir="ltr" />
+   779→                      </div>
+   780→                    </td>
+   781→                    <td className="px-3 py-3">
+   782→                      <Select className="w-32" value={txDraft.status} onChange={(v) => setTxDraft({ ...txDraft, status: v as TxStatus })} options={TX_STATUS_OPTIONS} />
+   783→                    </td>
+   784→                    <td className="px-3 py-3 text-end text-[13px] text-slate-400">auto</td>
+   785→                    <td className="px-3 py-3 text-end">
+   786→                      <div className="inline-flex items-center gap-1">
+   787→                        <button onClick={saveEditTx} className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-[12px] font-bold text-white hover:bg-emerald-700">Save</button>
+   788→                        <button
+   789→                          onClick={() => {
+   790→                            setEditingTx(null);
+   791→                            setTxDraft(null);
+   792→                          }}
+   793→                          className="rounded-md px-2 py-1.5 text-[12px] font-semibold text-slate-500 hover:bg-slate-100"
+   794→                        >
+   795→                          Cancel
+   796→                        </button>
+   797→                      </div>
+   798→                    </td>
+   799→                  </tr>
+   800→                ) : (
+   801→                  <tr key={t.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/60">
+   802→                    <td className="whitespace-nowrap px-3 py-3.5 text-slate-600">{t.dateISO}</td>
+   803→                    <td className="max-w-[280px] truncate px-3 py-3.5">
+   804→                      <span className="font-medium text-slate-800">{t.label}</span>
+   805→                      {t.notes && t.notes !== "—" && <span className="text-slate-400"> · {t.notes}</span>}
+   806→                    </td>
+   807→                    <td className="px-3 py-3.5 text-[13px] capitalize text-slate-500">{t.kind}</td>
+   808→                    <td className={cn("whitespace-nowrap px-3 py-3.5 text-right font-semibold tabular-nums", t.type === "CREDIT" ? "text-emerald-500" : "text-amber-600")} dir="ltr">
+   809→                      {t.type === "CREDIT" ? "+" : "−"}
+   810→                      {usd(t.amount)}
+   811→                    </td>
+   812→                    <td className="px-3 py-3.5"><StatusBadge status={t.status} /></td>
+   813→                    <td className="whitespace-nowrap px-3 py-3.5 text-right font-bold tabular-nums text-slate-900" dir="ltr">
+   814→                      {usd(t.balanceAfter)}
+   815→                    </td>
+   816→                    <td className="whitespace-nowrap px-3 py-3.5 text-end">
+   817→                      <div className="inline-flex items-center gap-1">
+   818→                        <button onClick={() => startEditTx(t)} aria-label="Edit transaction" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+   819→                          <Pencil className="h-4 w-4" />
+   820→                        </button>
+   821→                        <button onClick={() => setConfirmDeleteTx(t.id)} aria-label="Delete transaction" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600">
+   822→                          <Trash2 className="h-4 w-4" />
+   823→                        </button>
+   824→                      </div>
+   825→                    </td>
+   826→                  </tr>
+   827→                ),
+   828→              )}
+   829→              {clientTxs.length === 0 && (
+   830→                <tr>
+   831→                  <td colSpan={7} className="px-3 py-10 text-center text-sm text-slate-500">No transactions yet — add the first line above.</td>
+   832→                </tr>
+   833→              )}
+   834→            </tbody>
+   835→          </table>
+   836→        </div>
+   837→      </Card>
+   838→
+   839→      {/* Comments */}
+   840→      <Card className="mt-6 p-6">
+   841→        <div className="flex items-center gap-2.5">
+   842→          <MessageSquare className="h-5 w-5 text-slate-500" />
+   843→          <h2 className="text-lg font-bold text-slate-900">Comments</h2>
+   844→        </div>
+   845→        <div className="mt-5 flex items-end gap-3">
+   846→          <textarea
+   847→            value={note}
+   848→            onChange={(e) => setNote(e.target.value)}
+   849→            placeholder="Add a note about this client..."
+   850→            rows={2}
+   851→            className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+   852→          />
+   853→          <PrimaryButton
+   854→            className="mb-0.5 shrink-0 px-5 disabled:bg-emerald-600/40"
+   855→            disabled={!note.trim()}
+   856→            onClick={async () => {
+   857→              const ok = await ctx.runAction({ action: "add-comment", clientId: client.id, body: note.trim() }, { title: "Comment posted" });
+   858→              if (ok) setNote("");
+   859→            }}
+   860→          >
+   861→            Post
+   862→          </PrimaryButton>
+   863→        </div>
+   864→        {comments.length === 0 ? (
+   865→          <div className="flex flex-col items-center py-12 text-center">
+   866→            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+   867→              <Inbox className="h-6 w-6 text-slate-400" />
+   868→            </span>
+   869→            <p className="mt-4 text-[15px] font-bold text-slate-900">No comments yet</p>
+   870→            <p className="mt-1 text-sm text-slate-500">Notes left by staff about this client will appear here.</p>
+   871→          </div>
+   872→        ) : (
+   873→          <ul className="mt-6 space-y-4">
+   874→            {comments.map((c) => (
+   875→              <li key={c.id} className="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
+   876→                <div className="flex items-center justify-between">
+   877→                  <p className="text-sm font-semibold text-slate-900">{c.author}</p>
+   878→                  <span className="text-xs text-slate-400">{c.time}</span>
+   879→                </div>
+   880→                <p className="mt-1.5 text-sm text-slate-600">{c.body}</p>
+   881→              </li>
+   882→            ))}
+   883→          </ul>
+   884→        )}
+   885→      </Card>
+   886→
+   887→      {/* delete transaction confirmation */}
+   888→      <Modal open={confirmDeleteTx !== null} onClose={() => setConfirmDeleteTx(null)} title="Delete Transaction">
+   889→        <p className="text-sm leading-relaxed text-slate-600">
+   890→          Delete this transaction permanently? The client&apos;s balance, statement, all dashboard statistics and reports will be recalculated immediately. This cannot be undone.
+   891→        </p>
+   892→        <div className="mt-5 flex justify-end gap-3">
+   893→          <OutlineButton onClick={() => setConfirmDeleteTx(null)}>Cancel</OutlineButton>
+   894→          <PrimaryButton className="!bg-amber-600 hover:!bg-amber-700" onClick={() => confirmDeleteTx && removeTx(confirmDeleteTx)}>
+   895→            Delete Transaction
+   896→          </PrimaryButton>
+   897→        </div>
+   898→      </Modal>
+   899→
+   900→      <span className="hidden"><X /></span>
+   901→    </div>
+   902→  );
+   903→}
+   904→
+   905→function SummaryRow({ icon, label, value, valueClass }: { icon: React.ReactNode; label: string; value: string; valueClass: string }) {
+   906→  return (
+   907→    <div className="flex items-center justify-between py-4">
+   908→      <span className="flex items-center gap-2.5 text-sm text-slate-500">
+   909→        {icon}
+   910→        {label}
+   911→      </span>
+   912→      <span className={cn("text-sm tabular-nums", valueClass)}>{value}</span>
+   913→    </div>
+   914→  );
+   915→}
+   916→
+   917→function TrendIcon() {
+   918→  return (
+   919→    <svg className="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+   920→      <path d="M22 7 13.5 15.5 8.5 10.5 2 17" />
+   921→      <path d="M16 7h6v6" />
+   922→    </svg>
+   923→  );
+   924→}
+   925→
