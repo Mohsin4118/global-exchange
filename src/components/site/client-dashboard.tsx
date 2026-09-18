@@ -40,6 +40,7 @@ import {
   ProfileCard,
   RequestModal,
   SectionTitle,
+  SourceOfFundsCard,
   TierBadge,
   TxRowItem,
   VerifiedBadge,
@@ -113,6 +114,14 @@ export function ClientDashboard({
       window.removeEventListener("focus", boot);
     };
   }, [load]);
+
+  /* The dashboard ALWAYS opens at the very top: session restore / browser
+     scroll restoration must never land the client mid-page with the welcome
+     section hidden above the viewport ("top cut off") — one normal page
+     scroll starting at the welcome header, below the sticky topbar. */
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
 
   /* ---- live portfolio math (server balance + live market prices) ---- */
   const markets = useMemo(() => [...coins, ...stocks], [coins, stocks]);
@@ -380,7 +389,7 @@ export function ClientDashboard({
         </aside>
 
         {/* content */}
-        <main className="min-w-0 flex-1 py-5 sm:py-6">
+        <main className="min-w-0 flex-1 py-4 sm:py-6">
           {section === "overview" && (
             <OverviewSection
               view={view}
@@ -395,7 +404,6 @@ export function ClientDashboard({
               available={available}
               portfolioChange={portfolioChange}
               totalDeposits={totalDeposits}
-              pendingWithdrawalTotal={pendingWithdrawalTotal}
               history={history}
               allocation={allocation}
               suspended={!!suspended}
@@ -613,7 +621,6 @@ function OverviewSection({
   available,
   portfolioChange,
   totalDeposits,
-  pendingWithdrawalTotal,
   history,
   allocation,
   suspended,
@@ -636,7 +643,6 @@ function OverviewSection({
   available: number;
   portfolioChange: number;
   totalDeposits: number;
-  pendingWithdrawalTotal: number;
   history: number[];
   allocation: Array<{ label: string; value: number; color: string }>;
   suspended: boolean;
@@ -651,12 +657,12 @@ function OverviewSection({
   const recent = view.txs.slice(0, 5);
 
   return (
-    <div className="grid grid-cols-1 gap-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-5">
       {/* welcome header — real client identity from the authenticated session */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-            <h1 className="min-w-0 text-[22px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px]">
+            <h1 className="min-w-0 text-[20px] font-bold leading-snug tracking-tight text-slate-900 sm:text-[24px] sm:leading-tight lg:text-[28px]">
               {t("welcomeTitle")}{" "}
               <span className="whitespace-normal break-words" dir="auto">
                 {c.name}
@@ -670,8 +676,8 @@ function OverviewSection({
             <PrivateBadge t={t} />
             {c.tier !== "Private" && <TierBadge tier={c.tier} t={t} />}
           </div>
-          <p className="mt-3 text-[13.5px] text-slate-500">{t("welcomeSub")}</p>
-          <p className="mt-1 text-[12.5px] font-semibold text-slate-500">
+          <p className="mt-2.5 text-[13px] text-slate-500 sm:text-[13.5px]">{t("welcomeSub")}</p>
+          <p className="mt-1 text-[12px] font-semibold text-slate-500 sm:text-[12.5px]">
             {t("accountNo")}{" "}
             <span dir="ltr" className="font-mono text-slate-600">
               {c.accountNo}
@@ -697,9 +703,9 @@ function OverviewSection({
       </div>
 
       {c.managerNote && !suspended && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 sm:px-5">
-          <p className="text-[12.5px] font-bold text-emerald-600">{t("managerNoteTitle")}</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{c.managerNote}</p>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 sm:px-5 sm:py-3.5">
+          <p className="text-[12px] font-bold text-emerald-600 sm:text-[12.5px]">{t("managerNoteTitle")}</p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-slate-600 sm:text-[13px]">{c.managerNote}</p>
         </div>
       )}
 
@@ -713,8 +719,9 @@ function OverviewSection({
         </div>
       )}
 
-      {/* three financial cards — every value is real, from the server ledger */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+      {/* three financial cards — every value is real, from the server ledger.
+          Mobile: full-width compact stack (2.5 gap); sm+: 3-across grid. */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
         <KpiCard
           label={t("totalBalance")}
           value={money(total)}
@@ -725,7 +732,7 @@ function OverviewSection({
         <KpiCard
           label={t("cashAvailable")}
           value={money(cash)}
-          sub={pendingWithdrawalTotal > 0 ? `${t("availableFunds")}: ${money(available)}` : t("availableFunds")}
+          sub={`${t("availableFunds")}: ${money(available)}`}
           icon={<ArrowDownLeft className="h-4 w-4" />}
         />
         <KpiCard
@@ -737,9 +744,9 @@ function OverviewSection({
       </div>
 
       {/* display currency — switching it re-formats every figure from ONE source (#10) */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2 shadow-sm sm:px-3.5 sm:py-2.5">
         <label className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">{t("displayCurrency")}</span>
+          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 sm:text-[12px]">{t("displayCurrency")}</span>
           <select
             value={cur}
             onChange={(e) => onCurrency(e.target.value as CurrencyCode)}
@@ -754,7 +761,7 @@ function OverviewSection({
             ))}
           </select>
         </label>
-        <p className="text-[10.5px] leading-snug text-slate-400">{t("currencyNote")}</p>
+        <p className="hidden text-[10.5px] leading-snug text-slate-400 sm:block">{t("currencyNote")}</p>
       </div>
 
       {/* chart + market */}
@@ -762,6 +769,10 @@ function OverviewSection({
         <PerformanceChart history={history} t={t} money={money} />
         <MarketStrip coins={coins} stocks={stocks} t={t} singleColumn money={money} />
       </div>
+
+      {/* Source of Funds — its own proper dashboard card (#9), same design
+          system as the KPI cards, placed right after Portfolio Performance */}
+      <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
 
       {/* holdings preview + allocation + contacts */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">

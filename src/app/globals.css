@@ -119,6 +119,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Anchors / scroll-into-view always land BELOW the sticky headers
+     (56px client topbar on mobile, 64px desktop) — the top section of
+     the dashboard can never hide underneath a sticky header. */
+  html {
+    scroll-padding-top: 72px;
+  }
 }
 
 /* Ticker marquee animation */

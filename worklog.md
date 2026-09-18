@@ -566,3 +566,27 @@ Work Log:
 
 Stage Summary:
 - The homepage header now carries a professional, always-visible language selector between the CryptoWise brand and the hamburger menu. It is a REAL switcher: full Arabic translation + RTL mirroring on selection, LTR restored on English, choice persisted across page navigation and reloads via localStorage. Layout verified overflow-free from 375px to 1440px in both languages.
+
+---
+Task ID: 41
+Agent: Main agent (Super Z)
+Task: Client Dashboard mobile scale fix (compact cards, responsive typography, top never cut off, single page scroll) + Source of Funds as a first-class dashboard card
+
+Work Log:
+- KpiCard rebuilt mobile-first (dashboard-parts.tsx): base styles ARE the phone styles — padding p-3.5→sm:p-5, icon chip h-8/w-8 (rounded-lg)→sm:h-9/w-9, label 11px uppercase→sm:12.5px normal-case, value 20px mono bold→sm:24px, sub 11px→sm:12px with tighter margins. No transform/zoom/width hacks — explicit responsive classes only
+- Cash Available card now ALWAYS shows "Available funds: $X" (matches spec mock); Invested shows "Total Deposits: $X"
+- NEW SourceOfFundsCard component — same design system as Total Balance exactly (same Card surface rounded-2xl/border-slate-200/white/shadow, same padding scale, same label row + emerald icon chip w/ Landmark icon, same responsive behavior). Free text = the card's value slot: whitespace-pre-wrap + break-words, dir="auto" (Arabic renders RTL), empty state = italic muted t(sourceOfFundsEmpty). Placed on the Overview right AFTER Portfolio Performance (chart+market row) and BEFORE holdings — matches the required order Welcome→Badges→Summary→Account No→Deposit/Withdraw→Manager→Total→Cash→Invested→Performance→Source of Funds
+- Removed the old nested Source of Funds block from ProfileCard (Account & Settings) — no more "random text underneath another card"; no duplication (Account view now: profile rows + currency + password + contact)
+- Welcome block compacted: h1 20px→sm:24px→lg:28px with leading-snug (name wraps naturally, never cropped), tighter margins (mt-2.5 sub, mt-1 account no), grid gaps gap-2.5 mobile / gap-4 sm:gap-5 sections, main padding py-4 sm:py-6
+- Manager note compacted (px-3.5 py-3 mobile); Display-currency row compacted (px-3 py-2, label 11px, desktop-only note hidden on phones — select keeps text-16px on mobile to prevent iOS focus zoom)
+- PerformanceChart mobile height h-36 (sm:h-44) — viewBox scales to card width, Live badge visible, zero overflow
+- TOP-NOT-CUT-OFF hardening: ClientDashboard now scrolls to top on mount (session-restore/browser scroll-restoration can never land the client mid-page with the welcome hidden above the viewport) + globals.css html{scroll-padding-top:72px} so any anchor/scrollIntoView lands below the sticky header. Verified single page scroll: no ancestor of <main> has overflow-y auto/scroll (only the normal document scroll; drawer/modal internal scrolls are overlays only)
+- Mobile header already compact (h-14, gap-1.5, 36px controls) — verified 0 horizontal overflow 375-430px; dashboard has NO floating contact buttons (inline ContactCard only → nothing can overlap financial values; homepage FloatingContactDock checked compact+inside viewport at 390)
+- VERIFIED via scripts/verify41-sweep.sh (65/65 PASS) at 375×812 / 390×844 / 393×852 / 414×896 / 430×932: no horizontal overflow, opens at scrollY=0, h1 starts below header (73 > 57) and fully inside viewport, header visible 57px with 4+ buttons, no nested scrollers, Total Balance card 113px tall (<175), SOF card present/same-family/compact (91-112px), order KPI<Performance<SOF true — at EVERY viewport
+- AR check @390: root dir=rtl, "مرحباً بعودتك، Alex Morgan" wraps cleanly, cards mirrored, values LTR-wrapped, "مصدر الأموال" card with mirrored Landmark chip, no overflow. Long 4-line Arabic SOF (via admin API): dir=rtl, 4 lines preserved, fits, no overflow
+- LIVE SYNC proven: with the client sitting on Overview, admin API updated SOF twice — the client card picked up the new text in ~2s via the existing 4s poll, NO reload/navigation (Super Admin → Save → DB → Client Dashboard card). Demo client value restored to "Salary, savings and long-term investments."
+- Regression: homepage header language selector (Task 40) intact (🌐 EN ▾ between brand and burger); Account & Settings section renders fully (profile/currency/password/contact); desktop 1440 unchanged (KPI 3-across 136px, SOF full-width 990px card, chart 582px, no overflow); tablet 768 KPI 3-across no overflow; login flow healthy
+- lint 0 errors (46 warnings = baseline), tsc clean for src/, 0 console errors; screenshots in scripts/verify41/ (before/after, 5 viewport tops, AR top+SOF, desktop, final 390 set)
+
+Stage Summary:
+- The Client Dashboard is now a genuine mobile-first financial dashboard: compact proportional cards (~113px KPI height vs 358px container before), responsive typography (20/24/28 welcome, 20/24 values), the complete top section always visible below the sticky header with one normal page scroll, and Source of Funds promoted to a proper dashboard card identical to the Total Balance design system — admin-controlled, live-synced within seconds, EN+AR, wrap-safe at every width 375→1440.

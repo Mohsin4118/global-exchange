@@ -16,6 +16,7 @@ import {
   Bell,
   Check,
   Crown,
+  Landmark,
   Lock,
   Pencil,
   Wallet,
@@ -149,6 +150,10 @@ export function LiveChip({ t }: { t: T }) {
   );
 }
 
+/*  Mobile-first KPI card: the base styles ARE the phone styles (375-430px
+    viewport) — compact padding, 8/9 icon chip, 20/24 value, 11/12 label.
+    sm: and up scale back to the full desktop card. Nothing is scaled with
+    transform/zoom — every size is an explicit responsive class. */
 export function KpiCard({
   label,
   value,
@@ -163,18 +168,18 @@ export function KpiCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{label}</p>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/15">{icon}</span>
+    <Card className="p-3.5 sm:p-5">
+      <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{label}</p>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/15 sm:h-9 sm:w-9 sm:rounded-xl">{icon}</span>
       </div>
-      <p className="mt-2.5 font-mono text-[21px] font-bold leading-none tracking-tight text-slate-900 sm:text-[24px]" dir="ltr">
+      <p className="mt-2 font-mono text-[20px] font-bold leading-none tracking-tight text-slate-900 sm:mt-2.5 sm:text-[24px]" dir="ltr">
         {value}
       </p>
       {sub && (
         <p
           className={cn(
-            "mt-2 text-[12px] font-semibold",
+            "mt-1.5 text-[11px] font-semibold sm:text-[12px]",
             subTone === "up" ? "text-emerald-600" : subTone === "down" ? "text-amber-600" : "text-slate-500",
           )}
           dir="ltr"
@@ -182,6 +187,34 @@ export function KpiCard({
           {sub}
         </p>
       )}
+    </Card>
+  );
+}
+
+/*  Source of Funds — a FIRST-CLASS dashboard card (same design system as
+    KpiCard: same Card surface, padding scale, label row + icon chip, same
+    responsive behavior). The free text the Super Admin writes is the card's
+    value slot; it wraps naturally (multiline + long tokens) and renders
+    Arabic RTL via dir="auto". Read-only for the client by design (#9). */
+export function SourceOfFundsCard({ text, t }: { text?: string; t: T }) {
+  const value = text?.trim() ?? "";
+  return (
+    <Card className="p-3.5 sm:p-5">
+      <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[12.5px] sm:normal-case sm:tracking-normal">{t("sourceOfFunds")}</p>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/15 sm:h-9 sm:w-9 sm:rounded-xl">
+          <Landmark className="h-4 w-4" />
+        </span>
+      </div>
+      <p
+        className={cn(
+          "mt-2 break-words text-[13px] leading-relaxed sm:mt-2.5 sm:text-[14px]",
+          value ? "whitespace-pre-wrap font-semibold text-slate-800" : "font-medium italic text-slate-400",
+        )}
+        dir="auto"
+      >
+        {value || t("sourceOfFundsEmpty")}
+      </p>
     </Card>
   );
 }
@@ -211,7 +244,7 @@ export function PerformanceChart({ history, t, money = usd }: { history: number[
     <Card className="overflow-hidden">
       <SectionTitle title={t("performance")} right={<LiveChip t={t} />} />
       <div className="px-2 pb-3 pt-4">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-40 w-full sm:h-44" preserveAspectRatio="none" role="img" aria-label="Portfolio performance chart">
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-36 w-full sm:h-44" preserveAspectRatio="none" role="img" aria-label="Portfolio performance chart">
           <defs>
             <linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
@@ -853,15 +886,6 @@ export function ProfileCard({
             ))}
           </dl>
         )}
-
-        {/* Source of Funds — free text curated by the Super Admin (#9) */}
-        <div className="mt-5 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-4">
-          <p className="text-[12px] font-bold uppercase tracking-wide text-emerald-700">{t("sourceOfFunds")}</p>
-          <p className="mt-1 text-[12px] text-slate-500">{t("sourceOfFundsSub")}</p>
-          <p className="mt-2 whitespace-pre-wrap break-words text-[13px] font-semibold leading-relaxed text-slate-700" dir="auto">
-            {c.sourceOfFunds?.trim() ? c.sourceOfFunds : <span className="font-normal italic text-slate-400">{t("sourceOfFundsEmpty")}</span>}
-          </p>
-        </div>
 
         {/* Display currency — one formatter drives every figure on the dashboard */}
         <div className="mt-4 border-t border-slate-200/70 pt-4">
