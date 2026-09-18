@@ -436,3 +436,29 @@ Work Log:
 Stage Summary:
 - Hero composition now opens the hero: LARGE metallic-gold 3D Bitcoin (official B) in the UPPER-RIGHT immediately below the header on desktop (EN) and upper-LEFT in AR, with the copy never overlapped; on mobile the crypto composition comes first right under the header (upper-right EN / upper-left AR) and the copy stacks below — the Bitcoin can no longer sink to the bottom of the hero
 - Design separation intact: Homepage dark (gold Bitcoin + mint), Account surfaces WHITE/LIGHT
+
+---
+Task ID: 24
+Agent: Main agent (Super Z)
+Task: FIX HERO LAYOUT ON TABLET AND MOBILE — side-by-side two-column hero at every breakpoint (TEXT one side + SMALLER crypto composition the other), desktop keeps the grand composition
+
+Work Log:
+- Diagnosed prior layout: on <lg the crypto composition stacked ABOVE the copy (huge coin pushing the heading far down) — client rejected
+- hero.tsx restructured into TRUE responsive grid columns at EVERY breakpoint: grid-cols-[1.1fr_0.9fr] (base) / sm:grid-cols-[1.2fr_0.8fr] / xl:grid-cols-2 with items-center xl:items-start, gap-4/5/6
+- Copy column (badge + headline + description) always beside the visual column; grid mirrors columns automatically in RTL (text right / crypto left in AR, Bitcoin B stays LEFT)
+- Crypto composition scales down proportionally on tablet/mobile via the fr-based column + SVG viewBox + %-positioned satellites — no CSS zoom, no transform:scale, no absolute positioning above the text
+- Headline resized responsively: text-[28px] (base) / sm:text-4xl / lg:text-5xl / xl:text-[64px] (desktop unchanged); badge + description slightly reduced on small screens (client-allowed)
+- Trust chips + CTA pair extracted into trustChips/ctaRow constants rendered in TWO placements: inside the copy column on xl+ (approved desktop layout preserved, hidden below) and as a full-width col-span-2 row under the two columns below xl
+- Verified with agent-browser across the full matrix (scripts/verify24/, 9 screenshots + DOM measurements):
+  - 1440: UNCHANGED approved desktop — coin d=331 top 222 right (869), copy 104-708, CTA in copy column (~522), actions row hidden, badge top 145
+  - 1024: coin d=243 right (687-930), copy 24-598, h1 48px, side-by-side, chips+CTA full-width below
+  - 768: coin d=178 right (515-693), copy 24-444, balanced compact hero
+  - 600: coin d=158 right (381-539), text 28px beside it
+  - 430 / 390 / 375: coin d=109/98/94 right, copy right edge 226/204/196, badge top 113 at 390 (no huge space above heading), CTA row at ~523
+  - ALL sizes: sideBySide=true, no overlap, scrollW == innerW (no horizontal scrolling), no cropped coin (cluster inside column), coin progression 331→243→178→158→109→98→94 (proportional)
+  - AR 1024 + AR 390: crypto on LEFT (94-337 / 44-142), Arabic copy right, RTL coherent, B stays LEFT, no overflow
+  - 0 page errors, 0 console errors; lint 0 errors (42 pre-existing warnings); tsc clean for src/
+- Zip rebuilt: download/cryptowiseuk-project.zip
+
+Stage Summary:
+- Hero is now a genuine two-column responsive layout at every breakpoint: TEXT (badge/headline/description) on the left with the compact gold Bitcoin + satellite coins cluster on the RIGHT on tablet/mobile (mirrored in AR), chips + CTAs flowing full-width below on <xl; desktop (xl+) keeps the approved grand composition exactly as before

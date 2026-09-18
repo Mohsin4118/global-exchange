@@ -22,6 +22,44 @@ export function Hero({
   const [range, setRange] = useState<(typeof RANGES)[number]>("1D");
   const btc = coins[0];
 
+  // Trust chips + CTA pair are rendered in TWO placements: inside the copy column
+  // on desktop (xl+, approved layout) and as a full-width row under the two-column
+  // hero on tablet/mobile. One source of truth, no drift between the two.
+  const trustChips = (
+    <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
+      {[
+        { icon: BadgePercent, label: t("lowFees") },
+        { icon: ShieldCheck, label: t("secureRegulated") },
+        { icon: Clock3, label: t("support247") },
+      ].map(({ icon: Icon, label }) => (
+        <span key={label} className="inline-flex items-center gap-2.5">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#00E5A0]/35 bg-[#00E5A0]/[0.06] text-[#00E5A0]">
+            <Icon className="h-4 w-4" />
+          </span>
+          <span className="text-[13.5px] font-semibold text-white/80">{label}</span>
+        </span>
+      ))}
+    </div>
+  );
+
+  const ctaRow = (
+    <div className="flex flex-wrap items-center gap-3">
+      <button
+        onClick={onLogin}
+        className="group inline-flex items-center gap-2 rounded-full bg-[#00E5A0] px-7 py-3 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_36px_-8px_rgba(0,229,160,0.65)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
+      >
+        {t("signIn")}
+        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+      </button>
+      <button
+        onClick={onLogin}
+        className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[14.5px] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
+      >
+        {t("login")}
+      </button>
+    </div>
+  );
+
   const chartSeed = 1 + RANGES.indexOf(range) * 7;
   const path = useMemo(() => sparklinePath(sparkline(chartSeed, 44, 1), 560, 110), [chartSeed]);
   const areaPath = `${path} L560,110 L0,110 Z`;
@@ -37,81 +75,65 @@ export function Hero({
         <div className="absolute bottom-[-30%] start-1/3 h-[420px] w-[520px] rounded-full bg-[#00E5A0]/[0.05] blur-[150px]" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-16 lg:pt-20 pb-8">
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-6 items-start">
-          {/* left copy */}
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-16 xl:pt-20 pb-8">
+        {/* TWO responsive columns at EVERY breakpoint — TEXT on one side, CRYPTO on
+            the other (grid mirrors them automatically in RTL). Desktop (xl+) uses
+            the approved grand 50/50 split; tablet/mobile shrink the crypto column
+            so the composition sits BESIDE the copy, never above it. */}
+        <div className="grid grid-cols-[1.1fr_0.9fr] sm:grid-cols-[1.2fr_0.8fr] xl:grid-cols-2 items-center xl:items-start gap-4 sm:gap-5 xl:gap-6">
+          {/* LEFT column — badge, headline, description; chips + CTAs join it on desktop */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="relative isolate order-2 lg:order-1"
+            className="relative isolate min-w-0"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-4 py-1.5 text-[12.5px] font-medium text-[#00E5A0]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-3 py-1.5 text-[10.5px] font-medium text-[#00E5A0] sm:px-4 sm:text-[12.5px]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
               {t("heroBadge")}
             </span>
 
-            <h1 className="mt-5 text-[42px] sm:text-6xl xl:text-[64px] font-bold tracking-tight text-white leading-[1.04]">
+            <h1 className="mt-4 text-[28px] sm:mt-5 sm:text-4xl lg:text-5xl xl:text-[64px] font-bold tracking-tight text-white leading-[1.04]">
               {t("heroTitle1")}
               <span className="block text-[#00E5A0] drop-shadow-[0_0_28px_rgba(0,229,160,0.35)]">
                 {t("heroTitle2")}
               </span>
             </h1>
 
-            <p className="mt-5 max-w-lg text-[15.5px] leading-relaxed text-white/60">
+            <p className="mt-3 max-w-lg text-[14px] sm:mt-5 sm:text-[15.5px] leading-relaxed text-white/60">
               {t("heroSub")}
             </p>
 
-            {/* trust chips — outlined circle icons like the design */}
-            <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-4">
-              {[
-                { icon: BadgePercent, label: t("lowFees") },
-                { icon: ShieldCheck, label: t("secureRegulated") },
-                { icon: Clock3, label: t("support247") },
-              ].map(({ icon: Icon, label }) => (
-                <span key={label} className="inline-flex items-center gap-2.5">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#00E5A0]/35 bg-[#00E5A0]/[0.06] text-[#00E5A0]">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span className="text-[13.5px] font-semibold text-white/80">{label}</span>
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <button
-                onClick={onLogin}
-                className="group inline-flex items-center gap-2 rounded-full bg-[#00E5A0] px-7 py-3 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_36px_-8px_rgba(0,229,160,0.65)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
-              >
-                {t("signIn")}
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-              </button>
-              <button
-                onClick={onLogin}
-                className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[14.5px] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
-              >
-                {t("login")}
-              </button>
+            {/* desktop: chips + CTAs stay inside the copy column (approved layout) */}
+            <div className="mt-7 hidden xl:block">
+              {trustChips}
+              <div className="mt-8">{ctaRow}</div>
             </div>
           </motion.div>
 
-          {/* UPPER-RIGHT visual — one coherent premium crypto illustration: a LARGE
-              metallic gold 3D Bitcoin coin with 3D official-logo coins minted around it.
-              Desktop: own grid cell on the right, top-aligned to start just below the
-              header. Mobile: the graphic comes FIRST (immediately below the header,
-              biased to the upper-right in EN / upper-left in AR via physical margins),
-              and the copy stacks BELOW it — so the coin is never pushed to the bottom
-              of the hero and never overlaps the headline, description or buttons. */}
+          {/* RIGHT column — one coherent premium crypto illustration: a LARGE metallic
+              gold 3D Bitcoin with 3D official-logo coins minted around it. A true
+              responsive grid COLUMN beside the copy at every breakpoint: grand on
+              desktop (xl+), substantially smaller on tablet/mobile where the fr-based
+              column + SVG viewBox + %-positioned satellites scale the whole cluster
+              down proportionally (no CSS zoom, no transform:scale, nothing absolutely
+              positioned above the text). */}
           <motion.div
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.15, ease: "easeOut" }}
-            className="relative order-1 lg:order-2 lg:-mt-2 ml-auto w-[86%] max-w-[460px] sm:w-[74%] sm:max-w-[490px] lg:w-full lg:max-w-[520px] lg:mx-auto rtl:ml-0 rtl:mr-auto"
+            className="relative w-full xl:mx-auto xl:max-w-[520px] xl:-mt-2"
             dir="ltr"
           >
             <CryptoScene />
             <HeroSatellites />
           </motion.div>
+
+          {/* tablet/mobile: chips + CTAs as a full-width row under the two columns */}
+          <div className="col-span-2 xl:hidden">
+            {trustChips}
+            <div className="mt-6">{ctaRow}</div>
+          </div>
         </div>
 
         {/* live BTC chart card */}
