@@ -1,7 +1,7 @@
 "use client";
 
 /* ------------------------------------------------------------------ */
-/*  CryptoWise — Client Portal (DARK NAVY / VERY DARK TEAL dashboard)  */
+/*  CryptoWise — Client Portal (WHITE / LIGHT banking dashboard)       */
 /*  Clients land here right after signing in. Everything is served by  */
 /*  /api/client for the signed-in token only — the Super Admin curates */
 /*  every figure from the CRM and this dashboard re-reads it every few  */
@@ -244,10 +244,10 @@ export function ClientDashboard({
 
   if (!ready || !view) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#04121c]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f7fa]">
         <div className="flex flex-col items-center gap-3">
-          <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#00E5A0]/25 border-t-[#00E5A0]" />
-          <p className="text-sm font-semibold text-white/40">CryptoWise</p>
+          <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-emerald-200 border-t-emerald-600" />
+          <p className="text-sm font-semibold text-slate-400">CryptoWise</p>
         </div>
       </div>
     );
@@ -256,38 +256,33 @@ export function ClientDashboard({
   const c = view.client;
 
   return (
-    <div className="min-h-screen bg-[#04121c] text-white [color-scheme:dark]">
-      {/* ambient teal glows */}
-      <div className="pointer-events-none fixed inset-0" aria-hidden="true">
-        <div className="absolute -top-40 start-[10%] h-[420px] w-[420px] rounded-full bg-[#00E5A0]/[0.05] blur-[130px]" />
-        <div className="absolute bottom-[-20%] end-[-8%] h-[380px] w-[380px] rounded-full bg-teal-400/[0.04] blur-[120px]" />
-      </div>
+    <div className="min-h-screen bg-[#f5f7fa] text-slate-900 [color-scheme:light]">
 
       {/* ---------- topbar ---------- */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#031019]/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => setDrawer(true)}
               aria-label="Open menu"
               aria-expanded={drawer}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white lg:hidden"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
             >
               <Menu className="h-4.5 w-4.5" />
             </button>
             <LogoMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
             <div className="min-w-0">
-              <p className="truncate text-[13.5px] font-bold leading-tight text-white sm:text-[14px]">CryptoWise</p>
-              <p className="truncate text-[10.5px] font-semibold text-[#00E5A0] sm:text-[11px]">{t("clientArea")}</p>
+              <p className="truncate text-[13.5px] font-bold leading-tight text-slate-900 sm:text-[14px]">CryptoWise</p>
+              <p className="truncate text-[10.5px] font-semibold text-emerald-600 sm:text-[11px]">{t("clientArea")}</p>
             </div>
-            <span className="ms-1 hidden shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-bold text-white/50 ring-1 ring-white/10 md:inline-block" dir="ltr">
+            <span className="ms-1 hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-white/10 md:inline-block" dir="ltr">
               {t("accountNo")} {c.accountNo}
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
               onClick={onLangToggle}
-              className="flex h-9 items-center rounded-lg border border-white/10 px-2.5 text-[11.5px] font-bold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white sm:px-3 sm:text-[12px]"
+              className="flex h-9 items-center rounded-lg border border-slate-200 px-2.5 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3 sm:text-[12px]"
               aria-label="Toggle language"
             >
               {lang === "en" ? "العربية" : "EN"}
@@ -295,24 +290,24 @@ export function ClientDashboard({
             <button
               onClick={() => go("notifications")}
               aria-label={t("notificationsTitle")}
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white"
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               <Bell className="h-4 w-4" />
               {unread > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9.5px] font-bold text-[#04121c]">{unread}</span>
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9.5px] font-bold text-[#022c20]">{unread}</span>
               )}
             </button>
-            <div className="hidden items-center gap-2.5 rounded-full border border-white/10 py-1 pe-3 ps-1 sm:flex">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00E5A0] text-[11px] font-bold text-[#04121c]">{initials(c.name)}</span>
+            <div className="hidden items-center gap-2.5 rounded-full border border-slate-200 py-1 pe-3 ps-1 sm:flex">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00E5A0] text-[11px] font-bold text-[#022c20]">{initials(c.name)}</span>
               <span className="hidden text-left leading-tight md:block" dir="auto">
-                <span className="block max-w-[120px] truncate text-[12px] font-bold text-white">{c.name}</span>
-                <span className="block text-[10.5px] font-semibold text-white/40">{t("privateClient")}</span>
+                <span className="block max-w-[120px] truncate text-[12px] font-bold text-slate-900">{c.name}</span>
+                <span className="block text-[10.5px] font-semibold text-slate-500">{t("privateClient")}</span>
               </span>
             </div>
             <button
               onClick={signOut}
               aria-label={t("signOut")}
-              className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-[12px] font-semibold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white sm:px-3"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:px-3"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden md:inline">{t("signOut")}</span>
@@ -325,7 +320,7 @@ export function ClientDashboard({
       <div className="relative mx-auto flex w-full max-w-[1280px] items-start gap-6 px-0 sm:px-6">
         {/* desktop sidebar */}
         <aside className="sticky top-[72px] hidden w-[218px] shrink-0 py-6 lg:block" aria-label="Client menu">
-          <nav className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85 p-2">
+          <nav className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm p-2">
             {NAV.map((item) => (
               <button
                 key={item.id}
@@ -333,26 +328,26 @@ export function ClientDashboard({
                 aria-current={section === item.id ? "page" : undefined}
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors",
-                  section === item.id ? "bg-[#00E5A0]/12 text-[#00E5A0]" : "text-white/55 hover:bg-white/[0.04] hover:text-white",
+                  section === item.id ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                 )}
               >
                 {item.icon}
                 <span className="flex-1 text-start">{item.label}</span>
                 {!!item.badge && item.badge > 0 && (
-                  <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#04121c]">{item.badge}</span>
+                  <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#022c20]">{item.badge}</span>
                 )}
               </button>
             ))}
-            <div className="my-2 h-px bg-white/[0.06]" />
+            <div className="my-2 h-px bg-slate-100" />
             <button
               onClick={signOut}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-white/55 transition-colors hover:bg-white/[0.04] hover:text-white"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
             >
               <LogOut className="h-4 w-4" />
               <span className="flex-1 text-start">{t("signOut")}</span>
             </button>
           </nav>
-          <p className="mt-3 px-3 text-[10.5px] leading-relaxed text-white/25" dir="ltr">
+          <p className="mt-3 px-3 text-[10.5px] leading-relaxed text-slate-400" dir="ltr">
             {t("accountNo")} {c.accountNo}
           </p>
         </aside>
@@ -396,7 +391,7 @@ export function ClientDashboard({
             <div className="grid grid-cols-1 gap-5">
               <SectionHeading title={t("txHistory")} sub={`${txs.length} · ${t("allTime")}`} />
               <div className="flex flex-wrap items-center justify-between gap-2.5">
-                <div className="flex items-center gap-1 rounded-lg bg-white/[0.05] p-1">
+                <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
                   {(
                     [
                       ["all", t("filterAll")],
@@ -407,27 +402,27 @@ export function ClientDashboard({
                     <button
                       key={key}
                       onClick={() => setTxFilter(key)}
-                      className={cn("rounded-md px-2.5 py-1.5 text-[11.5px] font-bold transition-colors", txFilter === key ? "bg-[#00E5A0]/15 text-[#00E5A0]" : "text-white/50 hover:text-white")}
+                      className={cn("rounded-md px-2.5 py-1.5 text-[11.5px] font-bold transition-colors", txFilter === key ? "bg-emerald-100 text-emerald-600" : "text-slate-500 hover:text-slate-900")}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
-                <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-2 text-[11.5px] font-bold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-[11.5px] font-bold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
                   <Download className="h-3.5 w-3.5" /> CSV
                 </button>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
-                <ul className="divide-y divide-white/[0.05]">
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+                <ul className="divide-y divide-slate-100">
                   {(showAllTxs ? filteredTxs : filteredTxs.slice(0, 12)).map((tx) => (
                     <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} />
                   ))}
                   {filteredTxs.length === 0 && (
-                    <li className="px-6 py-12 text-center text-[13px] text-white/45">{t("noTx")}</li>
+                    <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noTx")}</li>
                   )}
                 </ul>
                 {filteredTxs.length > 12 && (
-                  <button onClick={() => setShowAllTxs((v) => !v)} className="w-full border-t border-white/[0.06] py-3 text-[12.5px] font-bold text-[#00E5A0] transition-colors hover:bg-[#00E5A0]/[0.06]">
+                  <button onClick={() => setShowAllTxs((v) => !v)} className="w-full border-t border-slate-200/70 py-3 text-[12.5px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
                     {showAllTxs ? "−" : "+"} {t("viewAllTx")} ({filteredTxs.length})
                   </button>
                 )}
@@ -459,13 +454,13 @@ export function ClientDashboard({
           )}
 
           {/* support footer */}
-          <p className="mb-2 mt-8 text-center text-[11.5px] text-white/30">
+          <p className="mb-2 mt-8 text-center text-[11.5px] text-slate-400">
             {t("supportTitle")} ·{" "}
-            <a href={SITE_PHONE_TEL} className="font-semibold text-white/45 hover:text-[#00E5A0]" dir="ltr">
+            <a href={SITE_PHONE_TEL} className="font-semibold text-slate-500 hover:text-emerald-600" dir="ltr">
               {SITE_PHONE_DISPLAY}
             </a>{" "}
             ·{" "}
-            <a href={`mailto:${SITE_EMAIL}`} className="font-semibold text-white/45 hover:text-[#00E5A0]">
+            <a href={`mailto:${SITE_EMAIL}`} className="font-semibold text-slate-500 hover:text-emerald-600">
               {SITE_EMAIL}
             </a>
           </p>
@@ -481,7 +476,7 @@ export function ClientDashboard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-[#020b12]/70 backdrop-blur-[2px]"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
               onClick={() => setDrawer(false)}
             />
             <motion.nav
@@ -489,27 +484,27 @@ export function ClientDashboard({
               animate={{ x: 0 }}
               exit={{ x: lang === "ar" ? "100%" : "-100%" }}
               transition={{ duration: 0.26, ease: "easeOut" }}
-              className="absolute bottom-0 start-0 top-0 flex w-[272px] max-w-[82vw] flex-col border-e border-white/[0.08] bg-[#071923] shadow-2xl"
+              className="absolute bottom-0 start-0 top-0 flex w-[272px] max-w-[82vw] flex-col border-e border-slate-200 bg-white shadow-2xl"
               aria-label="Client menu"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-4">
+              <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-4">
                 <div className="flex items-center gap-2.5">
                   <LogoMark className="h-8 w-8" />
                   <div>
-                    <p className="text-[13.5px] font-bold leading-tight text-white">CryptoWise</p>
-                    <p className="text-[10.5px] font-semibold text-[#00E5A0]">{t("clientArea")}</p>
+                    <p className="text-[13.5px] font-bold leading-tight text-slate-900">CryptoWise</p>
+                    <p className="text-[10.5px] font-semibold text-emerald-600">{t("clientArea")}</p>
                   </div>
                 </div>
-                <button onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white">
+                <button onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="border-b border-white/[0.07] px-4 py-3.5">
+              <div className="border-b border-slate-200/80 px-4 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00E5A0] text-[12px] font-bold text-[#04121c]">{initials(c.name)}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00E5A0] text-[12px] font-bold text-[#022c20]">{initials(c.name)}</span>
                   <div className="min-w-0" dir="auto">
-                    <p className="truncate text-[13px] font-bold text-white">{c.name}</p>
-                    <p className="text-[10.5px] font-semibold text-white/35" dir="ltr">
+                    <p className="truncate text-[13px] font-bold text-slate-900">{c.name}</p>
+                    <p className="text-[10.5px] font-semibold text-slate-400" dir="ltr">
                       {t("accountNo")} {c.accountNo}
                     </p>
                   </div>
@@ -523,21 +518,21 @@ export function ClientDashboard({
                     aria-current={section === item.id ? "page" : undefined}
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold transition-colors",
-                      section === item.id ? "bg-[#00E5A0]/12 text-[#00E5A0]" : "text-white/60 hover:bg-white/[0.04] hover:text-white",
+                      section === item.id ? "bg-emerald-50 text-emerald-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                     )}
                   >
                     {item.icon}
                     <span className="flex-1 text-start">{item.label}</span>
                     {!!item.badge && item.badge > 0 && (
-                      <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#04121c]">{item.badge}</span>
+                      <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#022c20]">{item.badge}</span>
                     )}
                   </button>
                 ))}
               </div>
-              <div className="border-t border-white/[0.07] p-2">
+              <div className="border-t border-slate-200/80 p-2">
                 <button
                   onClick={signOut}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="flex-1 text-start">{t("signOut")}</span>
@@ -558,8 +553,8 @@ export function ClientDashboard({
 function SectionHeading({ title, sub }: { title: string; sub?: string }) {
   return (
     <div>
-      <h1 className="text-[20px] font-bold tracking-tight text-white sm:text-[24px]">{title}</h1>
-      {sub && <p className="mt-1 text-[13px] text-white/45">{sub}</p>}
+      <h1 className="text-[20px] font-bold tracking-tight text-slate-900 sm:text-[24px]">{title}</h1>
+      {sub && <p className="mt-1 text-[13px] text-slate-500">{sub}</p>}
     </div>
   );
 }
@@ -616,7 +611,7 @@ function OverviewSection({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-            <h1 className="min-w-0 text-[22px] font-bold leading-tight tracking-tight text-white sm:text-[28px]">
+            <h1 className="min-w-0 text-[22px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px]">
               {t("welcomeTitle")}{" "}
               <span className="whitespace-normal break-words" dir="auto">
                 {c.name}
@@ -630,10 +625,10 @@ function OverviewSection({
             <PrivateBadge t={t} />
             {c.tier !== "Private" && <TierBadge tier={c.tier} t={t} />}
           </div>
-          <p className="mt-3 text-[13.5px] text-white/50">{t("welcomeSub")}</p>
-          <p className="mt-1 text-[12.5px] font-semibold text-white/40">
+          <p className="mt-3 text-[13.5px] text-slate-500">{t("welcomeSub")}</p>
+          <p className="mt-1 text-[12.5px] font-semibold text-slate-500">
             {t("accountNo")}{" "}
-            <span dir="ltr" className="font-mono text-white/60">
+            <span dir="ltr" className="font-mono text-slate-600">
               {c.accountNo}
             </span>
           </p>
@@ -649,7 +644,7 @@ function OverviewSection({
           <button
             onClick={onWithdraw}
             disabled={suspended}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-[13px] font-bold text-white/80 transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
           >
             <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
           </button>
@@ -657,18 +652,18 @@ function OverviewSection({
       </div>
 
       {c.managerNote && !suspended && (
-        <div className="rounded-2xl border border-[#00E5A0]/20 bg-[#00E5A0]/[0.06] px-4 py-3.5 sm:px-5">
-          <p className="text-[12.5px] font-bold text-[#00E5A0]">{t("managerNoteTitle")}</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-white/70">{c.managerNote}</p>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 sm:px-5">
+          <p className="text-[12.5px] font-bold text-emerald-600">{t("managerNoteTitle")}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{c.managerNote}</p>
         </div>
       )}
 
       {suspended && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3.5 sm:px-5">
-          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3.5 sm:px-5">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
           <div>
-            <p className="text-[13px] font-bold text-amber-300">{t("suspendedBanner")}</p>
-            <p className="mt-0.5 text-[12.5px] text-amber-200/80">{t("suspendedSub")}</p>
+            <p className="text-[13px] font-bold text-amber-800">{t("suspendedBanner")}</p>
+            <p className="mt-0.5 text-[12.5px] text-amber-700">{t("suspendedSub")}</p>
           </div>
         </div>
       )}
@@ -699,7 +694,7 @@ function OverviewSection({
       {/* chart + market */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
         <PerformanceChart history={history} t={t} />
-        <MarketStrip coins={coins} stocks={stocks} t={t} />
+        <MarketStrip coins={coins} stocks={stocks} t={t} singleColumn />
       </div>
 
       {/* holdings preview + allocation + contacts */}
@@ -710,34 +705,34 @@ function OverviewSection({
         <div className="grid grid-cols-1 content-start gap-4 xl:gap-5">
           <AllocationBar segments={allocation} t={t} />
           {/* recent activity preview */}
-          <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
             <SectionTitle
               title={t("recentTransactions")}
               right={
-                <button onClick={() => onGo("transactions")} className="rounded-lg px-2 py-1 text-[11.5px] font-bold text-[#00E5A0] transition-colors hover:bg-[#00E5A0]/10">
+                <button onClick={() => onGo("transactions")} className="rounded-lg px-2 py-1 text-[11.5px] font-bold text-emerald-600 transition-colors hover:bg-emerald-50">
                   {t("viewAll")}
                 </button>
               }
             />
-            <ul className="mt-3 divide-y divide-white/[0.05]">
+            <ul className="mt-3 divide-y divide-slate-100">
               {recent.map((tx) => (
                 <li key={tx.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", tx.type === "CREDIT" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300")}>
+                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", tx.type === "CREDIT" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800")}>
                     {tx.type === "CREDIT" ? <ArrowDownLeft className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12.5px] font-semibold text-white">{tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}</p>
-                    <p className="text-[10.5px] text-white/30" dir="ltr">
+                    <p className="truncate text-[12.5px] font-semibold text-slate-900">{tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}</p>
+                    <p className="text-[10.5px] text-slate-400" dir="ltr">
                       {tx.dateISO}
                     </p>
                   </div>
-                  <span className={cn("shrink-0 whitespace-nowrap text-[12.5px] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-400" : "text-amber-400")} dir="ltr">
+                  <span className={cn("shrink-0 whitespace-nowrap text-[12.5px] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                     {tx.type === "CREDIT" ? "+" : "−"}
                     {usd(tx.amount)}
                   </span>
                 </li>
               ))}
-              {recent.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-white/45">{t("noTx")}</li>}
+              {recent.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-slate-500">{t("noTx")}</li>}
             </ul>
           </div>
           <ContactCard t={t} />
@@ -780,12 +775,12 @@ function DepositsSection({
         <KpiCard label={t("depositsTotal")} value={usd(totalDeposits)} icon={<ArrowDownLeft className="h-4 w-4" />} />
         <KpiCard label={t("menuDeposits")} value={String(deposits.length)} sub={t("allTime")} icon={<ArrowLeftRight className="h-4 w-4" />} />
       </div>
-      <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
-        <ul className="divide-y divide-white/[0.05]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <ul className="divide-y divide-slate-100">
           {deposits.map((tx) => (
             <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} />
           ))}
-          {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-white/45">{t("noDeposits")}</li>}
+          {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noDeposits")}</li>}
         </ul>
       </div>
     </div>
@@ -820,7 +815,7 @@ function WithdrawalsSection({
         <button
           onClick={onWithdraw}
           disabled={suspended}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-[13px] font-bold text-white/80 transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
         </button>
@@ -830,28 +825,28 @@ function WithdrawalsSection({
         <KpiCard label={t("reqPending")} value={usd(pendingTotal)} icon={<ArrowUpRight className="h-4 w-4" />} />
         <KpiCard label={t("withdrawalsTotal")} value={usd(totalWithdrawn)} icon={<ArrowLeftRight className="h-4 w-4" />} />
       </div>
-      <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
-        <ul className="divide-y divide-white/[0.05]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <ul className="divide-y divide-slate-100">
           {withdrawals.map((tx) => (
             <li key={tx.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-800 ring-1 ring-amber-600/15">
                 <ArrowUpRight className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-white">{tx.label}</p>
-                <p className="mt-0.5 text-[11.5px] text-white/35" dir="ltr">
+                <p className="truncate text-[13px] font-semibold text-slate-900">{tx.label}</p>
+                <p className="mt-0.5 text-[11.5px] text-slate-400" dir="ltr">
                   {tx.dateISO} · {tx.method}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="whitespace-nowrap text-[13px] font-bold tabular-nums text-amber-400" dir="ltr">
+                <span className="whitespace-nowrap text-[13px] font-bold tabular-nums text-amber-600" dir="ltr">
                   −{usd(tx.amount)}
                 </span>
                 <StatusPill status={tx.status} t={t} />
               </div>
             </li>
           ))}
-          {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-white/45">{t("withdrawalsEmpty")}</li>}
+          {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("withdrawalsEmpty")}</li>}
         </ul>
       </div>
     </div>

@@ -377,3 +377,21 @@ Work Log:
 Stage Summary:
 - Hero now has a much larger METALLIC GOLD Bitcoin B as the undisputed main focus of the crypto graphic, surrounded by the correct official logos (Bitcoin mark itself gold, ETH/USDT/Aramco/Salek official files) in a clean orbit
 - Hero text, buttons and header are geometrically unreachable by the graphic on every viewport; mobile adaptation is a true layout rebuild (flow + insets), not a CSS scale-down
+
+---
+Task ID: 21
+Agent: Main agent (Super Z)
+Task: Design separation (reqs 19-23) — Homepage stays DARK, Client Dashboard re-themed to WHITE/LIGHT professional banking; hero CTA [ Sign In ] [ Login ] both → login page; AR keeps Bitcoin B on the LEFT
+
+Work Log:
+- Client dashboard re-themed dark-navy → light banking (client-dashboard.tsx + dashboard-parts.tsx, all ~130 color tokens mapped deterministically): page bg #f5f7fa, white cards with soft slate shadows + slate-200 borders, slate-900/600/400 text hierarchy, emerald-600 accents (nav active emerald-50 tint, values, links), brand-mint primary buttons kept, negatives amber (no red), [color-scheme:light] so native inputs/scrollbars match; dark ambient glows removed; spinner light
+- chart recolored for light (line/dot #059669, slate grid + labels, white-stroked dot); PerformanceChart, HoldingsTable, AllocationBar, TxRowItem, RequestModal (white panel, light inputs), NotificationsCard, ProfileCard (light inputs + PasswordInput theme="light" ×3), ContactCard variant="light" (light WhatsApp/Telegram/imo buttons), MarketStrip, StatusPill, TierBadge/VerifiedBadge (green verified kept)/PrivateBadge all converted
+- MarketStrip got singleColumn prop: overview side column renders one full-width row per coin (fixes "B..." name truncation); portfolio section keeps 2 columns
+- Hero CTA: "Learn More" removed → [ Sign In ] (primary, t("signIn")) + [ Login ] (secondary, t("login")), BOTH onClick → existing login view; onRegister prop removed from Hero + both page.tsx call sites; i18n: EN signIn "Sign In", AR signIn "دخول" (secondary stays "تسجيل الدخول") — no "Learn More" left in the hero CTA section
+- Homepage untouched otherwise: dark navy/teal, large metallic-gold Bitcoin B, official ETH/USDT/Aramco/Salek satellites right of the copy, EN text left; AR hero keeps the whole crypto composition on the LEFT (RTL mirror) per client final position
+- Browser verification (scripts/verify21/): desktop EN hero ([Sign In][Login]) → Sign In opens login page → demo login lands on WHITE dashboard (welcome + name + green Verified + Private badge + Account No. + Total Balance/Cash Available/Invested + 8-item menu); portfolio + account sections light (profile rows, change-password, light contact cards); mobile 390: dashboard no horizontal overflow (scrollWidth==390), homepage dark + gold B + CTA buttons + dock visible at top/mid/bottom (3/3 dock links in-viewport at every scroll) without covering footer/Super Admin; AR: hero visual LEFT + coherent RTL header, AR dashboard light RTL (sidebar right, Arabic labels, LTR numerics), AR hero Login button opens login page; 0 page errors, 0 console errors, lint 0 errors / 42 pre-existing warnings, tsc clean for src/
+- Dev server restarted mid-task to clear stale module graph (unrelated to code changes)
+
+Stage Summary:
+- Homepage = DARK marketing site (gold Bitcoin, mint accents); Client Account = WHITE professional banking dashboard — two distinct experiences sharing the same brand (logo, typography, mint/emerald accents), zero dark inheritance on the account side
+- Hero CTA is now [ Sign In ] [ Login ], both functional → login page; Arabic keeps the Bitcoin B on the LEFT with full RTL coherence

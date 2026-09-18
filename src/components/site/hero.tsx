@@ -13,12 +13,10 @@ const RANGES = ["1D", "1W", "1M", "1Y", "ALL"] as const;
 export function Hero({
   t,
   coins,
-  onRegister,
   onLogin,
 }: {
   t: (k: StringKey) => string;
   coins: Coin[];
-  onRegister: () => void;
   onLogin: () => void;
 }) {
   const [range, setRange] = useState<(typeof RANGES)[number]>("1D");
@@ -82,17 +80,17 @@ export function Hero({
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <button
-                onClick={onRegister}
+                onClick={onLogin}
                 className="group inline-flex items-center gap-2 rounded-full bg-[#00E5A0] px-7 py-3 text-[14.5px] font-bold text-[#022c20] shadow-[0_8px_36px_-8px_rgba(0,229,160,0.65)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
               >
-                {t("getStarted")}
+                {t("signIn")}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
               </button>
               <button
                 onClick={onLogin}
                 className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[14.5px] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
               >
-                {t("learnMore")}
+                {t("login")}
               </button>
             </div>
           </motion.div>

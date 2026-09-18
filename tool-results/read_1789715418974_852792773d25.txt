@@ -1,0 +1,860 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→/* ------------------------------------------------------------------ */
+     4→     4→/*  CryptoWise — Client Portal (DARK NAVY / VERY DARK TEAL dashboard)  */
+     5→     5→/*  Clients land here right after signing in. Everything is served by  */
+     6→     6→/*  /api/client for the signed-in token only — the Super Admin curates */
+     7→     7→/*  every figure from the CRM and this dashboard re-reads it every few  */
+     8→     8→/*  seconds. Left menu (desktop) + drawer menu (mobile) switch between */
+     9→     9→/*  fully functional client sections. Strictly self-scoped data.       */
+    10→    10→/* ------------------------------------------------------------------ */
+    11→    11→
+    12→    12→import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+    13→    13→import { AnimatePresence, motion } from "framer-motion";
+    14→    14→import {
+    15→    15→  ArrowDownLeft,
+    16→    16→  ArrowLeftRight,
+    17→    17→  ArrowUpRight,
+    18→    18→  Bell,
+    19→    19→  Download,
+    20→    20→  LayoutDashboard,
+    21→    21→  LogOut,
+    22→    22→  Menu,
+    23→    23→  PieChart,
+    24→    24→  ShieldAlert,
+    25→    25→  UserRoundCog,
+    26→    26→  Wallet,
+    27→    27→  X,
+    28→    28→} from "lucide-react";
+    29→    29→import { LogoMark } from "./icons";
+    30→    30→import {
+    31→    31→  AllocationBar,
+    32→    32→  ContactCard,
+    33→    33→  HoldingsTable,
+    34→    34→  KpiCard,
+    35→    35→  MarketStrip,
+    36→    36→  NotificationsCard,
+    37→    37→  PerformanceChart,
+    38→    38→  PrivateBadge,
+    39→    39→  ProfileCard,
+    40→    40→  RequestModal,
+    41→    41→  SectionTitle,
+    42→    42→  StatusPill,
+    43→    43→  TierBadge,
+    44→    44→  TxRowItem,
+    45→    45→  VerifiedBadge,
+    46→    46→  buildHoldingRows,
+    47→    47→  initials,
+    48→    48→  usd,
+    49→    49→  type T,
+    50→    50→} from "./dashboard-parts";
+    51→    51→import { useToast } from "@/hooks/use-toast";
+    52→    52→import { apiClientAction, apiClientGet, apiLogout } from "@/lib/api";
+    53→    53→import { SITE_EMAIL, SITE_PHONE_DISPLAY, SITE_PHONE_TEL } from "@/lib/contact";
+    54→    54→import type { Coin } from "@/lib/market";
+    55→    55→import type { ClientView, Tx } from "@/lib/shared-types";
+    56→    56→import type { Lang, StringKey } from "@/lib/i18n";
+    57→    57→import { cn } from "@/lib/utils";
+    58→    58→
+    59→    59→type Section = "overview" | "portfolio" | "transactions" | "deposits" | "withdrawals" | "notifications" | "account";
+    60→    60→type TxFilter = "all" | "in" | "out";
+    61→    61→
+    62→    62→export function ClientDashboard({
+    63→    63→  t,
+    64→    64→  lang,
+    65→    65→  coins,
+    66→    66→  stocks,
+    67→    67→  onLangToggle,
+    68→    68→  onSignOut,
+    69→    69→}: {
+    70→    70→  t: (k: StringKey) => string;
+    71→    71→  lang: Lang;
+    72→    72→  coins: Coin[];
+    73→    73→  stocks: Coin[];
+    74→    74→  onLangToggle: () => void;
+    75→    75→  onSignOut: () => void;
+    76→    76→}) {
+    77→    77→  const { toast } = useToast();
+    78→    78→  const [view, setView] = useState<ClientView | null>(null);
+    79→    79→  const [ready, setReady] = useState(false);
+    80→    80→  const [section, setSection] = useState<Section>("overview");
+    81→    81→  const [drawer, setDrawer] = useState(false);
+    82→    82→  const [txFilter, setTxFilter] = useState<TxFilter>("all");
+    83→    83→  const [reqModal, setReqModal] = useState<null | "deposit" | "withdrawal">(null);
+    84→    84→  const [showAllTxs, setShowAllTxs] = useState(false);
+    85→    85→
+    86→    86→  /* ---- live self-refresh: re-read the authorized API snapshot ---- */
+    87→    87→  const load = useCallback(async () => {
+    88→    88→    const res = await apiClientGet();
+    89→    89→    if (!res.ok) {
+    90→    90→      if (res.error === "unauthorized" || res.error === "gone") {
+    91→    91→        toast({ title: t("accountClosedToast") });
+    92→    92→        onSignOut();
+    93→    93→      }
+    94→    94→      return;
+    95→    95→    }
+    96→    96→    setView({ client: res.client!, financials: res.financials!, txs: res.txs!, notifications: res.notifications! });
+    97→    97→    setReady(true);
+    98→    98→  }, [onSignOut, t, toast]);
+    99→    99→
+   100→   100→  useEffect(() => {
+   101→   101→    const boot = () => {
+   102→   102→      void load();
+   103→   103→    };
+   104→   104→    boot();
+   105→   105→    const id = setInterval(boot, 4000);
+   106→   106→    window.addEventListener("focus", boot);
+   107→   107→    return () => {
+   108→   108→      clearInterval(id);
+   109→   109→      window.removeEventListener("focus", boot);
+   110→   110→    };
+   111→   111→  }, [load]);
+   112→   112→
+   113→   113→  /* ---- live portfolio math (server balance + live market prices) ---- */
+   114→   114→  const markets = useMemo(() => [...coins, ...stocks], [coins, stocks]);
+   115→   115→  const holdingRows = useMemo(() => (view ? buildHoldingRows(view.client.holdings, markets) : []), [view, markets]);
+   116→   116→  const invested = holdingRows.reduce((s, r) => s + r.value, 0);
+   117→   117→  const cash = view?.financials.balance ?? 0;
+   118→   118→  const available = view?.financials.available ?? 0;
+   119→   119→  const total = cash + invested;
+   120→   120→  const portfolioChange = invested > 0 ? holdingRows.reduce((s, r) => s + r.coin.change24h * r.value, 0) / invested : 0;
+   121→   121→  const totalDeposits = view?.financials.credits ?? 0;
+   122→   122→  const totalWithdrawn = useMemo(() => (view ? view.txs.filter((x) => x.kind === "withdrawal" && x.status === "COMPLETED").reduce((s, x) => s + x.amount, 0) : 0), [view]);
+   123→   123→
+   124→   124→  const suspended = view?.client.status === "suspended";
+   125→   125→  const unread = view?.notifications.filter((n) => n.unread).length ?? 0;
+   126→   126→
+   127→   127→  /* ---- session performance chart ---- */
+   128→   128→  const [history, setHistory] = useState<number[]>([]);
+   129→   129→  const lastTotalRef = useRef(total);
+   130→   130→  useEffect(() => {
+   131→   131→    setHistory((h) => {
+   132→   132→      if (h.length > 0 || total <= 0) return h;
+   133→   133→      const pts: number[] = [];
+   134→   134→      let v = total * 0.982;
+   135→   135→      let s = Math.max(1, Math.floor(total)) % 233280 || 13;
+   136→   136→      const rand = () => {
+   137→   137→        s = (s * 9301 + 49297) % 233280;
+   138→   138→        return s / 233280;
+   139→   139→      };
+   140→   140→      for (let i = 0; i < 42; i++) {
+   141→   141→        v += total * (rand() - 0.47) * 0.004;
+   142→   142→        pts.push(Math.max(total * 0.9, v));
+   143→   143→      }
+   144→   144→      pts[pts.length - 1] = total;
+   145→   145→      lastTotalRef.current = total;
+   146→   146→      return pts;
+   147→   147→    });
+   148→   148→  }, [total]);
+   149→   149→
+   150→   150→  useEffect(() => {
+   151→   151→    const append = () => {
+   152→   152→      if (history.length === 0) return;
+   153→   153→      if (Math.abs(total - lastTotalRef.current) < 0.005) return;
+   154→   154→      lastTotalRef.current = total;
+   155→   155→      setHistory((h) => [...h.slice(-79), total]);
+   156→   156→    };
+   157→   157→    append();
+   158→   158→  }, [total, history.length]);
+   159→   159→
+   160→   160→  /* ---- actions ---- */
+   161→   161→  const submitRequest = async (kind: "deposit" | "withdrawal", amount: number, note: string): Promise<string | null> => {
+   162→   162→    const res = await apiClientAction({ action: "request-transaction", kind, amount, note });
+   163→   163→    if (!res.ok) {
+   164→   164→      return res.error === "funds" ? "requestTooMuch" : "requestInvalid";
+   165→   165→    }
+   166→   166→    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+   167→   167→    toast({ title: t("requestSent"), description: t("requestSentSub") });
+   168→   168→    setReqModal(null);
+   169→   169→    return null;
+   170→   170→  };
+   171→   171→
+   172→   172→  const markAllRead = async () => {
+   173→   173→    const res = await apiClientAction({ action: "mark-read", ids: "all" });
+   174→   174→    if (res.ok && res.client && res.txs) {
+   175→   175→      setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+   176→   176→    }
+   177→   177→  };
+   178→   178→
+   179→   179→  const saveProfile = async (patch: { phone: string; country: string; address: string; city: string; postcode: string }): Promise<string | null> => {
+   180→   180→    const res = await apiClientAction({ action: "update-profile", ...patch });
+   181→   181→    if (!res.ok) return "requestInvalid";
+   182→   182→    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+   183→   183→    toast({ title: t("profileSaved") });
+   184→   184→    return null;
+   185→   185→  };
+   186→   186→
+   187→   187→  const savePassword = async (current: string, next: string): Promise<string | null> => {
+   188→   188→    const res = await apiClientAction({ action: "change-password", current, next });
+   189→   189→    if (!res.ok) return res.error === "wrong-current" ? "wrongCurrentPassword" : res.error === "weak" ? "weakPassword" : "requestInvalid";
+   190→   190→    toast({ title: t("passwordChangedToast") });
+   191→   191→    return null;
+   192→   192→  };
+   193→   193→
+   194→   194→  const signOut = async () => {
+   195→   195→    await apiLogout("client");
+   196→   196→    onSignOut();
+   197→   197→  };
+   198→   198→
+   199→   199→  const downloadCsv = () => {
+   200→   200→    if (!view) return;
+   201→   201→    const header = "Date,Description,Asset,Method,Type,Amount USD,Status,Reference\n";
+   202→   202→    const lines = view.txs.map((tx) =>
+   203→   203→      [tx.dateISO, `"${(tx.labelKey ? t(tx.labelKey as StringKey) : tx.label).replace(/"/g, '""')}"`, tx.asset ?? "", `"${tx.method}"`, tx.type, tx.amount.toFixed(2), tx.status, tx.reference].join(","),
+   204→   204→    );
+   205→   205→    const blob = new Blob([header + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+   206→   206→    const url = URL.createObjectURL(blob);
+   207→   207→    const a = document.createElement("a");
+   208→   208→    a.href = url;
+   209→   209→    a.download = `cryptowise-statement-${view.client.accountNo}.csv`;
+   210→   210→    a.click();
+   211→   211→    URL.revokeObjectURL(url);
+   212→   212→    toast({ title: t("statementToast") });
+   213→   213→  };
+   214→   214→
+   215→   215→  /* ---- derived lists ---- */
+   216→   216→  const txs = view?.txs ?? [];
+   217→   217→  const filteredTxs = useMemo(() => txs.filter((tx) => txFilter === "all" || (txFilter === "in" ? tx.type === "CREDIT" : tx.type === "DEBIT")), [txs, txFilter]);
+   218→   218→  const deposits = useMemo(() => txs.filter((tx) => tx.kind === "deposit"), [txs]);
+   219→   219→  const withdrawals = useMemo(() => txs.filter((tx) => tx.kind === "withdrawal"), [txs]);
+   220→   220→  const pendingWithdrawalTotal = withdrawals.filter((w) => w.status === "PENDING" || w.status === "PROCESSING").reduce((s, w) => s + w.amount, 0);
+   221→   221→
+   222→   222→  const allocation = useMemo(() => {
+   223→   223→    const segs = holdingRows.map((r) => ({ label: r.coin.name, value: r.value, color: r.coin.color }));
+   224→   224→    if (cash > 0) segs.unshift({ label: t("cash"), value: cash, color: "#10b981" });
+   225→   225→    return segs;
+   226→   226→  }, [holdingRows, cash, t]);
+   227→   227→
+   228→   228→  /* ---- menu definition (every item works — switches sections) ---- */
+   229→   229→  const NAV: Array<{ id: Section; label: string; icon: React.ReactNode; badge?: number }> = [
+   230→   230→    { id: "overview", label: t("menuOverview"), icon: <LayoutDashboard className="h-4 w-4" /> },
+   231→   231→    { id: "portfolio", label: t("menuPortfolio"), icon: <PieChart className="h-4 w-4" /> },
+   232→   232→    { id: "transactions", label: t("menuTransactions"), icon: <ArrowLeftRight className="h-4 w-4" /> },
+   233→   233→    { id: "deposits", label: t("menuDeposits"), icon: <ArrowDownLeft className="h-4 w-4" /> },
+   234→   234→    { id: "withdrawals", label: t("menuWithdrawals"), icon: <ArrowUpRight className="h-4 w-4" /> },
+   235→   235→    { id: "notifications", label: t("menuNotifications"), icon: <Bell className="h-4 w-4" />, badge: unread },
+   236→   236→    { id: "account", label: t("menuAccount"), icon: <UserRoundCog className="h-4 w-4" /> },
+   237→   237→  ];
+   238→   238→
+   239→   239→  const go = (s: Section) => {
+   240→   240→    setSection(s);
+   241→   241→    setDrawer(false);
+   242→   242→    window.scrollTo({ top: 0 });
+   243→   243→  };
+   244→   244→
+   245→   245→  if (!ready || !view) {
+   246→   246→    return (
+   247→   247→      <div className="flex min-h-screen items-center justify-center bg-[#04121c]">
+   248→   248→        <div className="flex flex-col items-center gap-3">
+   249→   249→          <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#00E5A0]/25 border-t-[#00E5A0]" />
+   250→   250→          <p className="text-sm font-semibold text-white/40">CryptoWise</p>
+   251→   251→        </div>
+   252→   252→      </div>
+   253→   253→    );
+   254→   254→  }
+   255→   255→
+   256→   256→  const c = view.client;
+   257→   257→
+   258→   258→  return (
+   259→   259→    <div className="min-h-screen bg-[#04121c] text-white [color-scheme:dark]">
+   260→   260→      {/* ambient teal glows */}
+   261→   261→      <div className="pointer-events-none fixed inset-0" aria-hidden="true">
+   262→   262→        <div className="absolute -top-40 start-[10%] h-[420px] w-[420px] rounded-full bg-[#00E5A0]/[0.05] blur-[130px]" />
+   263→   263→        <div className="absolute bottom-[-20%] end-[-8%] h-[380px] w-[380px] rounded-full bg-teal-400/[0.04] blur-[120px]" />
+   264→   264→      </div>
+   265→   265→
+   266→   266→      {/* ---------- topbar ---------- */}
+   267→   267→      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#031019]/90 backdrop-blur-xl">
+   268→   268→        <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6">
+   269→   269→          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+   270→   270→            <button
+   271→   271→              onClick={() => setDrawer(true)}
+   272→   272→              aria-label="Open menu"
+   273→   273→              aria-expanded={drawer}
+   274→   274→              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white lg:hidden"
+   275→   275→            >
+   276→   276→              <Menu className="h-4.5 w-4.5" />
+   277→   277→            </button>
+   278→   278→            <LogoMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
+   279→   279→            <div className="min-w-0">
+   280→   280→              <p className="truncate text-[13.5px] font-bold leading-tight text-white sm:text-[14px]">CryptoWise</p>
+   281→   281→              <p className="truncate text-[10.5px] font-semibold text-[#00E5A0] sm:text-[11px]">{t("clientArea")}</p>
+   282→   282→            </div>
+   283→   283→            <span className="ms-1 hidden shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-bold text-white/50 ring-1 ring-white/10 md:inline-block" dir="ltr">
+   284→   284→              {t("accountNo")} {c.accountNo}
+   285→   285→            </span>
+   286→   286→          </div>
+   287→   287→          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+   288→   288→            <button
+   289→   289→              onClick={onLangToggle}
+   290→   290→              className="flex h-9 items-center rounded-lg border border-white/10 px-2.5 text-[11.5px] font-bold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white sm:px-3 sm:text-[12px]"
+   291→   291→              aria-label="Toggle language"
+   292→   292→            >
+   293→   293→              {lang === "en" ? "العربية" : "EN"}
+   294→   294→            </button>
+   295→   295→            <button
+   296→   296→              onClick={() => go("notifications")}
+   297→   297→              aria-label={t("notificationsTitle")}
+   298→   298→              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white"
+   299→   299→            >
+   300→   300→              <Bell className="h-4 w-4" />
+   301→   301→              {unread > 0 && (
+   302→   302→                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9.5px] font-bold text-[#04121c]">{unread}</span>
+   303→   303→              )}
+   304→   304→            </button>
+   305→   305→            <div className="hidden items-center gap-2.5 rounded-full border border-white/10 py-1 pe-3 ps-1 sm:flex">
+   306→   306→              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00E5A0] text-[11px] font-bold text-[#04121c]">{initials(c.name)}</span>
+   307→   307→              <span className="hidden text-left leading-tight md:block" dir="auto">
+   308→   308→                <span className="block max-w-[120px] truncate text-[12px] font-bold text-white">{c.name}</span>
+   309→   309→                <span className="block text-[10.5px] font-semibold text-white/40">{t("privateClient")}</span>
+   310→   310→              </span>
+   311→   311→            </div>
+   312→   312→            <button
+   313→   313→              onClick={signOut}
+   314→   314→              aria-label={t("signOut")}
+   315→   315→              className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-[12px] font-semibold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white sm:px-3"
+   316→   316→            >
+   317→   317→              <LogOut className="h-3.5 w-3.5" />
+   318→   318→              <span className="hidden md:inline">{t("signOut")}</span>
+   319→   319→            </button>
+   320→   320→          </div>
+   321→   321→        </div>
+   322→   322→      </header>
+   323→   323→
+   324→   324→      {/* ---------- body: sidebar + content ---------- */}
+   325→   325→      <div className="relative mx-auto flex w-full max-w-[1280px] items-start gap-6 px-0 sm:px-6">
+   326→   326→        {/* desktop sidebar */}
+   327→   327→        <aside className="sticky top-[72px] hidden w-[218px] shrink-0 py-6 lg:block" aria-label="Client menu">
+   328→   328→          <nav className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85 p-2">
+   329→   329→            {NAV.map((item) => (
+   330→   330→              <button
+   331→   331→                key={item.id}
+   332→   332→                onClick={() => go(item.id)}
+   333→   333→                aria-current={section === item.id ? "page" : undefined}
+   334→   334→                className={cn(
+   335→   335→                  "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors",
+   336→   336→                  section === item.id ? "bg-[#00E5A0]/12 text-[#00E5A0]" : "text-white/55 hover:bg-white/[0.04] hover:text-white",
+   337→   337→                )}
+   338→   338→              >
+   339→   339→                {item.icon}
+   340→   340→                <span className="flex-1 text-start">{item.label}</span>
+   341→   341→                {!!item.badge && item.badge > 0 && (
+   342→   342→                  <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#04121c]">{item.badge}</span>
+   343→   343→                )}
+   344→   344→              </button>
+   345→   345→            ))}
+   346→   346→            <div className="my-2 h-px bg-white/[0.06]" />
+   347→   347→            <button
+   348→   348→              onClick={signOut}
+   349→   349→              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-white/55 transition-colors hover:bg-white/[0.04] hover:text-white"
+   350→   350→            >
+   351→   351→              <LogOut className="h-4 w-4" />
+   352→   352→              <span className="flex-1 text-start">{t("signOut")}</span>
+   353→   353→            </button>
+   354→   354→          </nav>
+   355→   355→          <p className="mt-3 px-3 text-[10.5px] leading-relaxed text-white/25" dir="ltr">
+   356→   356→            {t("accountNo")} {c.accountNo}
+   357→   357→          </p>
+   358→   358→        </aside>
+   359→   359→
+   360→   360→        {/* content */}
+   361→   361→        <main className="min-w-0 flex-1 py-5 sm:py-6">
+   362→   362→          {section === "overview" && (
+   363→   363→            <OverviewSection
+   364→   364→              view={view}
+   365→   365→              t={t}
+   366→   366→              lang={lang}
+   367→   367→              coins={coins}
+   368→   368→              stocks={stocks}
+   369→   369→              holdingRows={holdingRows}
+   370→   370→              invested={invested}
+   371→   371→              cash={cash}
+   372→   372→              total={total}
+   373→   373→              available={available}
+   374→   374→              portfolioChange={portfolioChange}
+   375→   375→              totalDeposits={totalDeposits}
+   376→   376→              pendingWithdrawalTotal={pendingWithdrawalTotal}
+   377→   377→              history={history}
+   378→   378→              allocation={allocation}
+   379→   379→              suspended={!!suspended}
+   380→   380→              onDeposit={() => !suspended && setReqModal("deposit")}
+   381→   381→              onWithdraw={() => !suspended && setReqModal("withdrawal")}
+   382→   382→              onGo={go}
+   383→   383→            />
+   384→   384→          )}
+   385→   385→
+   386→   386→          {section === "portfolio" && (
+   387→   387→            <div className="grid grid-cols-1 gap-5">
+   388→   388→              <SectionHeading title={t("menuPortfolio")} sub={t("welcomeSub")} />
+   389→   389→              <HoldingsTable rows={holdingRows} t={t} lang={lang} />
+   390→   390→              <AllocationBar segments={allocation} t={t} />
+   391→   391→              <MarketStrip coins={coins} stocks={stocks} t={t} />
+   392→   392→            </div>
+   393→   393→          )}
+   394→   394→
+   395→   395→          {section === "transactions" && (
+   396→   396→            <div className="grid grid-cols-1 gap-5">
+   397→   397→              <SectionHeading title={t("txHistory")} sub={`${txs.length} · ${t("allTime")}`} />
+   398→   398→              <div className="flex flex-wrap items-center justify-between gap-2.5">
+   399→   399→                <div className="flex items-center gap-1 rounded-lg bg-white/[0.05] p-1">
+   400→   400→                  {(
+   401→   401→                    [
+   402→   402→                      ["all", t("filterAll")],
+   403→   403→                      ["in", t("filterIn")],
+   404→   404→                      ["out", t("filterOut")],
+   405→   405→                    ] as const
+   406→   406→                  ).map(([key, label]) => (
+   407→   407→                    <button
+   408→   408→                      key={key}
+   409→   409→                      onClick={() => setTxFilter(key)}
+   410→   410→                      className={cn("rounded-md px-2.5 py-1.5 text-[11.5px] font-bold transition-colors", txFilter === key ? "bg-[#00E5A0]/15 text-[#00E5A0]" : "text-white/50 hover:text-white")}
+   411→   411→                    >
+   412→   412→                      {label}
+   413→   413→                    </button>
+   414→   414→                  ))}
+   415→   415→                </div>
+   416→   416→                <button onClick={downloadCsv} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-2 text-[11.5px] font-bold text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white">
+   417→   417→                  <Download className="h-3.5 w-3.5" /> CSV
+   418→   418→                </button>
+   419→   419→              </div>
+   420→   420→              <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
+   421→   421→                <ul className="divide-y divide-white/[0.05]">
+   422→   422→                  {(showAllTxs ? filteredTxs : filteredTxs.slice(0, 12)).map((tx) => (
+   423→   423→                    <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} />
+   424→   424→                  ))}
+   425→   425→                  {filteredTxs.length === 0 && (
+   426→   426→                    <li className="px-6 py-12 text-center text-[13px] text-white/45">{t("noTx")}</li>
+   427→   427→                  )}
+   428→   428→                </ul>
+   429→   429→                {filteredTxs.length > 12 && (
+   430→   430→                  <button onClick={() => setShowAllTxs((v) => !v)} className="w-full border-t border-white/[0.06] py-3 text-[12.5px] font-bold text-[#00E5A0] transition-colors hover:bg-[#00E5A0]/[0.06]">
+   431→   431→                    {showAllTxs ? "−" : "+"} {t("viewAllTx")} ({filteredTxs.length})
+   432→   432→                  </button>
+   433→   433→                )}
+   434→   434→              </div>
+   435→   435→            </div>
+   436→   436→          )}
+   437→   437→
+   438→   438→          {section === "deposits" && (
+   439→   439→            <DepositsSection t={t} lang={lang} deposits={deposits} totalDeposits={totalDeposits} suspended={!!suspended} onDeposit={() => !suspended && setReqModal("deposit")} />
+   440→   440→          )}
+   441→   441→
+   442→   442→          {section === "withdrawals" && (
+   443→   443→            <WithdrawalsSection t={t} lang={lang} withdrawals={withdrawals} available={available} pendingTotal={pendingWithdrawalTotal} totalWithdrawn={totalWithdrawn} suspended={!!suspended} onWithdraw={() => !suspended && setReqModal("withdrawal")} />
+   444→   444→          )}
+   445→   445→
+   446→   446→          {section === "notifications" && (
+   447→   447→            <div className="grid grid-cols-1 gap-5">
+   448→   448→              <SectionHeading title={t("notificationsTitle")} sub={t("contactSub")} />
+   449→   449→              <NotificationsCard notifications={view.notifications} t={t} onMarkAll={markAllRead} />
+   450→   450→            </div>
+   451→   451→          )}
+   452→   452→
+   453→   453→          {section === "account" && (
+   454→   454→            <div className="grid grid-cols-1 gap-5">
+   455→   455→              <SectionHeading title={t("menuAccount")} sub={`${t("accountNo")} ${c.accountNo}`} />
+   456→   456→              <ProfileCard view={view} t={t} lang={lang} onProfileSave={saveProfile} onPasswordSave={savePassword} />
+   457→   457→              <ContactCard t={t} />
+   458→   458→            </div>
+   459→   459→          )}
+   460→   460→
+   461→   461→          {/* support footer */}
+   462→   462→          <p className="mb-2 mt-8 text-center text-[11.5px] text-white/30">
+   463→   463→            {t("supportTitle")} ·{" "}
+   464→   464→            <a href={SITE_PHONE_TEL} className="font-semibold text-white/45 hover:text-[#00E5A0]" dir="ltr">
+   465→   465→              {SITE_PHONE_DISPLAY}
+   466→   466→            </a>{" "}
+   467→   467→            ·{" "}
+   468→   468→            <a href={`mailto:${SITE_EMAIL}`} className="font-semibold text-white/45 hover:text-[#00E5A0]">
+   469→   469→              {SITE_EMAIL}
+   470→   470→            </a>
+   471→   471→          </p>
+   472→   472→        </main>
+   473→   473→      </div>
+   474→   474→
+   475→   475→      {/* ---------- mobile drawer menu ---------- */}
+   476→   476→      <AnimatePresence>
+   477→   477→        {drawer && (
+   478→   478→          <div className="fixed inset-0 z-50 lg:hidden">
+   479→   479→            <motion.div
+   480→   480→              initial={{ opacity: 0 }}
+   481→   481→              animate={{ opacity: 1 }}
+   482→   482→              exit={{ opacity: 0 }}
+   483→   483→              transition={{ duration: 0.2 }}
+   484→   484→              className="absolute inset-0 bg-[#020b12]/70 backdrop-blur-[2px]"
+   485→   485→              onClick={() => setDrawer(false)}
+   486→   486→            />
+   487→   487→            <motion.nav
+   488→   488→              initial={{ x: lang === "ar" ? "100%" : "-100%" }}
+   489→   489→              animate={{ x: 0 }}
+   490→   490→              exit={{ x: lang === "ar" ? "100%" : "-100%" }}
+   491→   491→              transition={{ duration: 0.26, ease: "easeOut" }}
+   492→   492→              className="absolute bottom-0 start-0 top-0 flex w-[272px] max-w-[82vw] flex-col border-e border-white/[0.08] bg-[#071923] shadow-2xl"
+   493→   493→              aria-label="Client menu"
+   494→   494→            >
+   495→   495→              <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-4">
+   496→   496→                <div className="flex items-center gap-2.5">
+   497→   497→                  <LogoMark className="h-8 w-8" />
+   498→   498→                  <div>
+   499→   499→                    <p className="text-[13.5px] font-bold leading-tight text-white">CryptoWise</p>
+   500→   500→                    <p className="text-[10.5px] font-semibold text-[#00E5A0]">{t("clientArea")}</p>
+   501→   501→                  </div>
+   502→   502→                </div>
+   503→   503→                <button onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white">
+   504→   504→                  <X className="h-5 w-5" />
+   505→   505→                </button>
+   506→   506→              </div>
+   507→   507→              <div className="border-b border-white/[0.07] px-4 py-3.5">
+   508→   508→                <div className="flex items-center gap-2.5">
+   509→   509→                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00E5A0] text-[12px] font-bold text-[#04121c]">{initials(c.name)}</span>
+   510→   510→                  <div className="min-w-0" dir="auto">
+   511→   511→                    <p className="truncate text-[13px] font-bold text-white">{c.name}</p>
+   512→   512→                    <p className="text-[10.5px] font-semibold text-white/35" dir="ltr">
+   513→   513→                      {t("accountNo")} {c.accountNo}
+   514→   514→                    </p>
+   515→   515→                  </div>
+   516→   516→                </div>
+   517→   517→              </div>
+   518→   518→              <div className="flex-1 overflow-y-auto p-2">
+   519→   519→                {NAV.map((item) => (
+   520→   520→                  <button
+   521→   521→                    key={item.id}
+   522→   522→                    onClick={() => go(item.id)}
+   523→   523→                    aria-current={section === item.id ? "page" : undefined}
+   524→   524→                    className={cn(
+   525→   525→                      "flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold transition-colors",
+   526→   526→                      section === item.id ? "bg-[#00E5A0]/12 text-[#00E5A0]" : "text-white/60 hover:bg-white/[0.04] hover:text-white",
+   527→   527→                    )}
+   528→   528→                  >
+   529→   529→                    {item.icon}
+   530→   530→                    <span className="flex-1 text-start">{item.label}</span>
+   531→   531→                    {!!item.badge && item.badge > 0 && (
+   532→   532→                      <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-[#04121c]">{item.badge}</span>
+   533→   533→                    )}
+   534→   534→                  </button>
+   535→   535→                ))}
+   536→   536→              </div>
+   537→   537→              <div className="border-t border-white/[0.07] p-2">
+   538→   538→                <button
+   539→   539→                  onClick={signOut}
+   540→   540→                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[13.5px] font-semibold text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
+   541→   541→                >
+   542→   542→                  <LogOut className="h-4 w-4" />
+   543→   543→                  <span className="flex-1 text-start">{t("signOut")}</span>
+   544→   544→                </button>
+   545→   545→              </div>
+   546→   546→            </motion.nav>
+   547→   547→          </div>
+   548→   548→        )}
+   549→   549→      </AnimatePresence>
+   550→   550→
+   551→   551→      {reqModal && <RequestModal kind={reqModal} t={t} available={available} onClose={() => setReqModal(null)} onSubmit={(amount, note) => submitRequest(reqModal, amount, note)} />}
+   552→   552→    </div>
+   553→   553→  );
+   554→   554→}
+   555→   555→
+   556→   556→/* ---------------- section heading ---------------- */
+   557→   557→
+   558→   558→function SectionHeading({ title, sub }: { title: string; sub?: string }) {
+   559→   559→  return (
+   560→   560→    <div>
+   561→   561→      <h1 className="text-[20px] font-bold tracking-tight text-white sm:text-[24px]">{title}</h1>
+   562→   562→      {sub && <p className="mt-1 text-[13px] text-white/45">{sub}</p>}
+   563→   563→    </div>
+   564→   564→  );
+   565→   565→}
+   566→   566→
+   567→   567→/* ---------------- overview (landing) section ---------------- */
+   568→   568→
+   569→   569→function OverviewSection({
+   570→   570→  view,
+   571→   571→  t,
+   572→   572→  lang,
+   573→   573→  coins,
+   574→   574→  stocks,
+   575→   575→  holdingRows,
+   576→   576→  invested,
+   577→   577→  cash,
+   578→   578→  total,
+   579→   579→  available,
+   580→   580→  portfolioChange,
+   581→   581→  totalDeposits,
+   582→   582→  pendingWithdrawalTotal,
+   583→   583→  history,
+   584→   584→  allocation,
+   585→   585→  suspended,
+   586→   586→  onDeposit,
+   587→   587→  onWithdraw,
+   588→   588→  onGo,
+   589→   589→}: {
+   590→   590→  view: ClientView;
+   591→   591→  t: T;
+   592→   592→  lang: Lang;
+   593→   593→  coins: Coin[];
+   594→   594→  stocks: Coin[];
+   595→   595→  holdingRows: ReturnType<typeof buildHoldingRows>;
+   596→   596→  invested: number;
+   597→   597→  cash: number;
+   598→   598→  total: number;
+   599→   599→  available: number;
+   600→   600→  portfolioChange: number;
+   601→   601→  totalDeposits: number;
+   602→   602→  pendingWithdrawalTotal: number;
+   603→   603→  history: number[];
+   604→   604→  allocation: Array<{ label: string; value: number; color: string }>;
+   605→   605→  suspended: boolean;
+   606→   606→  onDeposit: () => void;
+   607→   607→  onWithdraw: () => void;
+   608→   608→  onGo: (s: Section) => void;
+   609→   609→}) {
+   610→   610→  const c = view.client;
+   611→   611→  const recent = view.txs.slice(0, 5);
+   612→   612→
+   613→   613→  return (
+   614→   614→    <div className="grid grid-cols-1 gap-5">
+   615→   615→      {/* welcome header — real client identity from the authenticated session */}
+   616→   616→      <div className="flex flex-wrap items-end justify-between gap-4">
+   617→   617→        <div className="min-w-0">
+   618→   618→          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+   619→   619→            <h1 className="min-w-0 text-[22px] font-bold leading-tight tracking-tight text-white sm:text-[28px]">
+   620→   620→              {t("welcomeTitle")}{" "}
+   621→   621→              <span className="whitespace-normal break-words" dir="auto">
+   622→   622→                {c.name}
+   623→   623→              </span>
+   624→   624→            </h1>
+   625→   625→            {/* green Verified badge with a check icon — next to the client name */}
+   626→   626→            <VerifiedBadge verified={c.kycStatus === "verified"} t={t} />
+   627→   627→          </div>
+   628→   628→          {/* "Private" badge — under the name (tier chip only when not already Private) */}
+   629→   629→          <div className="mt-2 flex flex-wrap items-center gap-2">
+   630→   630→            <PrivateBadge t={t} />
+   631→   631→            {c.tier !== "Private" && <TierBadge tier={c.tier} t={t} />}
+   632→   632→          </div>
+   633→   633→          <p className="mt-3 text-[13.5px] text-white/50">{t("welcomeSub")}</p>
+   634→   634→          <p className="mt-1 text-[12.5px] font-semibold text-white/40">
+   635→   635→            {t("accountNo")}{" "}
+   636→   636→            <span dir="ltr" className="font-mono text-white/60">
+   637→   637→              {c.accountNo}
+   638→   638→            </span>
+   639→   639→          </p>
+   640→   640→        </div>
+   641→   641→        <div className="flex flex-wrap gap-2.5">
+   642→   642→          <button
+   643→   643→            onClick={onDeposit}
+   644→   644→            disabled={suspended}
+   645→   645→            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[13px] font-bold text-[#022c20] shadow-[0_8px_24px_-10px_rgba(0,229,160,0.7)] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+   646→   646→          >
+   647→   647→            <ArrowDownLeft className="h-4 w-4" /> {t("deposit")}
+   648→   648→          </button>
+   649→   649→          <button
+   650→   650→            onClick={onWithdraw}
+   651→   651→            disabled={suspended}
+   652→   652→            className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-[13px] font-bold text-white/80 transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:px-5"
+   653→   653→          >
+   654→   654→            <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
+   655→   655→          </button>
+   656→   656→        </div>
+   657→   657→      </div>
+   658→   658→
+   659→   659→      {c.managerNote && !suspended && (
+   660→   660→        <div className="rounded-2xl border border-[#00E5A0]/20 bg-[#00E5A0]/[0.06] px-4 py-3.5 sm:px-5">
+   661→   661→          <p className="text-[12.5px] font-bold text-[#00E5A0]">{t("managerNoteTitle")}</p>
+   662→   662→          <p className="mt-1 text-[13px] leading-relaxed text-white/70">{c.managerNote}</p>
+   663→   663→        </div>
+   664→   664→      )}
+   665→   665→
+   666→   666→      {suspended && (
+   667→   667→        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3.5 sm:px-5">
+   668→   668→          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+   669→   669→          <div>
+   670→   670→            <p className="text-[13px] font-bold text-amber-300">{t("suspendedBanner")}</p>
+   671→   671→            <p className="mt-0.5 text-[12.5px] text-amber-200/80">{t("suspendedSub")}</p>
+   672→   672→          </div>
+   673→   673→        </div>
+   674→   674→      )}
+   675→   675→
+   676→   676→      {/* three financial cards — every value is real, from the server ledger */}
+   677→   677→      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+   678→   678→        <KpiCard
+   679→   679→          label={t("totalBalance")}
+   680→   680→          value={usd(total)}
+   681→   681→          sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
+   682→   682→          subTone={portfolioChange >= 0 ? "up" : "down"}
+   683→   683→          icon={<Wallet className="h-4 w-4" />}
+   684→   684→        />
+   685→   685→        <KpiCard
+   686→   686→          label={t("cashAvailable")}
+   687→   687→          value={usd(cash)}
+   688→   688→          sub={pendingWithdrawalTotal > 0 ? `${t("availableFunds")}: ${usd(available)}` : t("availableFunds")}
+   689→   689→          icon={<ArrowDownLeft className="h-4 w-4" />}
+   690→   690→        />
+   691→   691→        <KpiCard
+   692→   692→          label={t("invested")}
+   693→   693→          value={usd(invested)}
+   694→   694→          sub={`${t("totalDeposits")}: ${usd(totalDeposits)}`}
+   695→   695→          icon={<PieChart className="h-4 w-4" />}
+   696→   696→        />
+   697→   697→      </div>
+   698→   698→
+   699→   699→      {/* chart + market */}
+   700→   700→      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
+   701→   701→        <PerformanceChart history={history} t={t} />
+   702→   702→        <MarketStrip coins={coins} stocks={stocks} t={t} />
+   703→   703→      </div>
+   704→   704→
+   705→   705→      {/* holdings preview + allocation + contacts */}
+   706→   706→      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
+   707→   707→        <div className="min-w-0">
+   708→   708→          <HoldingsTable rows={holdingRows} t={t} lang={lang} />
+   709→   709→        </div>
+   710→   710→        <div className="grid grid-cols-1 content-start gap-4 xl:gap-5">
+   711→   711→          <AllocationBar segments={allocation} t={t} />
+   712→   712→          {/* recent activity preview */}
+   713→   713→          <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
+   714→   714→            <SectionTitle
+   715→   715→              title={t("recentTransactions")}
+   716→   716→              right={
+   717→   717→                <button onClick={() => onGo("transactions")} className="rounded-lg px-2 py-1 text-[11.5px] font-bold text-[#00E5A0] transition-colors hover:bg-[#00E5A0]/10">
+   718→   718→                  {t("viewAll")}
+   719→   719→                </button>
+   720→   720→              }
+   721→   721→            />
+   722→   722→            <ul className="mt-3 divide-y divide-white/[0.05]">
+   723→   723→              {recent.map((tx) => (
+   724→   724→                <li key={tx.id} className="flex items-center gap-3 px-4 py-3">
+   725→   725→                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", tx.type === "CREDIT" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/10 text-amber-300")}>
+   726→   726→                    {tx.type === "CREDIT" ? <ArrowDownLeft className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
+   727→   727→                  </span>
+   728→   728→                  <div className="min-w-0 flex-1">
+   729→   729→                    <p className="truncate text-[12.5px] font-semibold text-white">{tx.labelKey ? t(tx.labelKey as StringKey) : tx.label}</p>
+   730→   730→                    <p className="text-[10.5px] text-white/30" dir="ltr">
+   731→   731→                      {tx.dateISO}
+   732→   732→                    </p>
+   733→   733→                  </div>
+   734→   734→                  <span className={cn("shrink-0 whitespace-nowrap text-[12.5px] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-400" : "text-amber-400")} dir="ltr">
+   735→   735→                    {tx.type === "CREDIT" ? "+" : "−"}
+   736→   736→                    {usd(tx.amount)}
+   737→   737→                  </span>
+   738→   738→                </li>
+   739→   739→              ))}
+   740→   740→              {recent.length === 0 && <li className="px-6 py-8 text-center text-[13px] text-white/45">{t("noTx")}</li>}
+   741→   741→            </ul>
+   742→   742→          </div>
+   743→   743→          <ContactCard t={t} />
+   744→   744→        </div>
+   745→   745→      </div>
+   746→   746→    </div>
+   747→   747→  );
+   748→   748→}
+   749→   749→
+   750→   750→/* ---------------- deposits section ---------------- */
+   751→   751→
+   752→   752→function DepositsSection({
+   753→   753→  t,
+   754→   754→  lang,
+   755→   755→  deposits,
+   756→   756→  totalDeposits,
+   757→   757→  suspended,
+   758→   758→  onDeposit,
+   759→   759→}: {
+   760→   760→  t: T;
+   761→   761→  lang: Lang;
+   762→   762→  deposits: Tx[];
+   763→   763→  totalDeposits: number;
+   764→   764→  suspended: boolean;
+   765→   765→  onDeposit: () => void;
+   766→   766→}) {
+   767→   767→  return (
+   768→   768→    <div className="grid grid-cols-1 gap-5">
+   769→   769→      <div className="flex flex-wrap items-end justify-between gap-3">
+   770→   770→        <SectionHeading title={t("menuDeposits")} sub={t("requestHint")} />
+   771→   771→        <button
+   772→   772→          onClick={onDeposit}
+   773→   773→          disabled={suspended}
+   774→   774→          className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#00E5A0] px-4 text-[13px] font-bold text-[#022c20] transition-all hover:bg-[#2cf0b5] disabled:cursor-not-allowed disabled:opacity-50"
+   775→   775→        >
+   776→   776→          <ArrowDownLeft className="h-4 w-4" /> {t("deposit")}
+   777→   777→        </button>
+   778→   778→      </div>
+   779→   779→      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+   780→   780→        <KpiCard label={t("depositsTotal")} value={usd(totalDeposits)} icon={<ArrowDownLeft className="h-4 w-4" />} />
+   781→   781→        <KpiCard label={t("menuDeposits")} value={String(deposits.length)} sub={t("allTime")} icon={<ArrowLeftRight className="h-4 w-4" />} />
+   782→   782→      </div>
+   783→   783→      <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
+   784→   784→        <ul className="divide-y divide-white/[0.05]">
+   785→   785→          {deposits.map((tx) => (
+   786→   786→            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} />
+   787→   787→          ))}
+   788→   788→          {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-white/45">{t("noDeposits")}</li>}
+   789→   789→        </ul>
+   790→   790→      </div>
+   791→   791→    </div>
+   792→   792→  );
+   793→   793→}
+   794→   794→
+   795→   795→/* ---------------- withdrawals section ---------------- */
+   796→   796→
+   797→   797→function WithdrawalsSection({
+   798→   798→  t,
+   799→   799→  lang,
+   800→   800→  withdrawals,
+   801→   801→  available,
+   802→   802→  pendingTotal,
+   803→   803→  totalWithdrawn,
+   804→   804→  suspended,
+   805→   805→  onWithdraw,
+   806→   806→}: {
+   807→   807→  t: T;
+   808→   808→  lang: Lang;
+   809→   809→  withdrawals: Tx[];
+   810→   810→  available: number;
+   811→   811→  pendingTotal: number;
+   812→   812→  totalWithdrawn: number;
+   813→   813→  suspended: boolean;
+   814→   814→  onWithdraw: () => void;
+   815→   815→}) {
+   816→   816→  return (
+   817→   817→    <div className="grid grid-cols-1 gap-5">
+   818→   818→      <div className="flex flex-wrap items-end justify-between gap-3">
+   819→   819→        <SectionHeading title={t("menuWithdrawals")} sub={t("requestHint")} />
+   820→   820→        <button
+   821→   821→          onClick={onWithdraw}
+   822→   822→          disabled={suspended}
+   823→   823→          className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 text-[13px] font-bold text-white/80 transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+   824→   824→        >
+   825→   825→          <ArrowUpRight className="h-4 w-4" /> {t("withdraw")}
+   826→   826→        </button>
+   827→   827→      </div>
+   828→   828→      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+   829→   829→        <KpiCard label={t("availableFunds")} value={usd(available)} icon={<Wallet className="h-4 w-4" />} />
+   830→   830→        <KpiCard label={t("reqPending")} value={usd(pendingTotal)} icon={<ArrowUpRight className="h-4 w-4" />} />
+   831→   831→        <KpiCard label={t("withdrawalsTotal")} value={usd(totalWithdrawn)} icon={<ArrowLeftRight className="h-4 w-4" />} />
+   832→   832→      </div>
+   833→   833→      <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#071923]/85">
+   834→   834→        <ul className="divide-y divide-white/[0.05]">
+   835→   835→          {withdrawals.map((tx) => (
+   836→   836→            <li key={tx.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+   837→   837→              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20">
+   838→   838→                <ArrowUpRight className="h-4 w-4" />
+   839→   839→              </span>
+   840→   840→              <div className="min-w-0 flex-1">
+   841→   841→                <p className="truncate text-[13px] font-semibold text-white">{tx.label}</p>
+   842→   842→                <p className="mt-0.5 text-[11.5px] text-white/35" dir="ltr">
+   843→   843→                  {tx.dateISO} · {tx.method}
+   844→   844→                </p>
+   845→   845→              </div>
+   846→   846→              <div className="flex shrink-0 flex-col items-end gap-1">
+   847→   847→                <span className="whitespace-nowrap text-[13px] font-bold tabular-nums text-amber-400" dir="ltr">
+   848→   848→                  −{usd(tx.amount)}
+   849→   849→                </span>
+   850→   850→                <StatusPill status={tx.status} t={t} />
+   851→   851→              </div>
+   852→   852→            </li>
+   853→   853→          ))}
+   854→   854→          {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-white/45">{t("withdrawalsEmpty")}</li>}
+   855→   855→        </ul>
+   856→   856→      </div>
+   857→   857→    </div>
+   858→   858→  );
+   859→   859→}
+   860→   860→
