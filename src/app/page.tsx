@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "@/components/site/header";
 import { Hero, TaglineStrip } from "@/components/site/hero";
@@ -29,6 +29,31 @@ export default function Page() {
   const [restored, setRestored] = useState(false);
 
   const t = useCallback((k: StringKey) => STRINGS[lang][k] ?? STRINGS.en[k], [lang]);
+
+  // Language preference persists across pages and visits (header language selector)
+  const langRestored = useRef(false);
+  useEffect(() => {
+    let alive = true;
+    // microtask: keeps the restore off the synchronous effect path (lint rule)
+    Promise.resolve().then(() => {
+      if (!alive) return;
+      try {
+        const saved = window.localStorage.getItem("cw-lang");
+        if (saved === "ar" || saved === "en") setLang(saved);
+      } catch {}
+      langRestored.current = true;
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useEffect(() => {
+    // skip the mount write — it would clobber the stored choice before the restore reads it
+    if (!langRestored.current) return;
+    try {
+      window.localStorage.setItem("cw-lang", lang);
+    } catch {}
+  }, [lang]);
 
   // Simulated live market ticks (client-only, starts after mount)
   useEffect(() => {
@@ -146,7 +171,7 @@ export default function Page() {
                 <Header
                   t={t}
                   lang={lang}
-                  onLangToggle={() => setLang((l) => (l === "en" ? "ar" : "en"))}
+                  onLangSelect={setLang}
                   onLogin={() => setView("login")}
                   onRegister={() => setView("register")}
                   onHome={() => {
@@ -252,7 +277,7 @@ export default function Page() {
                 <Header
                   t={t}
                   lang={lang}
-                  onLangToggle={() => setLang((l) => (l === "en" ? "ar" : "en"))}
+                  onLangSelect={setLang}
                   onLogin={() => setView("login")}
                   onRegister={() => setView("register")}
                   onHome={() => {

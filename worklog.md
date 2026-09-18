@@ -545,3 +545,24 @@ Work Log:
 
 Stage Summary:
 - Source of Funds is now a first-class management field across the whole flow: Super Admin create form (multiline textarea) + edit form (auto-populated, editable at any time) → stored in the client record in data/db.json → displayed read-only on the client Account & Settings view (EN + AR, multiline + wrap-safe). ONE value everywhere, admin-controlled, client-visible only, persisted across refresh/logout/relogin/other tabs.
+
+---
+Task ID: 40
+Agent: Main agent (Super Z)
+Task: Language switcher in the Homepage header (between brand and hamburger, real functional EN/AR switch, persistent)
+
+Work Log:
+- header.tsx: replaced the simple EN/AR toggle with a real dropdown selector (Globe + current code + chevron) positioned in the header bar directly beside the hamburger button — visible at EVERY viewport (was hidden <sm); dropdown lists English (EN) and العربية (AR) with native labels, check mark + mint highlight on the active language, menuitemradio semantics, closes on outside click / Escape / selection; anchored end-0 so it mirrors naturally in RTL; removed the duplicate lang toggle from the hamburger drop panel bottom row (Login/Get Started stay); opening the hamburger closes the language menu and vice-versa
+- page.tsx: Header API switched from onLangToggle to onLangSelect(l) for the two homepage Header instances (ClientDashboard keeps its own toggle — untouched); added localStorage persistence ("cw-lang") — restore in a microtask (satisfies the react-compiler lint rule against synchronous setState in effects) and save on change, gated behind langRestored ref
+- Fixed a real persistence bug found during testing: the save effect's mount-write clobbered the stored choice BEFORE the restore read it (pick AR → reload → back to EN). The langRestored gate skips the mount write; re-tested full cycles AR→reload→AR and EN→reload→EN — both persist correctly
+- Verified via agent-browser (scripts/verify40/, 7 screenshots):
+  - Desktop 1440 EN: [Logo@104] ... [🌐 EN ▾@1202-1288][☰@1296-1336] — selector directly beside the hamburger, no overflow
+  - Dropdown: items [EnglishEN, العربيةAR], aria-checked on active (screenshot 01)
+  - Pick العربية → h1 "العملات الرقمية بأبسط صورة.", nav الرئيسية/المميزات/من نحن/الأسعار/المدونة, root div dir=rtl, h1 computed rtl, selector shows AR, header mirrors (burger left, selector beside it) — RTL coherent, no overflow (screenshot 02)
+  - Persistence: reload keeps cw-lang=ar, everything Arabic; SPA view switch (home → login view) stays Arabic; switch back to English restores dir=ltr + English copy
+  - Mobile 375/390/414 + tablet 768 + 1024 + 1440 sweep: logo visible, selector visible between brand and burger, directly adjacent to burger, no overlap, no horizontal scrolling, header height unchanged (64px); dropdown (176px) fits inside the mobile viewport; AR mobile mirrors correctly (screenshots 03-06)
+  - Hamburger panel intact after toggle removal (7 buttons, no stray lang toggle, screenshot 07)
+- lint 0 errors (46 warnings = pre-change baseline), tsc clean for src/, 0 page errors; 0 new console errors; zip rebuilt
+
+Stage Summary:
+- The homepage header now carries a professional, always-visible language selector between the CryptoWise brand and the hamburger menu. It is a REAL switcher: full Arabic translation + RTL mirroring on selection, LTR restored on English, choice persisted across page navigation and reloads via localStorage. Layout verified overflow-free from 375px to 1440px in both languages.
