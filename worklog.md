@@ -412,3 +412,27 @@ Work Log:
 Stage Summary:
 - Homepage hero is now one coherent premium crypto illustration matching the reference style: dominant LARGE metallic-gold 3D Bitcoin (official B) on the RIGHT with premium 3D official-logo coins (Ethereum, USDT/Tether, Solana, Aramco, Salik) minted around it — no flat/random icons, no labels, no overlap, dark theme preserved
 - Complete design separation holds: Homepage = dark marketing site; ALL account surfaces (login, register, client dashboard, EN + AR, desktop + mobile) = WHITE/LIGHT professional banking
+
+---
+Task ID: 23
+Agent: Main agent (Super Z)
+Task: BITCOIN POSITION FIX — hero composition must sit in the UPPER-RIGHT of the hero, immediately below the header (desktop + mobile), never near the bottom, never overlapping text
+
+Work Log:
+- Diagnosed prior layout: desktop grid used items-center (composition vertically centred against the copy => coin read as mid-hero); mobile stacked copy FIRST then visual (=> Bitcoin pushed to the bottom of the hero, the exact client complaint)
+- hero.tsx grid: items-center -> items-start (desktop composition top-aligned with the copy); section padding retuned pt-12/pt-16/pt-20 so the visual starts close to the sticky header; visual wrapper gains lg:-mt-2
+- Responsive positioning (no scaling): visual wrapper now order-1 lg:order-2 (mobile = graphic FIRST, immediately below header; copy stacks BELOW it), with directional physical margins ml-auto (EN mobile -> upper-right) + rtl:ml-0 rtl:mr-auto (AR mobile -> upper-left, keeping the Bitcoin B on the LEFT per Task 21) and lg:mx-auto restoring the approved centred-in-right-column desktop placement
+- Widths tiered w-[86%] max-w-[460px] / sm:w-[74%] max-w-[490px] / lg:w-full max-w-[520px] so the coin size adapts responsively instead of uniformly scaling
+- Verified via agent-browser (scripts/verify23/, 6 screenshots + DOM measurements):
+  - Desktop 1440 EN: composition top 137 vs badge top 145 (aligned at top, header bottom 65); gold coin face 230-560, d=331px, left 869 (right half); h1 198-331 and CTA buttons (104-460) never touched; scrollW 1440 == innerW
+  - Desktop AR: whole composition mirrored LEFT (coin 199-529), Arabic copy on the right, B on the LEFT per client rule; no overflow
+  - Mobile 390 EN: composition top 113 (48px below header bottom 65), biased right (left 66 / right 374), coin 165-361 d=196px, copy starts at 461 BELOW the graphic => zero overlap, coin never near the bottom; scrollW 390 == innerW
+  - Mobile 390 AR: composition top 113 biased LEFT (16/324) => B stays LEFT; text below; no overflow
+  - Scrolled mobile: [Sign In][Login] + BTC chart card + WhatsApp/Telegram/imo dock all visible, no "Learn More"
+  - Account dashboard re-check after login: body bg = lab(100 0 0) pure WHITE, Welcome back + Verified + Private + Account No. + Total/Cash/Invested intact => account stays LIGHT
+- 0 page errors, 0 console errors; lint 0 errors (42 pre-existing warnings); tsc clean for src/
+- Zip rebuilt: download/cryptowiseuk-project.zip
+
+Stage Summary:
+- Hero composition now opens the hero: LARGE metallic-gold 3D Bitcoin (official B) in the UPPER-RIGHT immediately below the header on desktop (EN) and upper-LEFT in AR, with the copy never overlapped; on mobile the crypto composition comes first right under the header (upper-right EN / upper-left AR) and the copy stacks below — the Bitcoin can no longer sink to the bottom of the hero
+- Design separation intact: Homepage dark (gold Bitcoin + mint), Account surfaces WHITE/LIGHT

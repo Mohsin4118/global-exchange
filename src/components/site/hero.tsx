@@ -37,14 +37,14 @@ export function Hero({
         <div className="absolute bottom-[-30%] start-1/3 h-[420px] w-[520px] rounded-full bg-[#00E5A0]/[0.05] blur-[150px]" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-14 sm:pt-20 pb-8">
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-6 items-center">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-16 lg:pt-20 pb-8">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-6 items-start">
           {/* left copy */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="relative isolate"
+            className="relative isolate order-2 lg:order-1"
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-4 py-1.5 text-[12.5px] font-medium text-[#00E5A0]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
@@ -95,16 +95,18 @@ export function Hero({
             </div>
           </motion.div>
 
-          {/* right visual — one coherent premium crypto illustration: a LARGE metallic
-              gold 3D Bitcoin coin with 3D official-logo coins minted around it.
-              The graphic lives in its own grid cell (desktop, right of the copy) /
-              below the copy (mobile), so it can never overlap the headline,
-              description or buttons (client request). */}
+          {/* UPPER-RIGHT visual — one coherent premium crypto illustration: a LARGE
+              metallic gold 3D Bitcoin coin with 3D official-logo coins minted around it.
+              Desktop: own grid cell on the right, top-aligned to start just below the
+              header. Mobile: the graphic comes FIRST (immediately below the header,
+              biased to the upper-right in EN / upper-left in AR via physical margins),
+              and the copy stacks BELOW it — so the coin is never pushed to the bottom
+              of the hero and never overlaps the headline, description or buttons. */}
           <motion.div
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.15, ease: "easeOut" }}
-            className="relative mx-auto w-full max-w-[520px]"
+            className="relative order-1 lg:order-2 lg:-mt-2 ml-auto w-[86%] max-w-[460px] sm:w-[74%] sm:max-w-[490px] lg:w-full lg:max-w-[520px] lg:mx-auto rtl:ml-0 rtl:mr-auto"
             dir="ltr"
           >
             <CryptoScene />
