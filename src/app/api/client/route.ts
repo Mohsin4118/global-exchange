@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { clientView, db, inFlight, mutate, pushNotification, pushAudit, requireClient, round2, uid, verifyPassword, hashPassword } from "@/lib/server/db";
+import { CURRENCIES } from "@/lib/shared-types";
 import type { ClientAction, Tx, TxEvent } from "@/lib/shared-types";
 
 export const dynamic = "force-dynamic";
@@ -152,6 +153,20 @@ export async function POST(req: NextRequest) {
         kind: "info",
       });
       pushAudit(d, "Update Transaction", "TRANSACTION", JSON.stringify({ reference: record.reference, client: client.name, from: "PENDING", to: "CANCELLED", by: "client" }));
+    });
+    const fresh = clientView(client.id);
+    return NextResponse.json({ ok: true, ...(fresh.ok ? fresh.view : {}) });
+  }
+
+  /* ---- display-currency preference (own account only, validated server-side) ---- */
+  if (body.action === "set-currency") {
+    const code = body.currency;
+    if (!CURRENCIES.includes(code)) {
+      return NextResponse.json({ ok: false, error: "bad-currency" }, { status: 400 });
+    }
+    mutate((d) => {
+      const record = d.clients.find((c) => c.id === client.id);
+      if (record) record.currency = code;
     });
     const fresh = clientView(client.id);
     return NextResponse.json({ ok: true, ...(fresh.ok ? fresh.view : {}) });

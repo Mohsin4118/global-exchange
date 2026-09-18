@@ -22,10 +22,11 @@ import {
   X,
 } from "lucide-react";
 import { CoinBadge } from "./icons";
-import { formatChange, formatPrice, sparkline, sparklinePath, type Coin } from "@/lib/market";
+import { formatChange, sparkline, sparklinePath, type Coin } from "@/lib/market";
 import { ContactButtonsCard } from "./contact-buttons";
 import { PasswordInput } from "@/components/ui/password-input";
-import type { ClientView, Notification, Tx } from "@/lib/shared-types";
+import { CURRENCIES } from "@/lib/shared-types";
+import type { ClientView, CurrencyCode, Notification, Tx } from "@/lib/shared-types";
 import type { Lang, StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,41 @@ export type T = (k: StringKey) => string;
 
 export function usd(n: number): string {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/* ---------------- display-currency formatting ---------------- */
+/*  ONE formatter for every money figure on the dashboard. The ledger
+    is USD; `fmtMoney` applies the admin-managed reference rate from
+    the DB so the whole dashboard stays consistent when the account
+    display currency changes. No rates are hardcoded in components. */
+export type Fx = Record<string, number>;
+
+export const CURRENCY_META: Record<string, { label: string; symbol?: string }> = {
+  USD: { label: "US Dollar", symbol: "$" },
+  SAR: { label: "Saudi Riyal" },
+  KWD: { label: "Kuwaiti Dinar" },
+  AED: { label: "UAE Dirham" },
+  QAR: { label: "Qatari Riyal" },
+  OMR: { label: "Omani Rial" },
+  GBP: { label: "British Pound", symbol: "£" },
+};
+
+export function fmtMoney(n: number, code = "USD", fx: Fx = { USD: 1 }): string {
+  const rate = code === "USD" ? 1 : fx[code] || 1;
+  const value = n * rate;
+  const abs = Math.abs(value);
+  // small converted figures keep more decimals so prices never collapse
+  const decimals = abs > 0 && abs < 1 ? 4 : abs < 100 ? 2 : 2;
+  const body = value.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const meta = CURRENCY_META[code];
+  if (meta?.symbol && code === "USD") return `$${body}`;
+  if (meta?.symbol) return `${meta.symbol}${body}`;
+  return `${code} ${body}`;
+}
+
+/** A currency formatter bound to one display currency — passed down as `money`. */
+export function makeMoney(code: string, fx: Fx): (n: number) => string {
+  return (n: number) => fmtMoney(n, code, fx);
 }
 
 export function fmtUnits(units: number): string {
@@ -152,7 +188,7 @@ export function KpiCard({
 
 /* ---------------- performance chart (dark style) ---------------- */
 
-export function PerformanceChart({ history, t }: { history: number[]; t: T }) {
+export function PerformanceChart({ history, t, money = usd }: { history: number[]; t: T; money?: (n: number) => string }) {
   const pts = history.length > 1 ? history : [1, 1];
   const max = Math.max(...pts);
   const min = Math.min(...pts);
@@ -189,10 +225,10 @@ export function PerformanceChart({ history, t }: { history: number[]; t: T }) {
           <path d={path} fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" />
           <circle cx={last[0]} cy={last[1]} r="3.5" fill="#059669" stroke="#ffffff" strokeWidth="1.5" />
           <text x={8} y={16} fontSize="11" fill="rgba(100,116,139,0.9)" className="font-mono" direction="ltr">
-            {usd(max)}
+            {money(max)}
           </text>
           <text x={8} y={H - 6} fontSize="11" fill="rgba(100,116,139,0.9)" className="font-mono" direction="ltr">
-            {usd(min)}
+            {money(min)}
           </text>
         </svg>
       </div>
@@ -223,7 +259,7 @@ export function buildHoldingRows(holdings: ClientView["client"]["holdings"], mar
     .sort((a, b) => b.value - a.value);
 }
 
-export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lang: Lang }) {
+export function HoldingsTable({ rows, t, lang, money = usd }: { rows: HoldingRow[]; t: T; lang: Lang; money?: (n: number) => string }) {
   const total = rows.reduce((s, r) => s + r.value, 0) || 1;
   if (rows.length === 0) {
     return (
@@ -235,23 +271,24 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
   }
   return (
     <Card className="overflow-hidden">
-      {/* desktop table (md+) */}
-      <div className="hidden md:block">
-        <table className="w-full text-sm">
+      {/* desktop table (lg+) — wrapped in its own horizontal scroller so it
+          can never crop columns or push the page wider than the viewport */}
+      <div className="hidden overflow-x-auto lg:block">
+        <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-slate-200/70 text-[12px] font-semibold uppercase tracking-wide text-slate-400">
-              <th className="px-6 py-3.5 text-start font-semibold">{t("holdings")}</th>
-              <th className="px-4 py-3.5 text-end font-semibold">{t("units")}</th>
-              <th className="px-4 py-3.5 text-end font-semibold">{t("price")}</th>
-              <th className="px-4 py-3.5 text-end font-semibold">{t("value")}</th>
-              <th className="px-4 py-3.5 text-end font-semibold">{t("change24h")}</th>
-              <th className="px-6 py-3.5 text-end font-semibold">%</th>
+              <th className="px-5 py-3.5 text-start font-semibold">{t("holdings")}</th>
+              <th className="px-3 py-3.5 text-end font-semibold">{t("units")}</th>
+              <th className="px-3 py-3.5 text-end font-semibold">{t("price")}</th>
+              <th className="px-3 py-3.5 text-end font-semibold">{t("value")}</th>
+              <th className="px-3 py-3.5 text-end font-semibold">{t("change24h")}</th>
+              <th className="px-5 py-3.5 text-end font-semibold">%</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.coin.id} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/60">
-                <td className="px-6 py-3.5">
+                <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
                     <CoinBadge glyph={r.coin.glyph} gradient={r.coin.gradient} className="h-9 w-9 text-[13px]" />
                     <div className="min-w-0">
@@ -262,16 +299,16 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
                     </div>
                   </div>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-end font-semibold tabular-nums text-slate-500" dir="ltr">
+                <td className="whitespace-nowrap px-3 py-3.5 text-end font-semibold tabular-nums text-slate-500" dir="ltr">
                   {fmtUnits(r.units)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-end tabular-nums text-slate-500" dir="ltr">
-                  {formatPrice(r.coin.price)}
+                <td className="whitespace-nowrap px-3 py-3.5 text-end tabular-nums text-slate-500" dir="ltr">
+                  {money(r.coin.price)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-end font-bold tabular-nums text-slate-900" dir="ltr">
-                  {usd(r.value)}
+                <td className="whitespace-nowrap px-3 py-3.5 text-end font-bold tabular-nums text-slate-900" dir="ltr">
+                  {money(r.value)}
                 </td>
-                <td className="px-4 py-3.5 text-end">
+                <td className="px-3 py-3.5 text-end">
                   <span
                     className={cn("inline-block rounded-md px-2 py-1 text-[12px] font-bold tabular-nums", r.coin.change24h >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800")}
                     dir="ltr"
@@ -279,7 +316,7 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
                     {formatChange(r.coin.change24h)}
                   </span>
                 </td>
-                <td className="px-6 py-3.5 text-end">
+                <td className="px-5 py-3.5 text-end">
                   <div className="flex items-center justify-end gap-2.5">
                     <svg viewBox="0 0 72 28" className="h-7 w-16" preserveAspectRatio="none" aria-hidden="true">
                       <path d={r.sparkPath} fill="none" stroke={r.coin.change24h >= 0 ? "#059669" : "#fbbf24"} strokeWidth="1.8" strokeLinecap="round" />
@@ -294,8 +331,8 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
           </tbody>
         </table>
       </div>
-      {/* mobile stacked cards (<md) — never scrolls horizontally */}
-      <ul className="divide-y divide-slate-100 md:hidden">
+      {/* stacked cards (<lg) — never scrolls horizontally */}
+      <ul className="divide-y divide-slate-100 lg:hidden">
         {rows.map((r) => (
           <li key={r.coin.id} className="p-4">
             <div className="flex items-center gap-3">
@@ -308,7 +345,7 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
               </div>
               <div className="shrink-0 text-end">
                 <p className="whitespace-nowrap text-[13.5px] font-bold tabular-nums text-slate-900" dir="ltr">
-                  {usd(r.value)}
+                  {money(r.value)}
                 </p>
                 <p className={cn("text-[11.5px] font-bold tabular-nums", r.coin.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                   {formatChange(r.coin.change24h)}
@@ -317,7 +354,7 @@ export function HoldingsTable({ rows, t, lang }: { rows: HoldingRow[]; t: T; lan
             </div>
             <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
               <span className="text-[11px] text-slate-400" dir="ltr">
-                {t("price")}: {formatPrice(r.coin.price)}
+                {t("price")}: {money(r.coin.price)}
               </span>
               <div className="flex items-center gap-2">
                 <svg viewBox="0 0 72 28" className="h-6 w-14" preserveAspectRatio="none" aria-hidden="true">
@@ -363,7 +400,7 @@ export function AllocationBar({ segments, t }: { segments: Array<{ label: string
 
 /* ---------------- transactions ---------------- */
 
-export function TxRowItem({ tx, t, lang, onCancel }: { tx: Tx; t: T; lang: Lang; onCancel?: (tx: Tx) => void }) {
+export function TxRowItem({ tx, t, lang, onCancel, money = usd }: { tx: Tx; t: T; lang: Lang; onCancel?: (tx: Tx) => void; money?: (n: number) => string }) {
   const credit = tx.type === "CREDIT";
   const [open, setOpen] = useState(false);
   const history = [...(tx.history ?? [])].reverse();
@@ -386,7 +423,7 @@ export function TxRowItem({ tx, t, lang, onCancel }: { tx: Tx; t: T; lang: Lang;
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className={cn("whitespace-nowrap text-[13.5px] font-bold tabular-nums", credit ? "text-emerald-600" : "text-amber-600")} dir="ltr">
             {credit ? "+" : "−"}
-            {usd(tx.amount)}
+            {money(tx.amount)}
           </span>
           <StatusPill status={tx.status} t={t} />
         </div>
@@ -401,7 +438,7 @@ export function TxRowItem({ tx, t, lang, onCancel }: { tx: Tx; t: T; lang: Lang;
             {tx.asset && <Detail label={t("requestAsset")} value={tx.asset} />}
             {tx.destination && <Detail label={t("requestDestination")} value={tx.destination} />}
             <Detail label={t("requestNote")} value={tx.notes} />
-            <Detail label={t("requestAmount")} value={usd(tx.amount)} mono />
+            <Detail label={t("requestAmount")} value={money(tx.amount)} mono />
           </div>
 
           {history.length > 0 && (
@@ -572,7 +609,7 @@ export function RequestModal({
                 placeholder="0.00"
                 dir="ltr"
                 aria-label={t("requestAmount")}
-                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
               />
             </label>
             <label className="block">
@@ -581,7 +618,7 @@ export function RequestModal({
                 value={asset}
                 onChange={(e) => setAsset(e.target.value)}
                 aria-label={t("requestAsset")}
-                className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+                className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
               >
                 {ASSET_OPTIONS.map((a) => (
                   <option key={a} value={a}>
@@ -604,7 +641,7 @@ export function RequestModal({
               placeholder={kind === "withdrawal" ? "0x… / IBAN / wallet" : kind === "trade" ? "e.g. Buy BTC with USD" : "Optional reference"}
               dir={kind === "withdrawal" ? "ltr" : undefined}
               aria-label={t("requestDestination")}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
             />
           </label>
 
@@ -693,13 +730,17 @@ export function ProfileCard({
   t,
   onProfileSave,
   onPasswordSave,
+  onCurrencyChange,
   lang,
+  money = usd,
 }: {
   view: ClientView;
   t: T;
   onProfileSave: (patch: { phone: string; country: string; address: string; city: string; postcode: string }) => Promise<string | null>;
   onPasswordSave: (current: string, next: string) => Promise<string | null>;
+  onCurrencyChange: (code: CurrencyCode) => void;
   lang: Lang;
+  money?: (n: number) => string;
 }) {
   const c = view.client;
   const fin = view.financials;
@@ -740,15 +781,15 @@ export function ProfileCard({
     [t("address"), [c.address, c.city, c.postcode].filter(Boolean).join(", ") || "—"],
     [t("country"), c.country || "—"],
     [t("accountNo"), c.accountNo, true],
-    [t("openingBalance"), usd(c.openingBalance), true],
-    [t("creditsLabel"), usd(fin.credits), true],
-    [t("debitsLabel"), usd(fin.debits), true],
+    [t("openingBalance"), money(c.openingBalance), true],
+    [t("creditsLabel"), money(fin.credits), true],
+    [t("debitsLabel"), money(fin.debits), true],
     [t("statusLabel"), c.status === "active" ? t("active") : t("suspended")],
     [t("tierLabel"), c.tier === "Private" ? t("tierPrivate") : c.tier === "Premium" ? t("tierPremium") : t("tierStandard")],
   ];
 
   const inputCls =
-    "h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15";
+    "h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm";
 
   return (
     <Card className="overflow-hidden">
@@ -813,6 +854,36 @@ export function ProfileCard({
           </dl>
         )}
 
+        {/* Source of Funds — free text curated by the Super Admin (#9) */}
+        <div className="mt-5 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-4">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-emerald-700">{t("sourceOfFunds")}</p>
+          <p className="mt-1 text-[12px] text-slate-500">{t("sourceOfFundsSub")}</p>
+          <p className="mt-2 break-words text-[13px] font-semibold leading-relaxed text-slate-700" dir="auto">
+            {c.sourceOfFunds?.trim() ? c.sourceOfFunds : <span className="font-normal italic text-slate-400">{t("sourceOfFundsEmpty")}</span>}
+          </p>
+        </div>
+
+        {/* Display currency — one formatter drives every figure on the dashboard */}
+        <div className="mt-4 border-t border-slate-200/70 pt-4">
+          <label className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-[13px] font-medium text-slate-600">{t("displayCurrency")}</span>
+            <select
+              value={c.currency ?? "USD"}
+              onChange={(e) => onCurrencyChange(e.target.value as CurrencyCode)}
+              aria-label={t("displayCurrency")}
+              dir="ltr"
+              className="h-10 min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[16px] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-sm"
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code} · {CURRENCY_META[code]?.label ?? code}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{t("currencyNote")}</p>
+        </div>
+
         <div className="mt-5 border-t border-slate-200/70 pt-4">
           {!pwOpen ? (
             <button onClick={() => setPwOpen(true)} className="text-[13px] font-bold text-emerald-600 transition-colors hover:text-emerald-700">
@@ -872,7 +943,7 @@ export function ContactCard({ t }: { t: T }) {
 
 /* ---------------- market overview ---------------- */
 
-export function MarketStrip({ coins, stocks, t, singleColumn }: { coins: Coin[]; stocks: Coin[]; t: T; singleColumn?: boolean }) {
+export function MarketStrip({ coins, stocks, t, singleColumn, money = usd }: { coins: Coin[]; stocks: Coin[]; t: T; singleColumn?: boolean; money?: (n: number) => string }) {
   const top = [...coins, ...stocks].slice(0, 6);
   return (
     <Card className="overflow-hidden">
@@ -892,7 +963,7 @@ export function MarketStrip({ coins, stocks, t, singleColumn }: { coins: Coin[];
             </div>
             <div className="shrink-0 text-end">
               <p className="whitespace-nowrap text-[13px] font-bold tabular-nums text-slate-900" dir="ltr">
-                {formatPrice(c.price)}
+                {money(c.price)}
               </p>
               <p className={cn("text-[11px] font-bold tabular-nums", c.change24h >= 0 ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                 {formatChange(c.change24h)}

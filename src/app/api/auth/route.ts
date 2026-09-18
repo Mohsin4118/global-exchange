@@ -108,6 +108,8 @@ export async function POST(req: NextRequest) {
         kycStatus: "unverified",
         agent: "Super Admin",
         managerNote: "",
+        sourceOfFunds: "",
+        currency: "USD",
         createdAtISO: new Date().toISOString().slice(0, 10),
       });
       pushNotification(data, {

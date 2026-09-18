@@ -39,7 +39,7 @@ export function PasswordInput({
         aria-label={ariaLabel}
         dir="ltr"
         className={cn(
-          "h-11 w-full rounded-xl border pe-11 text-sm outline-none transition",
+          "h-11 w-full rounded-xl border pe-11 text-[16px] outline-none transition sm:text-sm",
           theme === "dark"
             ? "border-white/10 bg-white/[0.03] px-4 text-white placeholder:text-white/25 focus:border-[#00E5A0]/50 focus:ring-2 focus:ring-[#00E5A0]/15"
             : "rounded-lg border-slate-200 px-3.5 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15",

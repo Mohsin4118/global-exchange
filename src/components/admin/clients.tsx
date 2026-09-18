@@ -42,6 +42,15 @@ const KYC_OPTIONS = [
   { value: "pending", label: "Pending" },
   { value: "unverified", label: "Unverified" },
 ];
+const CURRENCY_OPTIONS = [
+  { value: "USD", label: "USD · US Dollar" },
+  { value: "SAR", label: "SAR · Saudi Riyal" },
+  { value: "KWD", label: "KWD · Kuwaiti Dinar" },
+  { value: "AED", label: "AED · UAE Dirham" },
+  { value: "QAR", label: "QAR · Qatari Riyal" },
+  { value: "OMR", label: "OMR · Omani Rial" },
+  { value: "GBP", label: "GBP · British Pound" },
+];
 const KIND_OPTIONS: { value: TxKind; label: string }[] = [
   { value: "deposit", label: "Deposit" },
   { value: "withdrawal", label: "Withdrawal" },
@@ -303,7 +312,7 @@ type ClientRecord = AdminCtx["state"]["clients"][number];
 export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
   const client = ctx.state.clients.find((c) => c.id === ctx.selectedClientId);
   const [form, setForm] = useState<Record<string, string> | null>(null);
-  const [access, setAccess] = useState<{ password: string; tier: string; status: string; kyc: string; note: string; opening: string } | null>(null);
+  const [access, setAccess] = useState<{ password: string; tier: string; status: string; kyc: string; note: string; sof: string; currency: string; opening: string } | null>(null);
   const [holdings, setHoldings] = useState<Array<{ assetId: string; units: string }> | null>(null);
   const [note, setNote] = useState("");
   const [txForm, setTxForm] = useState({ dir: "CREDIT" as TxType, kind: "deposit" as TxKind, status: "COMPLETED" as TxStatus, amount: "", label: "", date: todayISO(), method: "Bank Transfer", asset: "", notes: "" });
@@ -313,7 +322,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
 
   // Keep drafts in sync with the server record (content-based: never clobbers
   // typing when nothing changed, always syncs after a save or external edit).
-  const signature = client ? JSON.stringify([client.name, client.email, client.phone, client.country, client.address, client.city, client.postcode, client.accountNo, client.agent, client.tier, client.status, client.kycStatus, client.managerNote, client.openingBalance, client.holdings]) : "";
+  const signature = client ? JSON.stringify([client.name, client.email, client.phone, client.country, client.address, client.city, client.postcode, client.accountNo, client.agent, client.tier, client.status, client.kycStatus, client.managerNote, client.sourceOfFunds, client.currency, client.openingBalance, client.holdings]) : "";
   useEffect(() => {
     if (!client) return;
     setForm({
@@ -327,7 +336,7 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
       accountNo: client.accountNo,
       agent: client.agent,
     });
-    setAccess({ password: "", tier: client.tier, status: client.status, kyc: client.kycStatus, note: client.managerNote, opening: String(client.openingBalance) });
+    setAccess({ password: "", tier: client.tier, status: client.status, kyc: client.kycStatus, note: client.managerNote, sof: client.sourceOfFunds ?? "", currency: client.currency ?? "USD", opening: String(client.openingBalance) });
     setHoldings(client.holdings.map((h) => ({ assetId: h.assetId, units: String(h.units) })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.selectedClientId, signature]);
@@ -394,10 +403,12 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
           status: access.status as ClientRecord["status"],
           kycStatus: access.kyc as ClientRecord["kycStatus"],
           managerNote: access.note,
+          sourceOfFunds: access.sof,
+          currency: access.currency as ClientRecord["currency"],
           openingBalance: parseFloat(access.opening) || 0,
         },
       },
-      { title: "Portal updated", description: "Access, tier, status, note and opening balance now match on the client dashboard." },
+      { title: "Portal updated", description: "Access, tier, status, note, source of funds, currency and opening balance now match on the client dashboard." },
     );
     if (ok) setAccess((a) => (a ? { ...a, password: "" } : a));
   };
@@ -603,6 +614,25 @@ export function ClientDetailPage({ ctx }: { ctx: AdminCtx }) {
                     className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
                   />
                 </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Source of Funds (free text, shown on the client account)</span>
+                  <textarea
+                    rows={2}
+                    value={access.sof}
+                    onChange={(e) => setAccess({ ...access, sof: e.target.value })}
+                    placeholder="e.g. Salary, savings and long-term investments."
+                    className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+                  />
+                </label>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[13px] font-medium text-slate-600">Display Currency (client dashboard)</span>
+                    <Select value={access.currency} onChange={(v) => setAccess({ ...access, currency: v })} options={CURRENCY_OPTIONS} />
+                  </label>
+                  <div className="flex items-end pb-1">
+                    <p className="text-[12px] leading-relaxed text-slate-400">Currency, note and source of funds sync to the client dashboard within seconds.</p>
+                  </div>
+                </div>
                 <div className="flex justify-end">
                   <PrimaryButton onClick={saveAccess}>Save Access &amp; Portal</PrimaryButton>
                 </div>

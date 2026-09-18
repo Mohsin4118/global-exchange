@@ -8,6 +8,26 @@ export type ClientStatus = "active" | "suspended";
 export type ClientTier = "Standard" | "Premium" | "Private";
 export type KycStatus = "verified" | "pending" | "unverified";
 
+/* ---------------- display currency (client preference) ------------- */
+/*  The LEDGER is always stored in USD. The display currency is a
+    per-account preference: every money figure on the client dashboard
+    is rendered through ONE formatter that applies the reference rate
+    from the DB (admin-managed). No hardcoded frontend rates. */
+export const CURRENCIES = ["USD", "SAR", "KWD", "AED", "QAR", "OMR", "GBP"] as const;
+export type CurrencyCode = (typeof CURRENCIES)[number];
+/** USD-based reference rates (1 USD = rate). Seeded with official pegs
+    where they exist (SAR/AED/QAR/OMR) and indicative market values for
+    free floaters (KWD/GBP); the Super Admin can update them at any time. */
+export const DEFAULT_FX: Record<CurrencyCode, number> = {
+  USD: 1,
+  SAR: 3.75,
+  KWD: 0.3065,
+  AED: 3.6725,
+  QAR: 3.64,
+  OMR: 0.3845,
+  GBP: 0.787,
+};
+
 export type TxKind = "deposit" | "withdrawal" | "trade" | "adjustment" | "opening";
 export type TxType = "CREDIT" | "DEBIT"; // CREDIT = money in, DEBIT = money out
 /** Full request lifecycle. A client can only ever CREATE a PENDING request;
@@ -79,6 +99,8 @@ export interface Client {
   kycStatus: KycStatus;
   agent: string; // assigned agent, "" = none
   managerNote: string; // personal message rendered on the client dashboard
+  sourceOfFunds: string; // FREE TEXT curated by the Super Admin, shown on the client account
+  currency: CurrencyCode; // display-currency preference for the client dashboard
   createdAtISO: string;
   lastLoginISO?: string;
   isDemo?: boolean;
@@ -110,7 +132,8 @@ export type AuditAction =
   | "Update Role"
   | "Sign In"
   | "Send Notification"
-  | "Change Password";
+  | "Change Password"
+  | "Update Rates";
 
 export interface AuditEntry {
   id: string;
@@ -174,6 +197,7 @@ export interface DbData {
   roles: AdminRole[];
   sessions: Session[];
   adminUser: AdminUser;
+  fx: Record<CurrencyCode, number>; // reference rates for display-currency conversion
 }
 
 /* ---------------- computed financials (derived, never stored) ------- */
@@ -193,6 +217,7 @@ export interface ClientView {
   financials: ComputedFinancials;
   txs: Tx[];
   notifications: Notification[];
+  fx: Record<string, number>; // admin-managed reference rates (USD-based)
 }
 
 export type PublicClient = Omit<Client, "passwordHash">;
@@ -207,6 +232,7 @@ export interface AdminSnapshot {
   staff: StaffMember[];
   roles: AdminRole[];
   stats: AdminStats;
+  fx: Record<string, number>; // admin-managed reference rates (USD-based)
 }
 
 export interface AdminStats {
@@ -240,6 +266,7 @@ export type ClientAction =
       method?: string;
     }
   | { action: "cancel-request"; id: string }
+  | { action: "set-currency"; currency: CurrencyCode }
   | { action: "update-profile"; phone?: string; country?: string; address?: string; city?: string; postcode?: string }
   | { action: "change-password"; current: string; next: string }
   | { action: "mark-read"; ids: "all" | string[] };
@@ -253,6 +280,7 @@ export type AdminAction =
   | { action: "delete-transaction"; id: string }
   | { action: "set-transaction-status"; id: string; status: TxStatus; note?: string; internalNote?: string }
   | { action: "send-notification"; clientId: string; title: string; body: string }
+  | { action: "set-rates"; rates: Record<string, number> }
   | { action: "mark-read"; id: string }
   | { action: "mark-all-read" }
   | { action: "add-comment"; clientId: string; body: string }
@@ -287,6 +315,8 @@ export interface UpdateClientInput {
   status?: ClientStatus;
   kycStatus?: KycStatus;
   managerNote?: string;
+  sourceOfFunds?: string; // free text, shown on the client account
+  currency?: CurrencyCode; // display-currency preference
   openingBalance?: number;
   holdings?: Holding[];
 }

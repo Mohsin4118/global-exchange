@@ -5,6 +5,7 @@ import { ArrowLeft, Check, ChevronDown, Clock, Download, Pencil, Plus, Trash2, X
 import { usd, type TxType } from "@/lib/admin-data";
 import type { AdminCtx } from "./types";
 import type { TxEvent, TxKind, TxStatus } from "@/lib/shared-types";
+import { CURRENCIES as CURRENCY_CODES } from "@/lib/shared-types";
 import { Card, Modal, MonoId, OutlineButton, PageHeader, PrimaryButton, SearchInput, Select, StatusBadge, statusLabel, TextInput } from "./ui";
 import { cn } from "@/lib/utils";
 
@@ -896,7 +897,9 @@ export function BalancesPage({ ctx }: { ctx: AdminCtx }) {
     <div>
       <PageHeader title="Balances" subtitle="Live balances computed from the ledger — adjust the opening balance to correct an account." />
 
-      <Card className="p-4">
+      <RatesCard ctx={ctx} />
+
+      <Card className="mt-5 p-4">
         <SearchInput value={query} onChange={setQuery} placeholder="Search by name, email, or account no..." />
       </Card>
 
@@ -951,6 +954,62 @@ export function BalancesPage({ ctx }: { ctx: AdminCtx }) {
 
       <AdjustBalanceModal client={adjusting} onClose={() => setAdjusting(null)} ctx={ctx} />
     </div>
+  );
+}
+
+/* Currency reference rates — the ONE source for the client display-currency
+   formatter. USD is the ledger base (locked to 1); the other rates are
+   admin-managed indicative values. */
+function RatesCard({ ctx }: { ctx: AdminCtx }) {
+  const [draft, setDraft] = useState<Record<string, string> | null>(null);
+  const fx = ctx.state.fx;
+  const dirty =
+    draft &&
+    CURRENCY_CODES.some((code) => code !== "USD" && parseFloat(draft[code]) !== fx[code]);
+  return (
+    <Card className="p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">Currency Reference Rates</h2>
+          <p className="mt-0.5 text-[13px] text-slate-500">
+            Indicative USD-based rates used by the client dashboard display-currency selector. The ledger base (USD) is locked to 1.
+          </p>
+        </div>
+        {dirty && (
+          <div className="flex gap-2">
+            <OutlineButton onClick={() => setDraft(null)}>Reset</OutlineButton>
+            <PrimaryButton
+              onClick={async () => {
+                if (!draft) return;
+                const rates: Record<string, number> = {};
+                for (const code of CURRENCY_CODES) rates[code] = parseFloat(draft[code]) || 1;
+                const ok = await ctx.runAction({ action: "set-rates", rates }, { title: "Rates updated", description: "Client dashboards now convert with the new reference rates." });
+                if (ok) setDraft(null);
+              }}
+            >
+              Save Rates
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        {CURRENCY_CODES.map((code) => (
+          <label key={code} className="block">
+            <span className="mb-1 block text-[12px] font-semibold text-slate-500">{code}</span>
+            <input
+              type="number"
+              step="any"
+              min="0"
+              disabled={code === "USD"}
+              value={draft?.[code] ?? String(fx[code] ?? 1)}
+              onChange={(e) => setDraft({ ...(draft ?? Object.fromEntries(CURRENCY_CODES.map((c) => [c, String(fx[c] ?? 1)]))), [code]: e.target.value })}
+              dir="ltr"
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 disabled:bg-slate-50 disabled:text-slate-400"
+            />
+          </label>
+        ))}
+      </div>
+    </Card>
   );
 }
 

@@ -11,6 +11,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { DEFAULT_FX } from "@/lib/shared-types";
 import type {
   AdminRole,
   AdminSnapshot,
@@ -204,6 +205,8 @@ function seed(): DbData {
       kycStatus: l.credits.length > 0 ? "verified" : "unverified",
       agent: l.agent,
       managerNote: "",
+      sourceOfFunds: "",
+      currency: "USD",
       createdAtISO: daysAgoISO(l.joined),
     });
     for (const [amount, label] of l.credits) {
@@ -283,6 +286,8 @@ function seed(): DbData {
     kycStatus: "verified",
     agent: "Super Admin",
     managerNote: "Your dedicated portfolio manager is available Mon–Fri, 9am–6pm GMT.",
+    sourceOfFunds: "Salary, savings and long-term investments.",
+    currency: "USD",
     createdAtISO: daysAgoISO(26),
     isDemo: true,
   });
@@ -358,6 +363,8 @@ function seed(): DbData {
     kycStatus: "pending",
     agent: "Super Admin",
     managerNote: "",
+    sourceOfFunds: "",
+    currency: "USD",
     createdAtISO: daysAgoISO(2),
   });
   txs.push(makeTx({ clientId: sarahId, dateISO: daysAgoISO(2), kind: "opening", type: "CREDIT", amount: 25000, label: "Account opening deposit", labelKey: "txOpening" }));
@@ -413,6 +420,7 @@ function seed(): DbData {
       name: "Super Admin",
       passwordHash: hashPassword("Super@2026"),
     },
+    fx: { ...DEFAULT_FX },
   };
 }
 
@@ -436,6 +444,12 @@ function readDb(): DbData {
     parsed.audit ??= [];
     parsed.notifications ??= [];
     parsed.txs ??= [];
+    // display-currency backfill (older db files keep working)
+    parsed.fx = { ...DEFAULT_FX, ...(parsed.fx ?? {}) };
+    for (const c of parsed.clients) {
+      c.currency ??= "USD";
+      c.sourceOfFunds ??= "";
+    }
     return parsed;
   } catch {
     const seeded = seed();
@@ -618,11 +632,12 @@ export function adminSnapshot(): AdminSnapshot {
     staff: data.staff,
     roles: data.roles,
     stats,
+    fx: data.fx,
   };
 }
 
 /** The one and only payload a client may ever receive about itself. */
-export function clientView(clientId: string): { ok: true; view: { client: PublicClient; financials: ComputedFinancials; txs: Tx[]; notifications: Notification[] } } | { ok: false } {
+export function clientView(clientId: string): { ok: true; view: { client: PublicClient; financials: ComputedFinancials; txs: Tx[]; notifications: Notification[]; fx: Record<string, number> } } | { ok: false } {
   const data = readDb();
   const client = data.clients.find((c) => c.id === clientId);
   if (!client) return { ok: false };
@@ -636,6 +651,7 @@ export function clientView(clientId: string): { ok: true; view: { client: Public
         .sort((a, b) => (a.dateISO === b.dateISO ? b.createdAtISO.localeCompare(a.createdAtISO) : b.dateISO.localeCompare(a.dateISO)))
         .map(clientSafeTx),
       notifications: data.notifications.filter((n) => n.audience === clientId).sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO)),
+      fx: data.fx,
     },
   };
 }

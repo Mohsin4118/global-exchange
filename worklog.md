@@ -507,3 +507,20 @@ Work Log:
 
 Stage Summary:
 - Tasks 25-39 confirmed COMPLETE and re-proven end-to-end at both API level (39/39) and real UI level (client submit → PENDING → admin review/decide → balance moves only on completion → client notified with references → AR RTL intact); deliverable reset to a pristine seeded state and zip rebuilt
+
+---
+Task ID: 27
+Agent: Main agent (Super Z)
+Task: URGENT — Client Dashboard mobile responsiveness (root-cause fix, no zoom/scale hacks) + Source of Funds free text + functional multi-currency display (SAR/KWD/AED/QAR/OMR/GBP)
+
+Work Log:
+- DIAGNOSED with real DOM measurement (agent-browser, every section at 320-1440): the layout never "overflowed" (scrollW==vw) — the REAL problems were (a) body wrapper `px-0 sm:px-6` = cards/heading flush against the screen edges at <640px (the client's "stuck/cropped, must zoom out" complaint), (b) topbar px-3 misaligned with content, (c) desktop holdings table overflowing its overflow-hidden card at md-lg so the right columns were VISIBLY CROPPED, (d) inputs at 14px triggering iOS Safari focus auto-zoom
+- FIXED root causes (genuine layout, no transform/zoom/body-overflow hacks): body wrapper px-0→px-4 (cards now have equal 16px margins, verified cardLeft=16/cardRight=vw-16 at 375/390/393/414/430), topbar px-3→px-4 (aligned), dashboard root `overflow-x-clip` as safety only, holdings table now lg+ only with px-5/px-3 paddings + min-w-[640px] inside its own overflow-x-auto scroller (stacked cards below lg; 0 offenders at 768/1024/1440), all dashboard inputs/selects ≥16px on mobile (text-[16px] sm:text-sm) to kill iOS focus zoom
+- NEW #9 Source of Funds: Client.sourceOfFunds free text — Super Admin edits it in Clients → Access & Portal Control; rendered on the client Account & Settings as a dedicated compliance card (EN+AR); syncs through the single DB (verified admin→client API within the same second)
+- NEW #10 Currency: CURRENCIES/DEFAULT_FX in shared-types (official pegs SAR 3.75 / AED 3.6725 / QAR 3.64 / OMR 0.3845, indicative KWD/GBP — admin-managed in DB, NOT hardcoded frontend rates); fx map seeded + backfilled in readDb; ClientView + AdminSnapshot now carry fx; ONE formatter fmtMoney/makeMoney drives EVERY money figure (KPIs, holdings, prices, tx rows, deposits/withdrawals, chart labels, profile rows); client selector on Overview + Account (set-currency action, server-validated) + admin per-client Display Currency select + admin "Currency Reference Rates" editor on the Balances page (set-rates action, USD locked to 1, audited); verified SAR 12,480→46,800.00 / GBP→£9,821.76 / admin rate change GBP 0.787→0.8 propagates to client fx
+- i18n: +5 keys EN+AR (sourceOfFunds/-Sub/-Empty, displayCurrency, currencyNote)
+- VERIFIED: all 7 client sections × 375/390/393/414/430 = 0 overflow, 0 offenders, 16px margins; AR at 390 all sections RTL-clean (مصدر الأموال + عملة العرض mirrored); desktop 1440 unchanged (sidebar, KPI grid, currency row); homepage 1440/390 no overflow, hero + CTA intact; tsc src 0 errors; lint 0 errors (46 warnings)
+- DB reset to pristine seed (fx present, demo sourceOfFunds set); zip rebuilt
+
+Stage Summary:
+- The dashboard now genuinely fits the viewport with proper margins at every width — no zoom, no cropping, no scale hacks; Source of Funds + functional display currency are live, admin-controlled, and synced through the one ledger; iOS focus-zoom eliminated

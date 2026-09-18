@@ -24,6 +24,7 @@ import {
   verifyPassword,
 } from "@/lib/server/db";
 import type { AdminAction, Client, Tx, TxEvent } from "@/lib/shared-types";
+import { CURRENCIES, DEFAULT_FX } from "@/lib/shared-types";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,8 @@ export async function POST(req: NextRequest) {
         kycStatus: "unverified",
         agent: "Super Admin",
         managerNote: "",
+        sourceOfFunds: "",
+        currency: "USD",
         createdAtISO: new Date().toISOString().slice(0, 10),
       });
       if (opening > 0) {
@@ -153,6 +156,8 @@ export async function POST(req: NextRequest) {
       if (patch.status !== undefined) (old.status = record.status), (next.status = patch.status), (record.status = patch.status);
       if (patch.kycStatus !== undefined) (old.kycStatus = record.kycStatus), (next.kycStatus = patch.kycStatus), (record.kycStatus = patch.kycStatus);
       if (patch.managerNote !== undefined) (old.managerNote = record.managerNote), (next.managerNote = patch.managerNote), (record.managerNote = patch.managerNote);
+      if (patch.sourceOfFunds !== undefined) (old.sourceOfFunds = record.sourceOfFunds), (next.sourceOfFunds = patch.sourceOfFunds), (record.sourceOfFunds = patch.sourceOfFunds);
+      if (patch.currency !== undefined && CURRENCIES.includes(patch.currency)) (old.currency = record.currency), (next.currency = patch.currency), (record.currency = patch.currency);
       if (patch.openingBalance !== undefined) {
         const value = round2(Math.max(0, Number(patch.openingBalance) || 0));
         (old.openingBalance = record.openingBalance), (next.openingBalance = value), (record.openingBalance = value);
@@ -417,6 +422,26 @@ export async function POST(req: NextRequest) {
     mutate((d) => {
       d.adminUser.passwordHash = hashPassword(body.next);
       pushAudit(d, "Change Password", "SESSION", '{"target":"admin account"}');
+    });
+    return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
+  }
+
+  /* ---------------- currency reference rates (admin-managed) ---------------- */
+
+  if (body.action === "set-rates") {
+    const incoming = body.rates ?? {};
+    const clean: Record<string, number> = {};
+    for (const code of CURRENCIES) {
+      if (code === "USD") {
+        clean[code] = 1; // the ledger base — locked
+        continue;
+      }
+      const raw = Number(incoming[code]);
+      clean[code] = Number.isFinite(raw) && raw > 0 ? Math.round(raw * 100000) / 100000 : (data.fx[code] ?? DEFAULT_FX[code]);
+    }
+    mutate((d) => {
+      d.fx = clean;
+      pushAudit(d, "Update Rates", "TRANSACTION", JSON.stringify(clean));
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }

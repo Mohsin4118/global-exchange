@@ -45,6 +45,7 @@ import {
   VerifiedBadge,
   buildHoldingRows,
   initials,
+  makeMoney,
   usd,
   type RequestKind,
   type T,
@@ -53,7 +54,9 @@ import { useToast } from "@/hooks/use-toast";
 import { apiClientAction, apiClientGet, apiLogout } from "@/lib/api";
 import { SITE_EMAIL, SITE_PHONE_DISPLAY, SITE_PHONE_TEL } from "@/lib/contact";
 import type { Coin } from "@/lib/market";
-import type { ClientView, Tx } from "@/lib/shared-types";
+import { CURRENCIES } from "@/lib/shared-types";
+import type { ClientView, CurrencyCode, Tx } from "@/lib/shared-types";
+import { CURRENCY_META } from "./dashboard-parts";
 import type { Lang, StringKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -94,7 +97,7 @@ export function ClientDashboard({
       }
       return;
     }
-    setView({ client: res.client!, financials: res.financials!, txs: res.txs!, notifications: res.notifications! });
+    setView({ client: res.client!, financials: res.financials!, txs: res.txs!, notifications: res.notifications!, fx: res.fx! });
     setReady(true);
   }, [onSignOut, t, toast]);
 
@@ -124,6 +127,18 @@ export function ClientDashboard({
 
   const suspended = view?.client.status === "suspended";
   const unread = view?.notifications.filter((n) => n.unread).length ?? 0;
+
+  /* ---- display currency: one formatter drives every figure (#10) ---- */
+  const cur = view?.client.currency ?? "USD";
+  const fx = view?.fx ?? { USD: 1 };
+  const money = useMemo(() => makeMoney(cur, fx), [cur, fx]);
+  const setCurrency = async (code: CurrencyCode) => {
+    if (!CURRENCIES.includes(code)) return;
+    const res = await apiClientAction({ action: "set-currency", currency: code });
+    if (res.ok && res.client && res.txs) {
+      setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
+    }
+  };
 
   /* ---- session performance chart ---- */
   const [history, setHistory] = useState<number[]>([]);
@@ -164,7 +179,7 @@ export function ClientDashboard({
     if (!res.ok) {
       return res.error === "funds" ? "requestTooMuch" : res.error === "duplicate" ? "requestDuplicate" : "requestInvalid";
     }
-    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
     toast({ title: t("requestSent"), description: t("requestSentSub") });
     setReqModal(null);
     return null;
@@ -177,21 +192,21 @@ export function ClientDashboard({
       toast({ title: t("requestInvalid") });
       return;
     }
-    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
     toast({ title: t("requestCancelledToast"), description: t("requestCancelledSub") });
   };
 
   const markAllRead = async () => {
     const res = await apiClientAction({ action: "mark-read", ids: "all" });
     if (res.ok && res.client && res.txs) {
-      setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+      setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
     }
   };
 
   const saveProfile = async (patch: { phone: string; country: string; address: string; city: string; postcode: string }): Promise<string | null> => {
     const res = await apiClientAction({ action: "update-profile", ...patch });
     if (!res.ok) return "requestInvalid";
-    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications! });
+    if (res.client && res.txs) setView({ client: res.client, financials: res.financials!, txs: res.txs, notifications: res.notifications!, fx: res.fx! });
     toast({ title: t("profileSaved") });
     return null;
   };
@@ -268,11 +283,11 @@ export function ClientDashboard({
   const c = view.client;
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] text-slate-900 [color-scheme:light]">
+    <div className="min-h-screen overflow-x-clip bg-[#f5f7fa] text-slate-900 [color-scheme:light]">
 
       {/* ---------- topbar ---------- */}
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6">
+        <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => setDrawer(true)}
@@ -329,7 +344,7 @@ export function ClientDashboard({
       </header>
 
       {/* ---------- body: sidebar + content ---------- */}
-      <div className="relative mx-auto flex w-full max-w-[1280px] items-start gap-6 px-0 sm:px-6">
+      <div className="relative mx-auto flex w-full max-w-[1280px] items-start gap-6 px-4 sm:px-6">
         {/* desktop sidebar */}
         <aside className="sticky top-[72px] hidden w-[218px] shrink-0 py-6 lg:block" aria-label="Client menu">
           <nav className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm p-2">
@@ -384,6 +399,9 @@ export function ClientDashboard({
               history={history}
               allocation={allocation}
               suspended={!!suspended}
+              money={money}
+              cur={cur}
+              onCurrency={setCurrency}
               onDeposit={() => !suspended && setReqModal("deposit")}
               onWithdraw={() => !suspended && setReqModal("withdrawal")}
               onGo={go}
@@ -436,7 +454,7 @@ export function ClientDashboard({
               <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
                 <ul className="divide-y divide-slate-100">
                   {(showAllTxs ? filteredTxs : filteredTxs.slice(0, 12)).map((tx) => (
-                    <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} onCancel={suspended ? undefined : cancelRequest} />
+                    <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : cancelRequest} />
                   ))}
                   {filteredTxs.length === 0 && (
                     <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noTx")}</li>
@@ -452,11 +470,11 @@ export function ClientDashboard({
           )}
 
           {section === "deposits" && (
-            <DepositsSection t={t} lang={lang} deposits={deposits} totalDeposits={totalDeposits} suspended={!!suspended} onDeposit={() => !suspended && setReqModal("deposit")} onCancel={suspended ? undefined : cancelRequest} />
+            <DepositsSection t={t} lang={lang} deposits={deposits} totalDeposits={totalDeposits} suspended={!!suspended} money={money} onDeposit={() => !suspended && setReqModal("deposit")} onCancel={suspended ? undefined : cancelRequest} />
           )}
 
           {section === "withdrawals" && (
-            <WithdrawalsSection t={t} lang={lang} withdrawals={withdrawals} available={available} pendingTotal={pendingWithdrawalTotal} totalWithdrawn={totalWithdrawn} suspended={!!suspended} onWithdraw={() => !suspended && setReqModal("withdrawal")} onCancel={suspended ? undefined : cancelRequest} />
+            <WithdrawalsSection t={t} lang={lang} withdrawals={withdrawals} available={available} pendingTotal={pendingWithdrawalTotal} totalWithdrawn={totalWithdrawn} suspended={!!suspended} money={money} onWithdraw={() => !suspended && setReqModal("withdrawal")} onCancel={suspended ? undefined : cancelRequest} />
           )}
 
           {section === "notifications" && (
@@ -469,7 +487,7 @@ export function ClientDashboard({
           {section === "account" && (
             <div className="grid grid-cols-1 gap-5">
               <SectionHeading title={t("menuAccount")} sub={`${t("accountNo")} ${c.accountNo}`} />
-              <ProfileCard view={view} t={t} lang={lang} onProfileSave={saveProfile} onPasswordSave={savePassword} />
+              <ProfileCard view={view} t={t} lang={lang} money={money} onProfileSave={saveProfile} onPasswordSave={savePassword} onCurrencyChange={setCurrency} />
               <ContactCard t={t} />
             </div>
           )}
@@ -599,6 +617,9 @@ function OverviewSection({
   history,
   allocation,
   suspended,
+  money,
+  cur,
+  onCurrency,
   onDeposit,
   onWithdraw,
   onGo,
@@ -619,6 +640,9 @@ function OverviewSection({
   history: number[];
   allocation: Array<{ label: string; value: number; color: string }>;
   suspended: boolean;
+  money: (n: number) => string;
+  cur: string;
+  onCurrency: (code: CurrencyCode) => void;
   onDeposit: () => void;
   onWithdraw: () => void;
   onGo: (s: Section) => void;
@@ -693,35 +717,56 @@ function OverviewSection({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <KpiCard
           label={t("totalBalance")}
-          value={usd(total)}
+          value={money(total)}
           sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
           subTone={portfolioChange >= 0 ? "up" : "down"}
           icon={<Wallet className="h-4 w-4" />}
         />
         <KpiCard
           label={t("cashAvailable")}
-          value={usd(cash)}
-          sub={pendingWithdrawalTotal > 0 ? `${t("availableFunds")}: ${usd(available)}` : t("availableFunds")}
+          value={money(cash)}
+          sub={pendingWithdrawalTotal > 0 ? `${t("availableFunds")}: ${money(available)}` : t("availableFunds")}
           icon={<ArrowDownLeft className="h-4 w-4" />}
         />
         <KpiCard
           label={t("invested")}
-          value={usd(invested)}
-          sub={`${t("totalDeposits")}: ${usd(totalDeposits)}`}
+          value={money(invested)}
+          sub={`${t("totalDeposits")}: ${money(totalDeposits)}`}
           icon={<PieChart className="h-4 w-4" />}
         />
       </div>
 
+      {/* display currency — switching it re-formats every figure from ONE source (#10) */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-sm">
+        <label className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">{t("displayCurrency")}</span>
+          <select
+            value={cur}
+            onChange={(e) => onCurrency(e.target.value as CurrencyCode)}
+            aria-label={t("displayCurrency")}
+            dir="ltr"
+            className="h-9 max-w-[190px] rounded-lg border border-slate-200 bg-white px-2.5 text-[16px] font-bold text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 sm:text-[13px]"
+          >
+            {CURRENCIES.map((code) => (
+              <option key={code} value={code}>
+                {code} · {CURRENCY_META[code]?.label ?? code}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="text-[10.5px] leading-snug text-slate-400">{t("currencyNote")}</p>
+      </div>
+
       {/* chart + market */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
-        <PerformanceChart history={history} t={t} />
-        <MarketStrip coins={coins} stocks={stocks} t={t} singleColumn />
+        <PerformanceChart history={history} t={t} money={money} />
+        <MarketStrip coins={coins} stocks={stocks} t={t} singleColumn money={money} />
       </div>
 
       {/* holdings preview + allocation + contacts */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
         <div className="min-w-0">
-          <HoldingsTable rows={holdingRows} t={t} lang={lang} />
+          <HoldingsTable rows={holdingRows} t={t} lang={lang} money={money} />
         </div>
         <div className="grid grid-cols-1 content-start gap-4 xl:gap-5">
           <AllocationBar segments={allocation} t={t} />
@@ -749,7 +794,7 @@ function OverviewSection({
                   </div>
                   <span className={cn("shrink-0 whitespace-nowrap text-[12.5px] font-bold tabular-nums", tx.type === "CREDIT" ? "text-emerald-600" : "text-amber-600")} dir="ltr">
                     {tx.type === "CREDIT" ? "+" : "−"}
-                    {usd(tx.amount)}
+                    {money(tx.amount)}
                   </span>
                 </li>
               ))}
@@ -771,6 +816,7 @@ function DepositsSection({
   deposits,
   totalDeposits,
   suspended,
+  money = usd,
   onDeposit,
   onCancel,
 }: {
@@ -779,6 +825,7 @@ function DepositsSection({
   deposits: Tx[];
   totalDeposits: number;
   suspended: boolean;
+  money?: (n: number) => string;
   onDeposit: () => void;
   onCancel?: (tx: Tx) => void;
 }) {
@@ -795,13 +842,13 @@ function DepositsSection({
         </button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <KpiCard label={t("depositsTotal")} value={usd(totalDeposits)} icon={<ArrowDownLeft className="h-4 w-4" />} />
+        <KpiCard label={t("depositsTotal")} value={money(totalDeposits)} icon={<ArrowDownLeft className="h-4 w-4" />} />
         <KpiCard label={t("menuDeposits")} value={String(deposits.length)} sub={t("allTime")} icon={<ArrowLeftRight className="h-4 w-4" />} />
       </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <ul className="divide-y divide-slate-100">
           {deposits.map((tx) => (
-            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} onCancel={suspended ? undefined : onCancel} />
+            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : onCancel} />
           ))}
           {deposits.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("noDeposits")}</li>}
         </ul>
@@ -820,6 +867,7 @@ function WithdrawalsSection({
   pendingTotal,
   totalWithdrawn,
   suspended,
+  money = usd,
   onWithdraw,
   onCancel,
 }: {
@@ -830,6 +878,7 @@ function WithdrawalsSection({
   pendingTotal: number;
   totalWithdrawn: number;
   suspended: boolean;
+  money?: (n: number) => string;
   onWithdraw: () => void;
   onCancel?: (tx: Tx) => void;
 }) {
@@ -846,14 +895,14 @@ function WithdrawalsSection({
         </button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <KpiCard label={t("availableFunds")} value={usd(available)} icon={<Wallet className="h-4 w-4" />} />
-        <KpiCard label={t("reqPending")} value={usd(pendingTotal)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <KpiCard label={t("withdrawalsTotal")} value={usd(totalWithdrawn)} icon={<ArrowLeftRight className="h-4 w-4" />} />
+        <KpiCard label={t("availableFunds")} value={money(available)} icon={<Wallet className="h-4 w-4" />} />
+        <KpiCard label={t("reqPending")} value={money(pendingTotal)} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <KpiCard label={t("withdrawalsTotal")} value={money(totalWithdrawn)} icon={<ArrowLeftRight className="h-4 w-4" />} />
       </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <ul className="divide-y divide-slate-100">
           {withdrawals.map((tx) => (
-            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} onCancel={suspended ? undefined : onCancel} />
+            <TxRowItem key={tx.id} tx={tx} t={t} lang={lang} money={money} onCancel={suspended ? undefined : onCancel} />
           ))}
           {withdrawals.length === 0 && <li className="px-6 py-12 text-center text-[13px] text-slate-500">{t("withdrawalsEmpty")}</li>}
         </ul>
