@@ -178,7 +178,7 @@ export default function Page() {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 />
-                <Hero t={t} coins={coins} onLogin={() => setView("login")} />
+                <Hero t={t} coins={coins} onLogin={() => setView("login")} onRegister={() => setView("register")} />
                 <Ticker coins={[...coins, ...stocks]} />
               </div>
               <TrustStats t={t} />
@@ -284,7 +284,7 @@ export default function Page() {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 />
-                <Hero t={t} coins={coins} onLogin={() => setView("login")} />
+                <Hero t={t} coins={coins} onLogin={() => setView("login")} onRegister={() => setView("register")} />
                 <Ticker coins={[...coins, ...stocks]} />
               </div>
             </motion.div>

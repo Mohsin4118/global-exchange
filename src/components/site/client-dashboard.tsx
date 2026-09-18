@@ -654,10 +654,6 @@ function OverviewSection({
   onGo: (s: Section) => void;
 }) {
   const c = view.client;
-  /* SOURCE free text — short entries share the KPI grid slot; longer
-     compliance texts promote the card to full width above the KPI row so a
-     long entry can never balloon a narrow desktop column. */
-  const sofLong = (c.sourceOfFunds ?? "").trim().length > 72;
   const recent = view.txs.slice(0, 5);
 
   return (
@@ -723,46 +719,27 @@ function OverviewSection({
         </div>
       )}
 
-      {/* financial cards — SOURCE is ALWAYS the FIRST card, directly above
-          Total Balance, identical card design system, real server values.
-          Short text: SOURCE shares the KPI grid (4-across on desktop).
-          Long text: SOURCE renders full-width above a 3-across KPI row.
-          Mobile stacks in the required order either way. */}
-      {sofLong ? (
-        <>
-          <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
-            <KpiCard
-              label={t("totalBalance")}
-              value={money(total)}
-              sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
-              subTone={portfolioChange >= 0 ? "up" : "down"}
-              icon={<Wallet className="h-4 w-4" />}
-            />
-            <KpiCard
-              label={t("cashAvailable")}
-              value={money(cash)}
-              sub={`${t("availableFunds")}: ${money(available)}`}
-              icon={<ArrowDownLeft className="h-4 w-4" />}
-            />
-            <KpiCard
-              label={t("invested")}
-              value={money(invested)}
-              sub={`${t("totalDeposits")}: ${money(totalDeposits)}`}
-              icon={<PieChart className="h-4 w-4" />}
-            />
-          </div>
-        </>
-      ) : (
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-          <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
-          <KpiCard
-            label={t("totalBalance")}
-            value={money(total)}
-            sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
-            subTone={portfolioChange >= 0 ? "up" : "down"}
-            icon={<Wallet className="h-4 w-4" />}
-          />
+      {/* financial cards — required order: TOTAL BALANCE → SOURCE (immediately
+          BELOW Total Balance) → CASH AVAILABLE → INVESTED → PORTFOLIO
+          PERFORMANCE (chart below). SOURCE uses the EXACT same card design
+          system as Total Balance (same Card surface, padding, label row,
+          icon chip, typography slots) — only the content differs: Total
+          Balance shows the live balance, SOURCE shows the free text curated
+          by the Super Admin for this client. Short entries use the big bold
+          value typography; longer compliance texts wrap compactly so the
+          card never balloons. Stacked full-width on every viewport, so
+          SOURCE is ALWAYS directly under Total Balance — desktop, tablet
+          and mobile. */}
+      <div className="grid grid-cols-1 gap-2.5 sm:gap-4">
+        <KpiCard
+          label={t("totalBalance")}
+          value={money(total)}
+          sub={`${portfolioChange >= 0 ? "+" : ""}${portfolioChange.toFixed(2)}% · ${t("change24h")}`}
+          subTone={portfolioChange >= 0 ? "up" : "down"}
+          icon={<Wallet className="h-4 w-4" />}
+        />
+        <SourceOfFundsCard text={c.sourceOfFunds} t={t} />
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4">
           <KpiCard
             label={t("cashAvailable")}
             value={money(cash)}
@@ -776,7 +753,7 @@ function OverviewSection({
             icon={<PieChart className="h-4 w-4" />}
           />
         </div>
-      )}
+      </div>
 
       {/* display currency — switching it re-formats every figure from ONE source (#10) */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2 shadow-sm sm:px-3.5 sm:py-2.5">

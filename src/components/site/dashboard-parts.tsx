@@ -191,15 +191,15 @@ export function KpiCard({
   );
 }
 
-/*  SOURCE card — a FIRST-CLASS financial card and the FIRST one on the
-    dashboard (directly ABOVE Total Balance). Uses the EXACT same design
-    system as KpiCard: same Card surface, padding scale, label row + icon
-    chip, same responsive behavior, same grid slot widths. Value slot uses
-    the Total Balance value typography (bold, tight, prominent) for short
-    entries; longer compliance-style texts wrap compactly at a readable
-    prose size so the card never balloons and never stretches its grid row.
-    Free text wraps naturally (multiline + long tokens) and renders Arabic
-    RTL via dir="auto". Read-only for the client (#9). */
+/*  SOURCE card — a FIRST-CLASS financial card placed IMMEDIATELY BELOW
+    the Total Balance card. Uses the EXACT same design system as KpiCard:
+    same Card surface, padding scale, label row + icon chip, same
+    responsive behavior, same full-width slot. Value slot uses the Total
+    Balance value typography (bold, tight, prominent) for short entries;
+    longer compliance-style texts wrap compactly at a readable prose size
+    so the card never balloons. Free text wraps naturally (multiline +
+    long tokens) and renders Arabic RTL via dir="auto". Read-only for the
+    client (#9). */
 export function SourceOfFundsCard({ text, t }: { text?: string; t: T }) {
   const value = text?.trim() ?? "";
   const long = value.length > 72;

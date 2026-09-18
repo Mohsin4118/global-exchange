@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import { DEFAULT_FX } from "@/lib/shared-types";
 import type {
+  AccountRequest,
   AdminRole,
   AdminSnapshot,
   AdminStats,
@@ -136,7 +137,7 @@ function makeTx(p: {
   };
 }
 
-function makeNotification(p: Pick<Notification, "audience" | "title" | "body" | "kind"> & { createdAtISO?: string; unread?: boolean }): Notification {
+function makeNotification(p: Pick<Notification, "audience" | "title" | "body" | "kind"> & { createdAtISO?: string; unread?: boolean; requestId?: string }): Notification {
   const createdAtISO = p.createdAtISO ?? new Date().toISOString();
   return {
     id: uid("n"),
@@ -144,6 +145,7 @@ function makeNotification(p: Pick<Notification, "audience" | "title" | "body" | 
     title: p.title,
     body: p.body,
     kind: p.kind,
+    ...(p.requestId ? { requestId: p.requestId } : {}),
     createdAtISO,
     time: relTime(createdAtISO),
     unread: p.unread ?? true,
@@ -408,6 +410,7 @@ function seed(): DbData {
 
   return {
     clients,
+    accountRequests: [],
     txs,
     notifications,
     audit,
@@ -438,6 +441,7 @@ function readDb(): DbData {
     const parsed = JSON.parse(raw) as DbData;
     if (!parsed.adminUser || !Array.isArray(parsed.clients)) throw new Error("corrupt db");
     parsed.sessions ??= [];
+    parsed.accountRequests ??= [];
     parsed.comments ??= [];
     parsed.staff ??= [];
     parsed.roles ??= [];
@@ -449,6 +453,12 @@ function readDb(): DbData {
     for (const c of parsed.clients) {
       c.currency ??= "USD";
       c.sourceOfFunds ??= "";
+    }
+    for (const r of parsed.accountRequests) {
+      r.status ??= "pending";
+      r.phone ??= "";
+      r.country ??= "";
+      r.address ??= "";
     }
     return parsed;
   } catch {
@@ -593,6 +603,9 @@ export function adminSnapshot(): AdminSnapshot {
     financials: computeFinancials(c.id, data),
     hasPortalPassword: true,
   }));
+  const accountRequests = [...data.accountRequests]
+    .sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO))
+    .map(({ passwordHash: _drop, ...rest }) => rest);
   const nameById = new Map(data.clients.map((c) => [c.id, c.name] as const));
   const txs = [...data.txs]
     .sort((a, b) => (a.dateISO === b.dateISO ? b.createdAtISO.localeCompare(a.createdAtISO) : b.dateISO.localeCompare(a.dateISO)))
@@ -614,6 +627,7 @@ export function adminSnapshot(): AdminSnapshot {
     credits: round2(completed.filter((t) => t.type === "CREDIT").reduce((s, t) => s + t.amount, 0)),
     debits: round2(completed.filter((t) => t.type === "DEBIT").reduce((s, t) => s + t.amount, 0)),
     pendingWithdrawals: txs.filter((t) => t.kind === "withdrawal" && inFlight(t.status)).length,
+    pendingAccountRequests: data.accountRequests.filter((r) => r.status === "pending").length,
     txCount: txs.length,
     requestCounts,
   };
@@ -625,6 +639,7 @@ export function adminSnapshot(): AdminSnapshot {
 
   return {
     clients,
+    accountRequests,
     txs,
     notifications: [...data.notifications].sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO)),
     audit: data.audit,
@@ -680,6 +695,6 @@ export function pushAudit(data: DbData, action: AuditAction, entity: AuditEntry[
   data.audit = [{ id: uid("a"), date: stamp(), admin: "Super Admin", action, entity, detailsNew, detailsOld, ip: "—" }, ...data.audit].slice(0, 300);
 }
 
-export function pushNotification(data: DbData, p: Pick<Notification, "audience" | "title" | "body" | "kind">) {
+export function pushNotification(data: DbData, p: Pick<Notification, "audience" | "title" | "body" | "kind"> & { requestId?: string }) {
   data.notifications = [makeNotification(p), ...data.notifications].slice(0, 400);
 }

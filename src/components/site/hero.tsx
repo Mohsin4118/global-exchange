@@ -14,10 +14,12 @@ export function Hero({
   t,
   coins,
   onLogin,
+  onRegister,
 }: {
   t: (k: StringKey) => string;
   coins: Coin[];
   onLogin: () => void;
+  onRegister?: () => void;
 }) {
   const [range, setRange] = useState<(typeof RANGES)[number]>("1D");
   const btc = coins[0];
@@ -51,11 +53,14 @@ export function Hero({
         {t("signIn")}
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
       </button>
+      {/* second CTA = NEW ACCOUNT REQUEST → registration form (EN: Get
+          Started / AR: انشاء حساب جديد) — falls back to the login view when
+          no registration handler is provided */}
       <button
-        onClick={onLogin}
+        onClick={onRegister ?? onLogin}
         className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[0.90625rem] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
       >
-        {t("login")}
+        {t("getStarted")}
       </button>
     </div>
   );

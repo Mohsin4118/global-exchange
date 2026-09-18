@@ -124,6 +124,87 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }
 
+  /* ------------------------------------------------------------------ */
+  /*  ACCOUNT REQUESTS — the public registration pipeline. A request is  */
+  /*  created PENDING by /api/auth client-register. Approve provisions   */
+  /*  a real client account (status active) with the credentials chosen  */
+  /*  at sign-up; reject stores the decision. Neither action ever runs   */
+  /*  automatically — and the SAME records drive the notifications, the  */
+  /*  request list, the audit trail and the client list.                 */
+  /* ------------------------------------------------------------------ */
+  if (body.action === "approve-request" || body.action === "reject-request") {
+    const target = data.accountRequests.find((r) => r.id === body.id);
+    if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+    if (target.status !== "pending") {
+      return NextResponse.json({ ok: false, error: "already-reviewed" }, { status: 409 });
+    }
+    if (body.action === "approve-request") {
+      if (data.clients.some((c) => c.email.toLowerCase() === target.email.toLowerCase())) {
+        return NextResponse.json({ ok: false, error: "taken" }, { status: 409 });
+      }
+      mutate((d) => {
+        const request = d.accountRequests.find((r) => r.id === body.id)!;
+        const id = uid("c");
+        d.clients.unshift({
+          id,
+          accountNo: `CW-${Math.floor(100000 + Math.random() * 900000)}`,
+          name: request.name,
+          email: request.email,
+          passwordHash: request.passwordHash, // credentials chosen at registration
+          phone: request.phone,
+          country: request.country,
+          address: request.address,
+          city: "",
+          postcode: "",
+          openingBalance: 0,
+          holdings: [],
+          tier: "Standard",
+          status: "active",
+          kycStatus: "unverified",
+          agent: "Super Admin",
+          managerNote: "",
+          sourceOfFunds: "",
+          currency: "USD",
+          createdAtISO: new Date().toISOString().slice(0, 10),
+        });
+        request.status = "approved";
+        request.reviewedAtISO = new Date().toISOString();
+        request.reviewedBy = "Super Admin";
+        request.clientId = id;
+        pushNotification(d, {
+          audience: id,
+          title: "Account approved",
+          body: "Your account request has been approved. You can now sign in with your email and password.",
+          kind: "account",
+        });
+        pushNotification(d, {
+          audience: "admin",
+          title: "Account Request Approved",
+          body: `${request.name} (${request.email}) was approved and added to Clients.`,
+          kind: "registration",
+        });
+        pushAudit(d, "Approve Account Request", "USER", JSON.stringify({ requestId: request.id, email: request.email, name: request.name, newClientId: id, status: "approved" }));
+      });
+      return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
+    }
+    const reason = body.reason?.trim().slice(0, 300);
+    mutate((d) => {
+      const request = d.accountRequests.find((r) => r.id === body.id)!;
+      request.status = "rejected";
+      request.reviewedAtISO = new Date().toISOString();
+      request.reviewedBy = "Super Admin";
+      if (reason) request.rejectReason = reason;
+      pushNotification(d, {
+        audience: "admin",
+        title: "Account Request Rejected",
+        body: `${request.name} (${request.email}) was rejected. No client account was created.`,
+        kind: "registration",
+      });
+      pushAudit(d, "Reject Account Request", "USER", JSON.stringify({ requestId: request.id, email: request.email, name: request.name, status: "rejected", ...(reason ? { reason } : {}) }));
+    });
+    return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
+  }
+
   if (body.action === "update-client") {
     const target = data.clients.find((c) => c.id === body.id);
     if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });

@@ -115,9 +115,37 @@ export interface Notification {
   time: string; // display label
   unread: boolean;
   kind: "registration" | "withdrawal" | "deposit" | "account" | "info";
+  requestId?: string; // set when the notification is tied to an account request
 }
 
+/* ---------------- account (registration) requests ---------------- */
+/*  Signing up NEVER creates an active client. Every public registration
+    becomes a PENDING AccountRequest; only the Super Admin can turn it into
+    a real client account (approve) or decline it (reject). */
+export type AccountRequestStatus = "pending" | "approved" | "rejected";
+
+export interface AccountRequest {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: ClientPasswordHash; // the credentials chosen at sign-up — activated on approval
+  phone: string;
+  country: string;
+  address: string;
+  status: AccountRequestStatus;
+  createdAtISO: string;
+  reviewedAtISO?: string;
+  reviewedBy?: string;
+  rejectReason?: string;
+  clientId?: string; // set on approval — links the request to the created client
+}
+
+/** Admin-facing request payload — never exposes the password hash. */
+export type PublicAccountRequest = Omit<AccountRequest, "passwordHash">;
+
 export type AuditAction =
+  | "Approve Account Request"
+  | "Reject Account Request"
   | "Create Transaction"
   | "Update Transaction"
   | "Delete Transaction"
@@ -189,6 +217,7 @@ export interface Session {
 
 export interface DbData {
   clients: Client[];
+  accountRequests: AccountRequest[];
   txs: Tx[];
   notifications: Notification[];
   audit: AuditEntry[];
@@ -225,6 +254,7 @@ export type PublicClient = Omit<Client, "passwordHash">;
 /** Admin payload — clients + financials, all txs, notifications, audit, comments, staff. */
 export interface AdminSnapshot {
   clients: Array<PublicClient & { financials: ComputedFinancials; hasPortalPassword: boolean }>;
+  accountRequests: PublicAccountRequest[];
   txs: Array<Tx & { clientName: string; balanceAfter: number }>;
   notifications: Notification[];
   audit: AuditEntry[];
@@ -243,6 +273,7 @@ export interface AdminStats {
   credits: number;
   debits: number;
   pendingWithdrawals: number; // count of pending withdrawal requests
+  pendingAccountRequests: number; // registration requests awaiting Super Admin review
   txCount: number;
   requestCounts: Record<TxStatus, number>; // live counts per request status
 }
@@ -251,7 +282,7 @@ export interface AdminStats {
 
 export type AuthAction =
   | { action: "client-login"; email: string; password: string }
-  | { action: "client-register"; name: string; email: string; password: string; phone?: string }
+  | { action: "client-register"; name: string; email: string; password: string; phone?: string; country?: string; address?: string }
   | { action: "admin-login"; email: string; password: string }
   | { action: "logout" };
 
@@ -275,6 +306,8 @@ export type AdminAction =
   | { action: "create-client"; client: NewClientInput }
   | { action: "update-client"; id: string; patch: UpdateClientInput }
   | { action: "delete-client"; id: string }
+  | { action: "approve-request"; id: string }
+  | { action: "reject-request"; id: string; reason?: string }
   | { action: "create-transaction"; tx: NewTxInput }
   | { action: "update-transaction"; id: string; patch: UpdateTxInput }
   | { action: "delete-transaction"; id: string }

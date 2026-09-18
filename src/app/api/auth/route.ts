@@ -65,7 +65,21 @@ export async function POST(req: NextRequest) {
     }
 
     const client = data.clients.find((c) => c.email.toLowerCase() === email);
-    if (!client || !verifyPassword(password, client.passwordHash)) {
+    if (!client) {
+      // The email may belong to a PENDING or REJECTED account request —
+      // surface the real account state instead of a generic "invalid".
+      const request = [...data.accountRequests]
+        .filter((r) => r.email.toLowerCase() === email)
+        .sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO))[0];
+      if (request && request.status === "pending") {
+        return NextResponse.json({ ok: false, error: "pending" }, { status: 403 });
+      }
+      if (request && request.status === "rejected") {
+        return NextResponse.json({ ok: false, error: "rejected" }, { status: 403 });
+      }
+      return NextResponse.json({ ok: false, error: "invalid" }, { status: 401 });
+    }
+    if (!verifyPassword(password, client.passwordHash)) {
       return NextResponse.json({ ok: false, error: "invalid" }, { status: 401 });
     }
     if (client.status === "suspended") {
@@ -86,46 +100,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
     }
     return mutate((data) => {
-      if (data.clients.some((c) => c.email.toLowerCase() === email)) {
+      // The email must be free among BOTH active clients and open requests
+      if (
+        data.clients.some((c) => c.email.toLowerCase() === email) ||
+        data.accountRequests.some((r) => r.email.toLowerCase() === email && r.status === "pending")
+      ) {
         return NextResponse.json({ ok: false, error: "taken" }, { status: 409 });
       }
-      const id = uid("c");
-      data.clients.unshift({
+      /* ----------------------------------------------------------------
+          Registration NEVER creates an active client. It creates a
+          PENDING AccountRequest that only the Super Admin can approve
+          (which provisions the real client with the chosen credentials)
+          or reject. No session is issued here. */
+      const id = uid("r");
+      data.accountRequests.unshift({
         id,
-        accountNo: `CW-${Math.floor(100000 + Math.random() * 900000)}`,
         name,
         email,
         passwordHash: hashPassword(body.password),
         phone: body.phone?.trim() ?? "",
-        country: "",
-        address: "",
-        city: "",
-        postcode: "",
-        openingBalance: 0,
-        holdings: [],
-        tier: "Standard",
-        status: "active",
-        kycStatus: "unverified",
-        agent: "Super Admin",
-        managerNote: "",
-        sourceOfFunds: "",
-        currency: "USD",
-        createdAtISO: new Date().toISOString().slice(0, 10),
+        country: body.country?.trim() ?? "",
+        address: body.address?.trim() ?? "",
+        status: "pending",
+        createdAtISO: new Date().toISOString(),
       });
       pushNotification(data, {
         audience: "admin",
-        title: "New Client Registration",
-        body: `${name} has registered on the platform.`,
+        title: "New Client Registration Request",
+        body: `${name} (${email}) has requested to create an account. Review it under Account Requests.`,
         kind: "registration",
+        requestId: id,
       });
-      pushNotification(data, {
-        audience: id,
-        title: "Welcome to CryptoWise",
-        body: "Your account has been created. Your account manager will help you fund your account — reach out any time.",
-        kind: "account",
-      });
-      const session = createSession("client", email, id);
-      return NextResponse.json({ ok: true, token: session.token, role: "client", client: publicClient(data.clients.find((c) => c.id === id)!) });
+      return NextResponse.json({ ok: true, pending: true });
     });
   }
 

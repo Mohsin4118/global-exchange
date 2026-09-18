@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Lock, Mail, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Globe, Lock, Mail, MapPin, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
 import { Logo } from "./icons";
 import { useToast } from "@/hooks/use-toast";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -61,7 +61,19 @@ export function LoginView({
       onClientSuccess?.();
       return;
     }
-    toast({ title: res.error === "suspended" ? t("suspendedBanner") : t("invalidCredentials"), variant: "destructive" });
+    // account states are enforced server-side: a PENDING or REJECTED
+    // registration request can never reach the Client Dashboard
+    toast({
+      title:
+        res.error === "suspended"
+          ? t("suspendedBanner")
+          : res.error === "pending"
+            ? t("loginPending")
+            : res.error === "rejected"
+              ? t("loginRejected")
+              : t("invalidCredentials"),
+      variant: "destructive",
+    });
   };
 
   return (
@@ -167,7 +179,6 @@ export function RegisterView({
   lang,
   onBack,
   onSwitchToLogin,
-  onClientSuccess,
 }: {
   t: (k: StringKey) => string;
   lang: Lang;
@@ -182,9 +193,14 @@ export function RegisterView({
   const [last, setLast] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("");
+  const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  // a submitted registration becomes a PENDING ACCOUNT REQUEST — never an
+  // active session. The panel replaces the form once the request is in.
+  const [submitted, setSubmitted] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,64 +217,91 @@ export function RegisterView({
       return;
     }
     setBusy(true);
-    const res = await apiRegister(`${first.trim()} ${last.trim()}`, email.trim(), password, phone.trim());
+    const res = await apiRegister(`${first.trim()} ${last.trim()}`, email.trim(), password, phone.trim(), country.trim(), address.trim());
     setBusy(false);
     if (!res.ok) {
       toast({ title: res.error === "taken" ? t("emailAlreadyUsed") : t("weakPassword"), variant: "destructive" });
       return;
     }
-    toast({ title: t("accountCreatedToast") });
-    onClientSuccess?.();
+    setSubmitted(true);
   };
 
   return (
     <AuthShell t={t} lang={lang} onBack={onBack} title={title} subtitle={subtitle}>
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Field icon={<User className="h-4 w-4" />} label={t("firstName")} value={first} onChange={setFirst} placeholder="John" autoComplete="given-name" required />
-          <Field icon={<User className="h-4 w-4" />} label={t("lastName")} value={last} onChange={setLast} placeholder="Smith" autoComplete="family-name" required />
-        </div>
-        <Field icon={<Mail className="h-4 w-4" />} label={t("emailAddress")} type="email" value={email} onChange={setEmail} placeholder="name@example.com" autoComplete="email" required />
-        <Field icon={<Phone className="h-4 w-4" />} label={`${t("phone")} (${t("optional")})`} type="tel" value={phone} onChange={setPhone} placeholder="+44 ..." autoComplete="tel" />
-        <div>
-          <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
-            {t("password")} <span className="text-emerald-600">*</span>
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
-              <Lock className="h-4 w-4" />
-            </span>
-            <PasswordInput theme="light" value={password} onChange={setPassword} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
-          </div>
-        </div>
-        <div>
-          <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
-            {t("confirmPassword")} <span className="text-emerald-600">*</span>
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
-              <Lock className="h-4 w-4" />
-            </span>
-            <PasswordInput theme="light" value={confirm} onChange={setConfirm} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={busy}
-          className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[0.9375rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
-        >
-          {busy ? "…" : t("createAccount")}
-        </button>
-
-        <p className="text-center text-[0.84375rem] text-slate-500">
-          {t("haveAccount")}{" "}
-          <button type="button" onClick={onSwitchToLogin} className="font-semibold text-emerald-600 hover:underline">
+      {submitted ? (
+        <div className="flex flex-col items-center text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <CheckCircle2 className="h-7 w-7" />
+          </span>
+          <h2 className="mt-4 text-xl font-bold text-slate-900">{t("regPendingTitle")}</h2>
+          <p className="mt-2 text-[0.875rem] leading-relaxed text-slate-500">{t("regPendingBody")}</p>
+          <button
+            type="button"
+            onClick={onSwitchToLogin}
+            className="mt-5 h-11 w-full rounded-xl bg-[#00E5A0] text-[0.9375rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] transition-all"
+          >
             {t("signIn")}
           </button>
-        </p>
-      </form>
-      <p className="mt-5 text-center text-[0.71875rem] leading-relaxed text-slate-400">{t("dataProtected")}</p>
+          <button type="button" onClick={onBack} className="mt-2.5 h-10 w-full rounded-xl border border-slate-200 bg-white text-[0.875rem] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+            {t("backHome")}
+          </button>
+        </div>
+      ) : (
+        <>
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Field icon={<User className="h-4 w-4" />} label={t("firstName")} value={first} onChange={setFirst} placeholder="John" autoComplete="given-name" required />
+              <Field icon={<User className="h-4 w-4" />} label={t("lastName")} value={last} onChange={setLast} placeholder="Smith" autoComplete="family-name" required />
+            </div>
+            <Field icon={<Mail className="h-4 w-4" />} label={t("emailAddress")} type="email" value={email} onChange={setEmail} placeholder="name@example.com" autoComplete="email" required />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field icon={<Phone className="h-4 w-4" />} label={`${t("phone")} (${t("optional")})`} type="tel" value={phone} onChange={setPhone} placeholder="+44 ..." autoComplete="tel" />
+              <Field icon={<Globe className="h-4 w-4" />} label={`${t("regCountry")} (${t("optional")})`} value={country} onChange={setCountry} placeholder="United Kingdom" autoComplete="country-name" />
+            </div>
+            <Field icon={<MapPin className="h-4 w-4" />} label={`${t("regAddress")} (${t("optional")})`} value={address} onChange={setAddress} placeholder="12 Kingsway Mews, London" autoComplete="street-address" />
+            <div>
+              <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
+                {t("password")} <span className="text-emerald-600">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </span>
+                <PasswordInput theme="light" value={password} onChange={setPassword} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[0.78125rem] font-medium text-slate-600">
+                {t("confirmPassword")} <span className="text-emerald-600">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </span>
+                <PasswordInput theme="light" value={confirm} onChange={setConfirm} placeholder="••••••••" autoComplete="new-password" className="[&_input]:ps-10" />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="mt-1 h-12 rounded-xl bg-[#00E5A0] text-[0.9375rem] font-bold text-[#022c20] shadow-[0_8px_32px_-8px_rgba(0,229,160,0.6)] hover:bg-[#2cf0b5] active:scale-[0.99] transition-all disabled:opacity-60"
+            >
+              {busy ? "…" : t("createAccount")}
+            </button>
+
+            <p className="rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-[0.78125rem] leading-relaxed text-amber-800">{t("regRequestNote")}</p>
+
+            <p className="text-center text-[0.84375rem] text-slate-500">
+              {t("haveAccount")}{" "}
+              <button type="button" onClick={onSwitchToLogin} className="font-semibold text-emerald-600 hover:underline">
+                {t("signIn")}
+              </button>
+            </p>
+          </form>
+          <p className="mt-5 text-center text-[0.71875rem] leading-relaxed text-slate-400">{t("dataProtected")}</p>
+        </>
+      )}
     </AuthShell>
   );
 }

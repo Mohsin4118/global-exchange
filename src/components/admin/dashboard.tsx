@@ -9,6 +9,7 @@ import {
   Search,
   TrendingUp,
   UserCheck,
+  UserPlus,
   Users,
   Wallet,
 } from "lucide-react";
@@ -73,6 +74,26 @@ export function DashboardPage({ ctx }: { ctx: AdminCtx }) {
           iconBg="bg-emerald-500"
         />
       </div>
+
+      {/* PENDING ACCOUNT REQUESTS — live registration queue (#44) */}
+      {ctx.state.stats.pendingAccountRequests > 0 && (
+        <button onClick={() => ctx.navigate("requests")} className="mt-6 block w-full text-left">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 transition-colors hover:bg-amber-100/70">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500">
+                <UserPlus className="h-5 w-5 text-white" />
+              </span>
+              <div>
+                <p className="text-[0.9375rem] font-bold text-amber-900">
+                  {ctx.state.stats.pendingAccountRequests} pending account {ctx.state.stats.pendingAccountRequests === 1 ? "request" : "requests"}
+                </p>
+                <p className="text-[0.8125rem] text-amber-800/80">New users have requested accounts — review, then approve or reject.</p>
+              </div>
+            </div>
+            <span className="rounded-lg bg-amber-500 px-3.5 py-2 text-sm font-bold text-white">Review now</span>
+          </div>
+        </button>
+      )}
 
       {/* REQUEST PIPELINE — the client-submitted work queue (#35) */}
       <div className="mt-6">

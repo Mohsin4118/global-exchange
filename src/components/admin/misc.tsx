@@ -15,6 +15,7 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 import type { AuditAction } from "@/lib/shared-types";
 import type { AdminCtx } from "./types";
@@ -182,11 +183,10 @@ export function NotificationsPage({ ctx }: { ctx: AdminCtx }) {
 
       <div className="space-y-3">
         {notifications.map((n) => (
-          <button
+          <div
             key={n.id}
-            onClick={() => n.unread && ctx.runAction({ action: "mark-read", id: n.id })}
             className={cn(
-              "block w-full rounded-xl border p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors",
+              "rounded-xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors",
               n.unread ? "border-emerald-200/60 bg-emerald-50/50 hover:bg-emerald-50" : "border-slate-200/80 bg-white hover:bg-slate-50/60",
             )}
           >
@@ -200,10 +200,23 @@ export function NotificationsPage({ ctx }: { ctx: AdminCtx }) {
                   {n.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
                 </div>
                 <p className="mt-0.5 text-[0.8125rem] text-slate-500">{n.body}</p>
+                {/* account-request notifications are wired to the real request —
+                    jump straight to the review queue */}
+                {n.requestId && n.audience === "admin" && (
+                  <button
+                    onClick={() => {
+                      if (n.unread) void ctx.runAction({ action: "mark-read", id: n.id });
+                      ctx.navigate("requests");
+                    }}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-[0.8125rem] font-bold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" /> Review request
+                  </button>
+                )}
               </div>
               <span className="shrink-0 text-xs text-slate-400">{n.time}</span>
             </div>
-          </button>
+          </div>
         ))}
         {notifications.length === 0 && (
           <Card className="p-12 text-center text-sm text-slate-500">No notifications.</Card>

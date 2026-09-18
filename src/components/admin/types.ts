@@ -4,6 +4,7 @@ export type AdminPage =
   | "dashboard"
   | "clients"
   | "client-detail"
+  | "requests"
   | "transactions"
   | "deposits"
   | "withdrawals"

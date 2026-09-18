@@ -17,6 +17,7 @@ import {
   Menu,
   ShieldCheck,
   TrendingUp,
+  UserPlus,
   Users,
   Wallet,
   X,
@@ -31,10 +32,12 @@ import { DashboardPage, FinancialPage, MarketPage } from "./dashboard";
 import { ClientDetailPage, ClientsPage } from "./clients";
 import { BalancesPage, DepositsPage, TransactionsPage, WithdrawalsPage } from "./ledger";
 import { AuditPage, NotificationsPage, ProfilePage, StaffPage } from "./misc";
+import { RequestsPage } from "./requests";
 
 const NAV: { page: AdminPage; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { page: "dashboard", label: "Dashboard", icon: LayoutGrid },
   { page: "clients", label: "Clients", icon: Users },
+  { page: "requests", label: "Account Requests", icon: UserPlus },
   { page: "transactions", label: "Transactions", icon: ArrowDownUp },
   { page: "deposits", label: "Deposits", icon: Wallet },
   { page: "withdrawals", label: "Withdrawals", icon: ArrowDownToLine },
@@ -102,6 +105,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
           "wrong-current": "The current password is incorrect.",
           "demo-protected": "The demo account cannot be deleted.",
           self: "You cannot remove your own account.",
+          "already-reviewed": "This request has already been approved or rejected.",
           "client-not-found": "Select a client for this transaction.",
           amount: "Enter a valid amount greater than zero.",
           "not-found": "That record no longer exists.",
@@ -167,7 +171,12 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
         {NAV.map((item) => {
           const active = page === item.page || (page === "client-detail" && item.page === "clients");
           const Icon = item.icon;
-          const badge = item.page === "withdrawals" && (state?.stats.pendingWithdrawals ?? 0) > 0 ? state!.stats.pendingWithdrawals : null;
+          const badge =
+            item.page === "withdrawals" && (state?.stats.pendingWithdrawals ?? 0) > 0
+              ? state!.stats.pendingWithdrawals
+              : item.page === "requests" && (state?.stats.pendingAccountRequests ?? 0) > 0
+                ? state!.stats.pendingAccountRequests
+                : null;
           return (
             <button
               key={item.page}
@@ -344,6 +353,7 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
               {page === "dashboard" && <DashboardPage ctx={ctx} />}
               {page === "clients" && <ClientsPage ctx={ctx} />}
               {page === "client-detail" && <ClientDetailPage ctx={ctx} />}
+              {page === "requests" && <RequestsPage ctx={ctx} />}
               {page === "transactions" && <TransactionsPage ctx={ctx} />}
               {page === "deposits" && <DepositsPage ctx={ctx} />}
               {page === "withdrawals" && <WithdrawalsPage ctx={ctx} />}

@@ -59,6 +59,9 @@ export interface LoginResult {
   token?: string;
   role?: "client" | "admin";
   client?: PublicClient;
+  /** client-register: true when the submission became a PENDING account
+      request (Super Admin review) instead of an active session. */
+  pending?: boolean;
 }
 
 export async function apiClientLogin(email: string, password: string): Promise<LoginResult> {
@@ -73,10 +76,17 @@ export async function apiAdminLogin(email: string, password: string): Promise<Lo
   return res;
 }
 
-export async function apiRegister(name: string, email: string, password: string, phone?: string): Promise<LoginResult> {
-  const res = await post<LoginResult>("/api/auth", { action: "client-register", name, email, password, phone });
-  if (res.ok && res.token) setClientToken(res.token);
-  return res;
+export async function apiRegister(
+  name: string,
+  email: string,
+  password: string,
+  phone?: string,
+  country?: string,
+  address?: string,
+): Promise<LoginResult> {
+  // Registration creates a PENDING account request — the server never
+  // issues a client token here, so nothing is stored locally.
+  return post<LoginResult>("/api/auth", { action: "client-register", name, email, password, phone, country, address });
 }
 
 export async function apiLogout(kind: "client" | "admin") {

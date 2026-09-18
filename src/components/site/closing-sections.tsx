@@ -339,7 +339,7 @@ export function Footer({
           {/* account */}
           <FooterCol title={t("account")}>
             <FooterLink label={t("login")} onClick={onLogin} />
-            <FooterLink label={t("createAccount")} onClick={onRegister} />
+            <FooterLink label={t("getStarted")} onClick={onRegister} />
           </FooterCol>
 
           {/* help */}
