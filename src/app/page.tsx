@@ -165,7 +165,7 @@ export default function Page() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3 }}
-              className="flex min-h-screen flex-col"
+              className="home-page flex min-h-screen flex-col bg-[#04121c]"
             >
               <div className="bg-gradient-to-b from-[#04141d] to-[#020b12]">
                 <Header

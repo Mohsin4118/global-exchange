@@ -18,7 +18,9 @@ export const metadata: Metadata = {
     "Securely access your account information, monitor financial activity, and follow global cryptocurrency market data.",
   keywords: ["CryptoWise", "crypto", "bitcoin", "ethereum", "trading", "exchange"],
   icons: {
-    icon: "/logo.svg",
+    icon: "/glob-exchange.jpeg?v=3",
+    shortcut: "/glob-exchange.jpeg?v=3",
+    apple: "/glob-exchange.jpeg?v=3",
   },
   openGraph: {
     title: "CryptoWise | Private Financial Platform",
@@ -36,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#04121c] text-foreground`}
       >
         {children}
         <Toaster />

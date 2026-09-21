@@ -493,7 +493,7 @@ export function TxRowItem({ tx, t, lang, onCancel, money = usd }: { tx: Tx; t: T
                         {new Date(ev.at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </p>
-                    <p className="text-slate-400">{ev.byRole === "client" ? ev.by : "Super Admin"}</p>
+                    <p className="text-slate-400">{ev.byRole === "client" ? ev.by : ev.byRole === "admin" ? "Account Manager" : "System"}</p>
                     {ev.note && <p className="mt-0.5 rounded-md bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200/70">{ev.note}</p>}
                   </li>
                 ))}
@@ -560,6 +560,12 @@ export const REQUEST_KINDS = ["deposit", "withdrawal", "trade"] as const;
 export type RequestKind = (typeof REQUEST_KINDS)[number];
 
 const ASSET_OPTIONS = ["USD", "USDT", "BTC", "ETH", "SOL", "XRP", "Aramco", "Salik"];
+
+function requestKindLabel(kind: RequestKind, t: T): string {
+  if (kind === "withdrawal") return t("withdraw");
+  if (kind === "deposit") return t("deposit");
+  return t("trade");
+}
 
 export function RequestModal({
   initialKind,
@@ -631,7 +637,7 @@ export function RequestModal({
                     kind === k ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700",
                   )}
                 >
-                  {k}
+                  {requestKindLabel(k, t)}
                 </button>
               ))}
             </div>

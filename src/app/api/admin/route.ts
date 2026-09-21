@@ -286,7 +286,7 @@ export async function POST(req: NextRequest) {
       kind: input.kind,
       type: input.type,
       amount,
-      label: input.label?.trim() || (input.type === "CREDIT" ? "Credit — posted by Super Admin" : "Debit — posted by Super Admin"),
+      label: input.label?.trim() || (input.type === "CREDIT" ? "Credit" : "Debit"),
       asset: input.asset?.trim() || undefined,
       status: input.status ?? "COMPLETED",
       reference: newReference(),
@@ -304,7 +304,7 @@ export async function POST(req: NextRequest) {
         kind: "info",
       });
       pushAudit(d, "Create Transaction", "TRANSACTION", JSON.stringify({ clientId: client.id, client: client.name, type: input.type, amount, reference: tx.reference, status: tx.status }));
-      tx.history = [{ at: nowISO, by: "Super Admin", byRole: "admin", from: null, to: tx.status, note: "Posted by Super Admin" }];
+      tx.history = [{ at: nowISO, by: "Super Admin", byRole: "admin", from: null, to: tx.status, note: "Posted" }];
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }

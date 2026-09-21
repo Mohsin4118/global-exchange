@@ -119,6 +119,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  html,
+  body {
+    background: #04121c;
+  }
   /* Anchors / scroll-into-view always land BELOW the sticky headers
      (56px client topbar on mobile, 64px desktop) — the top section of
      the dashboard can never hide underneath a sticky header. */
@@ -131,6 +135,16 @@
     font-size: 112.5%;
     scroll-padding-top: 72px;
   }
+}
+
+.home-page {
+  background: #04121c;
+}
+
+.home-page > section,
+.home-page > footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 760px;
 }
 
 /* Ticker marquee animation */

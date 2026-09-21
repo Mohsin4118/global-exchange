@@ -2,15 +2,13 @@
 
 import { cn } from "@/lib/utils";
 
-/** Original mountain-arrows exchange mark (drawn from scratch). */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 40" fill="none" className={className} aria-hidden="true">
-      <rect width="40" height="40" rx="11" fill="#00E5A0" fillOpacity="0.12" />
-      <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="10.25" stroke="#00E5A0" strokeOpacity="0.35" strokeWidth="1.5" />
-      <path d="M9 26.5 16 14l4.4 7.6L24 16l7 10.5" stroke="#00E5A0" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="24.5" cy="12.5" r="2.4" fill="#00E5A0" />
-    </svg>
+    <img
+      src="/glob-exchange.jpeg"
+      alt="Globexchange Logo"
+      className={cn("rounded-xl object-contain bg-white p-0.5 border border-[#00E5A0]/40 shadow-sm shrink-0", className)}
+    />
   );
 }
 

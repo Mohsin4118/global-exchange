@@ -671,22 +671,29 @@ export function clientView(clientId: string): { ok: true; view: { client: Public
   };
 }
 
+function clientFacingLabel(label: string): string {
+  return label
+    .replace(/\s*[—-]\s*posted by Super Admin/gi, "")
+    .replace(/\bSuper Admin\b/gi, "Account Manager")
+    .trim();
+}
+
 /** Client-safe transaction: strips the PRIVATE admin note and every internal
     remark from the history (the status transition itself stays visible; only
-    the internal wording is removed). Admin actors are anonymised to
-    "Super Admin" so admin emails/details never leak through the client API (#30 / #36). */
+    the internal wording is removed). Admin actors are anonymised to a generic
+    account-manager label so admin role names never leak through the client API. */
 export function clientSafeTx(t: Tx): Tx {
   const { adminNote: _private, ...rest } = t;
   const history = (t.history ?? []).map<TxEvent>((e) => ({
     at: e.at,
-    by: e.byRole === "admin" ? "Super Admin" : e.by,
+    by: e.byRole === "admin" ? "Account Manager" : e.by,
     byRole: e.byRole,
     from: e.from,
     to: e.to,
-    ...(e.note ? { note: e.note } : {}),
+    ...(e.note ? { note: clientFacingLabel(e.note) } : {}),
     ...(e.changes ? { changes: e.changes } : {}),
   }));
-  return { ...rest, history };
+  return { ...rest, label: clientFacingLabel(rest.label), history };
 }
 
 /* ---------------- audit & notification helpers ---------------- */
