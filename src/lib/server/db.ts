@@ -516,6 +516,16 @@ export function destroySession(token: string) {
   });
 }
 
+export function removeSessionsFromData(data: DbData, target: { clientId?: string; adminEmail?: string }, exceptToken?: string | null) {
+  const adminEmail = target.adminEmail?.trim().toLowerCase();
+  data.sessions = data.sessions.filter((s) => {
+    if (exceptToken && s.token === exceptToken) return true;
+    if (target.clientId && s.role === "client" && s.clientId === target.clientId) return false;
+    if (adminEmail && s.role === "admin" && s.email.toLowerCase() === adminEmail) return false;
+    return true;
+  });
+}
+
 /** Session must belong to a client — returns the client record or null. */
 export function requireClient(token: string | null | undefined): Client | null {
   const session = resolveSession(token);

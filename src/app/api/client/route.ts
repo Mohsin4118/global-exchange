@@ -7,7 +7,7 @@
 /* ------------------------------------------------------------------ */
 
 import { NextRequest, NextResponse } from "next/server";
-import { clientView, db, inFlight, mutate, pushNotification, pushAudit, requireClient, round2, uid, verifyPassword, hashPassword } from "@/lib/server/db";
+import { clientView, db, inFlight, mutate, pushNotification, pushAudit, removeSessionsFromData, requireClient, round2, uid, verifyPassword, hashPassword } from "@/lib/server/db";
 import { CURRENCIES } from "@/lib/shared-types";
 import type { ClientAction, Tx, TxEvent } from "@/lib/shared-types";
 
@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const client = requireClient(bearer(req));
+  const token = bearer(req);
+  const client = requireClient(token);
   if (!client) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
   let body: ClientAction;
@@ -197,7 +198,10 @@ export async function POST(req: NextRequest) {
     }
     mutate((d) => {
       const record = d.clients.find((c) => c.id === client.id);
-      if (record) record.passwordHash = hashPassword(body.next);
+      if (record) {
+        record.passwordHash = hashPassword(body.next);
+        removeSessionsFromData(d, { clientId: client.id }, token);
+      }
     });
     return NextResponse.json({ ok: true });
   }

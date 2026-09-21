@@ -17,6 +17,7 @@ import {
   newReference,
   pushAudit,
   pushNotification,
+  removeSessionsFromData,
   requireAdmin,
   round2,
   stamp,
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!requireAdmin(bearer(req))) {
+  const adminToken = bearer(req);
+  if (!requireAdmin(adminToken)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -224,7 +226,9 @@ export async function POST(req: NextRequest) {
       if (nextEmail) (old.email = record.email), (next.email = nextEmail), (record.email = nextEmail);
       if (patch.password) {
         record.passwordHash = hashPassword(patch.password);
+        removeSessionsFromData(d, { clientId: record.id });
         next.password = "reset";
+        next.sessions = "revoked";
       }
       if (patch.phone !== undefined) (old.phone = record.phone), (next.phone = patch.phone), (record.phone = patch.phone.trim());
       if (patch.country !== undefined) (old.country = record.country), (next.country = patch.country), (record.country = patch.country.trim());
@@ -502,7 +506,8 @@ export async function POST(req: NextRequest) {
     if (body.next.length < 8) return NextResponse.json({ ok: false, error: "weak" }, { status: 400 });
     mutate((d) => {
       d.adminUser.passwordHash = hashPassword(body.next);
-      pushAudit(d, "Change Password", "SESSION", '{"target":"admin account"}');
+      removeSessionsFromData(d, { adminEmail: d.adminUser.email }, adminToken);
+      pushAudit(d, "Change Password", "SESSION", '{"target":"admin account","sessions":"revoked"}');
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }
