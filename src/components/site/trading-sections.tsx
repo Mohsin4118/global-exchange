@@ -22,10 +22,6 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6 }}
           >
             <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
               {t("infraBadge")}
@@ -68,10 +64,6 @@ export function Infrastructure({ t, onRegister, onLogin }: { t: (k: StringKey) =
 
           {/* trust cards */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6, delay: 0.12 }}
             className="grid sm:grid-cols-3 gap-4"
           >
             <div className="sm:col-span-2 rounded-2xl border border-white/[0.07] bg-gradient-to-br from-[#0d4638] to-[#0a382e] p-6 flex flex-col justify-between min-h-[150px]">
@@ -146,10 +138,6 @@ export function TradingSection({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6 }}
           >
             <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
               {t("tradingBadge")}
@@ -176,10 +164,6 @@ export function TradingSection({
 
           {/* swap widget */}
           <motion.div
-            initial={{ opacity: 0, y: 26 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6, delay: 0.1 }}
             className="relative"
           >
             <div className="pointer-events-none absolute -inset-5 rounded-[28px] bg-[#00E5A0]/[0.04] blur-2xl" aria-hidden="true" />
@@ -337,10 +321,6 @@ export function WhyChooseUs({ t, onRegister }: { t: (k: StringKey) => string; on
     <section className="border-y border-white/[0.05] bg-[#020b12]/70">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
           className="text-center"
         >
           <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">{t("whyUs")}</span>
@@ -351,10 +331,6 @@ export function WhyChooseUs({ t, onRegister }: { t: (k: StringKey) => string; on
           {cards.map((c, i) => (
             <motion.div
               key={c.title}
-              initial={{ opacity: 0, y: 22 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.07 }}
               className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 hover:border-[#00E5A0]/25 hover:bg-[#00e5a014] transition-colors"
             >
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#00E5A0]/12 text-lg text-[#00E5A0]">
@@ -391,10 +367,6 @@ export function Steps({ t, onRegister }: { t: (k: StringKey) => string; onRegist
     <section>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
           className="text-center text-3xl sm:text-4xl font-bold tracking-tight text-white"
         >
           {t("stepsTitle")}
@@ -404,10 +376,6 @@ export function Steps({ t, onRegister }: { t: (k: StringKey) => string; onRegist
           {steps.map((s, i) => (
             <motion.div
               key={s.n}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.55, delay: i * 0.1 }}
               className="relative rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-transparent p-7"
             >
               <span className="font-mono text-[2.5rem] font-bold leading-none text-[#00E5A0]/15 select-none" aria-hidden="true">

@@ -51,10 +51,6 @@ export function TrustStats({ t }: { t: (k: StringKey) => string }) {
     <section className="relative border-b border-white/[0.04]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.55 }}
           className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-8 rounded-2xl border border-[#00E5A0]/15 bg-gradient-to-r from-[#00E5A0]/[0.07] via-white/[0.02] to-[#00E5A0]/[0.05] px-6 py-6 md:px-8"
         >
           {/* brand trust copy */}
@@ -107,10 +103,6 @@ export function SecurityBadges({ t }: { t: (k: StringKey) => string }) {
     <section className="border-y border-white/[0.05] bg-[#020b12]/70">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.55 }}
           className="text-center"
         >
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">{t("badgesTitle")}</h2>
@@ -121,10 +113,6 @@ export function SecurityBadges({ t }: { t: (k: StringKey) => string }) {
           {badges.map((b, i) => (
             <motion.div
               key={b.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.45, delay: i * 0.06 }}
               className="group flex flex-col items-center rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center hover:border-[#00E5A0]/30 hover:bg-[#00e5a014] transition-colors"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#00E5A0]/30 bg-[#00E5A0]/10 text-[#00E5A0] group-hover:scale-110 transition-transform">
@@ -165,10 +153,6 @@ export function Testimonials({ t }: { t: (k: StringKey) => string }) {
     <section>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.55 }}
           className="text-center"
         >
           <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
@@ -182,10 +166,6 @@ export function Testimonials({ t }: { t: (k: StringKey) => string }) {
           {items.map((item, i) => (
             <motion.figure
               key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
               className="flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 hover:border-[#00E5A0]/25 transition-colors"
             >
               <Stars />
@@ -225,10 +205,6 @@ export function Faq({ t }: { t: (k: StringKey) => string }) {
     <section className="border-t border-white/[0.05] bg-[#020b12]/70">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.55 }}
           className="text-center"
         >
           <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">{t("faqBadge")}</span>

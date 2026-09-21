@@ -38,10 +38,6 @@ export function AccountPreview({ t }: { t: (k: StringKey) => string }) {
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* copy */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6 }}
           >
             <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
               {t("acctBadge")}
@@ -69,10 +65,6 @@ export function AccountPreview({ t }: { t: (k: StringKey) => string }) {
 
           {/* wallet mockup (light, like client screenshots) */}
           <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.65, delay: 0.1 }}
             className="relative mx-auto w-full max-w-sm"
           >
             <div className="pointer-events-none absolute -inset-5 rounded-[32px] bg-[#00E5A0]/[0.05] blur-2xl" aria-hidden="true" />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Globe2, Zap, TrendingUp, ArrowRight } from "lucide-react";
 import { CoinBadge } from "./icons";
@@ -23,10 +24,6 @@ export function Pillars({ t }: { t: (k: StringKey) => string }) {
           {items.map(({ icon: Icon, title, desc }, i) => (
             <motion.div
               key={title}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
               className={cn(
                 "px-0 sm:px-5 lg:px-6",
                 i > 0 && "lg:border-s lg:border-white/[0.07]",
@@ -50,7 +47,7 @@ export function Pillars({ t }: { t: (k: StringKey) => string }) {
 /* ---------------- Ticker marquee ---------------- */
 
 export function Ticker({ coins }: { coins: Coin[] }) {
-  const doubled = [...coins, ...coins];
+  const doubled = useMemo(() => [...coins, ...coins], [coins]);
   return (
     <div className="relative overflow-hidden border-b border-white/[0.05] bg-[#020b12]/80" dir="ltr">
       <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#04121c] to-transparent z-10" />
@@ -92,10 +89,6 @@ export function StocksSection({
     <section id="stocks" className="scroll-mt-20 border-t border-white/[0.04]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
           className="text-center"
         >
           <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
@@ -109,10 +102,6 @@ export function StocksSection({
           {stocks.map((s, i) => (
             <motion.div
               key={s.id}
-              initial={{ opacity: 0, y: 22 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.07 }}
               className="group rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-transparent p-5 hover:border-[#00E5A0]/30 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -164,10 +153,6 @@ export function LiveMarket({
     <section id="markets" className="scroll-mt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
           className="text-center"
         >
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("liveMarketTitle")}</h2>
@@ -178,10 +163,6 @@ export function LiveMarket({
           {featured.map((c, i) => (
             <motion.div
               key={c.id}
-              initial={{ opacity: 0, y: 22 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.07 }}
               className="group rounded-2xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-transparent p-5 hover:border-[#00E5A0]/30 transition-colors"
             >
               <div className="flex items-center gap-3">

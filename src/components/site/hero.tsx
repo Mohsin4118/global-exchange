@@ -75,9 +75,9 @@ export function Hero({
     <section id="home" className="relative overflow-hidden">
       {/* ambient glows */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute -top-44 start-[12%] h-[520px] w-[520px] rounded-full bg-[#00E5A0]/[0.06] blur-[140px]" />
-        <div className="absolute top-24 end-[-6%] h-[460px] w-[460px] rounded-full bg-teal-400/[0.05] blur-[130px]" />
-        <div className="absolute bottom-[-30%] start-1/3 h-[420px] w-[520px] rounded-full bg-[#00E5A0]/[0.05] blur-[150px]" />
+        <div className="absolute -top-36 start-[12%] h-[460px] w-[460px] rounded-full bg-[#00E5A0]/[0.05] blur-[90px]" />
+        <div className="absolute top-24 end-[-6%] h-[390px] w-[390px] rounded-full bg-teal-400/[0.045] blur-[90px]" />
+        <div className="absolute bottom-[-24%] start-1/3 h-[360px] w-[460px] rounded-full bg-[#00E5A0]/[0.045] blur-[100px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-16 xl:pt-20 pb-8">
@@ -88,13 +88,10 @@ export function Hero({
         <div className="grid grid-cols-[1.1fr_0.9fr] sm:grid-cols-[1.2fr_0.8fr] xl:grid-cols-2 items-center xl:items-start gap-4 sm:gap-5 xl:gap-6">
           {/* LEFT column — badge, headline, description; chips + CTAs join it on desktop */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
             className="relative isolate min-w-0"
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-[#00E5A0]/25 bg-[#00d9b316] px-3 py-1.5 text-[0.65625rem] font-medium text-[#00E5A0] sm:px-4 sm:text-[0.78125rem]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0] animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#00E5A0]" />
               {t("heroBadge")}
             </span>
 
@@ -124,9 +121,6 @@ export function Hero({
               down proportionally (no CSS zoom, no transform:scale, nothing absolutely
               positioned above the text). */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.15, ease: "easeOut" }}
             className="relative w-full xl:mx-auto xl:max-w-[520px] xl:-mt-2"
             dir="ltr"
           >
@@ -143,9 +137,6 @@ export function Hero({
 
         {/* live BTC chart card */}
         <motion.div
-          initial={{ opacity: 0, y: 26 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.25, ease: "easeOut" }}
           className="relative mt-10 rounded-2xl border border-white/[0.08] bg-[#071923]/85 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.8)] backdrop-blur px-5 sm:px-6 py-5"
         >
           <div className="flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
@@ -238,7 +229,6 @@ type Satellite = {
   rim: string; // metallic coin-edge gradient
   face: string; // minted coin-face gradient (brand colour)
   imgClass: string;
-  float: number;
   delay: number;
 };
 
@@ -254,7 +244,6 @@ const SATELLITES: Satellite[] = [
     rim: "linear-gradient(135deg,#FBFDFF 0%,#C9D2DE 28%,#7E8A9C 55%,#EEF3F9 80%,#93A0B2 100%)",
     face: "linear-gradient(145deg,#9CA8BE 0%,#5E6A82 48%,#313B4F 100%)",
     imgClass: "h-[56%] w-auto",
-    float: 5.2,
     delay: 0.5,
   },
   {
@@ -264,7 +253,6 @@ const SATELLITES: Satellite[] = [
     rim: "linear-gradient(135deg,#EAFFF7 0%,#A2E9D0 30%,#3F9D7D 55%,#C2F4E0 80%,#5FB093 100%)",
     face: "linear-gradient(145deg,#41C69B 0%,#26A17B 50%,#116E52 100%)",
     imgClass: "w-[58%] h-auto",
-    float: 6.0,
     delay: 0.8,
   },
   {
@@ -274,7 +262,6 @@ const SATELLITES: Satellite[] = [
     rim: "linear-gradient(135deg,#FFF7DC 0%,#FFDF7E 30%,#C08A18 55%,#FFE9A8 80%,#A8700E 100%)",
     face: "linear-gradient(145deg,#FFFFFF 0%,#EDF3F7 55%,#CFDEE6 100%)",
     imgClass: "h-[76%] w-auto",
-    float: 5.6,
     delay: 1.0,
   },
   {
@@ -284,7 +271,6 @@ const SATELLITES: Satellite[] = [
     rim: "linear-gradient(135deg,#C2FFEC 0%,#00FFA3 26%,#7FA6E8 52%,#C86BFF 76%,#DC1FFF 92%,#9A2BC4 100%)",
     face: "linear-gradient(145deg,#252933 0%,#13161C 55%,#0A0C10 100%)",
     imgClass: "w-[56%] h-auto",
-    float: 6.4,
     delay: 1.2,
   },
   {
@@ -294,7 +280,6 @@ const SATELLITES: Satellite[] = [
     rim: "linear-gradient(135deg,#FFF7DC 0%,#FFDF7E 30%,#C08A18 55%,#FFE9A8 80%,#A8700E 100%)",
     face: "linear-gradient(145deg,#FFFFFF 0%,#F4F6F8 55%,#DDE3E8 100%)",
     imgClass: "w-[58%] h-auto",
-    float: 5.0,
     delay: 1.4,
   },
 ];
@@ -307,13 +292,6 @@ function HeroSatellites() {
           key={s.logo}
           className={cn("absolute", s.pos)}
           style={{ width: s.size }}
-          initial={{ opacity: 0, scale: 0.55, y: 14 }}
-          animate={{ opacity: 1, scale: 1, y: [0, -7, 0] }}
-          transition={{
-            opacity: { duration: 0.55, delay: s.delay, ease: "easeOut" },
-            scale: { duration: 0.55, delay: s.delay, ease: "easeOut" },
-            y: { duration: s.float, repeat: Infinity, ease: "easeInOut", delay: s.delay },
-          }}
         >
           {/* metallic rim */}
           <div
@@ -422,50 +400,37 @@ function CryptoScene() {
         <g transform="rotate(-14 280 280)">
           <ellipse cx="280" cy="280" rx="266" ry="94" fill="none" stroke="url(#orbitGrad)" strokeWidth="1.5" />
           <ellipse cx="280" cy="280" rx="238" ry="76" fill="none" stroke="#F7B733" strokeOpacity="0.16" strokeWidth="1.4" strokeDasharray="2 9" />
-          <motion.circle
+          <circle
             cx="46"
             cy="280"
             r="4"
             fill="#F7B733"
             filter="url(#blurSm)"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
           />
         </g>
         <g transform="rotate(22 280 280)">
           <ellipse cx="280" cy="280" rx="250" ry="128" fill="none" stroke="#00E5A0" strokeOpacity="0.1" strokeWidth="1.2" />
-          <motion.circle
+          <circle
             cx="530"
             cy="280"
             r="3.6"
             fill="#2cf0b5"
             filter="url(#blurSm)"
-            animate={{ opacity: [0.35, 0.95, 0.35] }}
-            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
           />
         </g>
 
         {/* two small distant gold coins on the orbits — depth */}
-        <motion.g
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-        >
+        <g>
           <circle cx="96" cy="150" r="13" fill="url(#btcFace)" stroke="url(#btcRim)" strokeWidth="3" />
           <circle cx="96" cy="150" r="7.5" fill="none" stroke="#B9770E" strokeOpacity="0.55" strokeWidth="1.2" />
-        </motion.g>
-        <motion.g
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
-        >
+        </g>
+        <g>
           <circle cx="486" cy="390" r="10" fill="url(#btcFace)" stroke="url(#btcRim)" strokeWidth="2.6" />
           <circle cx="486" cy="390" r="5.5" fill="none" stroke="#B9770E" strokeOpacity="0.55" strokeWidth="1" />
-        </motion.g>
+        </g>
 
         {/* ===== THE Bitcoin — dominant, metallic gold, 3D ===== */}
-        <motion.g
-          animate={{ y: [0, -11, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <g>
           {/* coin edge (thickness) + reeded milling */}
           <circle cx="280" cy="293" r="178" fill="url(#btcEdge)" />
           <circle cx="280" cy="293" r="178" fill="none" stroke="#6E4B06" strokeWidth="9" strokeDasharray="3.2 5.6" opacity="0.5" />
@@ -504,41 +469,36 @@ function CryptoScene() {
             strokeLinecap="round"
             filter="url(#blurMid)"
           />
-        </motion.g>
+        </g>
 
         {/* sparkles */}
         <g fill="#FFE89A">
-          <motion.path
+          <path
             d={SPARK_PATH}
             transform="translate(296 46) scale(0.9)"
-            animate={{ opacity: [0.25, 0.95, 0.25] }}
-            transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            opacity="0.75"
           />
-          <motion.path
+          <path
             d={SPARK_PATH}
             transform="translate(206 74) scale(0.5)"
-            animate={{ opacity: [0.2, 0.85, 0.2] }}
-            transition={{ duration: 2.7, repeat: Infinity, ease: "easeInOut", delay: 1.3 }}
+            opacity="0.55"
           />
-          <motion.path
+          <path
             d={SPARK_PATH}
             transform="translate(60 400) scale(0.7)"
-            animate={{ opacity: [0.2, 0.8, 0.2] }}
-            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.9 }}
+            opacity="0.5"
           />
         </g>
         <g fill="#2cf0b5">
-          <motion.path
+          <path
             d={SPARK_PATH}
             transform="translate(486 250) scale(0.55)"
-            animate={{ opacity: [0.2, 0.8, 0.2] }}
-            transition={{ duration: 3.3, repeat: Infinity, ease: "easeInOut", delay: 1.7 }}
+            opacity="0.5"
           />
-          <motion.path
+          <path
             d={SPARK_PATH}
             transform="translate(322 516) scale(0.6)"
-            animate={{ opacity: [0.15, 0.75, 0.15] }}
-            transition={{ duration: 2.9, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+            opacity="0.45"
           />
         </g>
       </svg>

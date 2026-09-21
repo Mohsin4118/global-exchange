@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "@/components/site/header";
 import { Hero, TaglineStrip } from "@/components/site/hero";
@@ -55,14 +55,19 @@ export default function Page() {
     } catch {}
   }, [lang]);
 
-  // Simulated live market ticks (client-only, starts after mount)
+  // Simulated live market ticks. Keep them light: only run while the homepage
+  // tab is visible so scrolling and admin/client views do not compete with it.
   useEffect(() => {
+    if (view !== "home") return;
     const id = setInterval(() => {
-      setCoins((prev) => prev.map((c) => tickCoin(c)));
-      setStocks((prev) => prev.map((s) => tickCoin(s)));
-    }, 3000);
+      if (document.visibilityState !== "visible") return;
+      startTransition(() => {
+        setCoins((prev) => prev.map((c) => tickCoin(c)));
+        setStocks((prev) => prev.map((s) => tickCoin(s)));
+      });
+    }, 9000);
     return () => clearInterval(id);
-  }, []);
+  }, [view]);
 
   // Restore sessions from bearer tokens (client portal + admin backoffice).
   // The server decides whether a token is valid — nothing is trusted locally.
@@ -147,7 +152,14 @@ export default function Page() {
     goHome();
   }, [goHome]);
 
+  const showLogin = useCallback(() => setView("login"), []);
+  const showRegister = useCallback(() => setView("register"), []);
+  const scrollHomeTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const dir = useMemo(() => (lang === "ar" ? "rtl" : "ltr"), [lang]);
+  const tickerCoins = useMemo(() => [...coins, ...stocks], [coins, stocks]);
 
   return (
     <div dir={dir} className="min-h-screen flex flex-col bg-[#04121c] text-white [color-scheme:dark]">
@@ -172,32 +184,30 @@ export default function Page() {
                   t={t}
                   lang={lang}
                   onLangSelect={setLang}
-                  onLogin={() => setView("login")}
-                  onRegister={() => setView("register")}
-                  onHome={() => {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
+                  onLogin={showLogin}
+                  onRegister={showRegister}
+                  onHome={scrollHomeTop}
                 />
-                <Hero t={t} coins={coins} onLogin={() => setView("login")} onRegister={() => setView("register")} />
-                <Ticker coins={[...coins, ...stocks]} />
+                <Hero t={t} coins={coins} onLogin={showLogin} onRegister={showRegister} />
+                <Ticker coins={tickerCoins} />
               </div>
               <TrustStats t={t} />
               <TaglineStrip t={t} lang={lang} />
               <Pillars t={t} />
-              <LiveMarket t={t} coins={coins} onRegister={() => setView("register")} />
-              <StocksSection t={t} stocks={stocks} onRegister={() => setView("register")} />
-              <Infrastructure t={t} onRegister={() => setView("register")} onLogin={() => setView("login")} />
-              <TradingSection t={t} coins={coins} onLogin={() => setView("login")} />
+              <LiveMarket t={t} coins={coins} onRegister={showRegister} />
+              <StocksSection t={t} stocks={stocks} onRegister={showRegister} />
+              <Infrastructure t={t} onRegister={showRegister} onLogin={showLogin} />
+              <TradingSection t={t} coins={coins} onLogin={showLogin} />
               <AccountPreview t={t} />
-              <WhyChooseUs t={t} onRegister={() => setView("register")} />
-              <Steps t={t} onRegister={() => setView("register")} />
+              <WhyChooseUs t={t} onRegister={showRegister} />
+              <Steps t={t} onRegister={showRegister} />
               <SecurityBadges t={t} />
               <SupportedCryptos t={t} coins={coins} activity={activity} />
               <SecuritySection t={t} />
               <Testimonials t={t} />
               <Faq t={t} />
-              <FinalCta t={t} onRegister={() => setView("register")} onLogin={() => setView("login")} />
-              <Footer t={t} onLogin={() => setView("login")} onRegister={() => setView("register")} onAdmin={goAdmin} />
+              <FinalCta t={t} onRegister={showRegister} onLogin={showLogin} />
+              <Footer t={t} onLogin={showLogin} onRegister={showRegister} onAdmin={goAdmin} />
               {/* viewport-fixed contact dock — visible across the ENTIRE homepage scroll */}
               <FloatingContactDock />
             </motion.div>
@@ -278,8 +288,8 @@ export default function Page() {
                   t={t}
                   lang={lang}
                   onLangSelect={setLang}
-                  onLogin={() => setView("login")}
-                  onRegister={() => setView("register")}
+                  onLogin={showLogin}
+                  onRegister={showRegister}
                   onHome={() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}

@@ -24,10 +24,6 @@ export function SupportedCryptos({
     <section className="border-y border-white/[0.05] bg-[#020b12]/70">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
           className="text-center"
         >
           <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
@@ -38,10 +34,6 @@ export function SupportedCryptos({
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.65, delay: 0.1 }}
           className="mx-auto mt-10 max-w-3xl rounded-2xl border border-white/[0.08] bg-[#071923]/90 p-5 sm:p-6 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)]"
         >
           {/* coin tabs */}
@@ -125,10 +117,6 @@ export function SupportedCryptos({
 
         {/* fiat currencies strip */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.55, delay: 0.15 }}
           className="mx-auto mt-6 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"
         >
           <span className="text-[0.71875rem] font-semibold uppercase tracking-wide text-white/40">{t("fiatSupported")}</span>
@@ -161,10 +149,6 @@ export function SecuritySection({ t }: { t: (k: StringKey) => string }) {
     <section id="about" className="scroll-mt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
           className="text-center"
         >
           <span className="text-[0.78125rem] font-semibold uppercase tracking-[0.18em] text-[#00E5A0]">
@@ -178,10 +162,6 @@ export function SecuritySection({ t }: { t: (k: StringKey) => string }) {
           {cards.map((c, i) => (
             <motion.div
               key={c.title}
-              initial={{ opacity: 0, y: 22 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
               className={cn(
                 "rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 hover:border-[#00E5A0]/25 transition-colors",
                 i === 4 && "sm:col-span-2 lg:col-span-1"
@@ -207,10 +187,6 @@ export function FinalCta({ t, onRegister, onLogin }: { t: (k: StringKey) => stri
     <section id="help" className="scroll-mt-20 border-t border-white/[0.05] bg-[#020b12]/70">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.65 }}
         >
           <LogoMark className="mx-auto h-14 w-14" />
           <h2 className="mt-6 text-3xl sm:text-4xl font-bold tracking-tight text-white">{t("ctaTitle")}</h2>
