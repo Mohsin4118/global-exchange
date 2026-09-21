@@ -3,7 +3,7 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "@/components/site/header";
-import { Hero, TaglineStrip } from "@/components/site/hero";
+import { CustodyHighlights, Hero, TaglineStrip } from "@/components/site/hero";
 import { Pillars, Ticker, LiveMarket, StocksSection } from "@/components/site/market-sections";
 import { Infrastructure, TradingSection, WhyChooseUs, Steps } from "@/components/site/trading-sections";
 import { AccountPreview } from "@/components/site/account-preview";
@@ -190,6 +190,7 @@ export default function Page() {
                 />
                 <Hero t={t} coins={coins} onLogin={showLogin} onRegister={showRegister} />
                 <Ticker coins={tickerCoins} />
+                <CustodyHighlights t={t} />
               </div>
               <TrustStats t={t} />
               <TaglineStrip t={t} lang={lang} />
