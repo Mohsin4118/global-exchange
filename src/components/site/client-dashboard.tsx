@@ -17,6 +17,7 @@ import {
   ArrowUpRight,
   Bell,
   Download,
+  ExternalLink,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -63,6 +64,7 @@ import { cn } from "@/lib/utils";
 
 type Section = "overview" | "portfolio" | "transactions" | "deposits" | "withdrawals" | "notifications" | "account";
 type TxFilter = "all" | "in" | "out";
+const COMPANIES_HOUSE_URL = "https://find-and-update.company-information.service.gov.uk/company/16728292";
 
 export function ClientDashboard({
   t,
@@ -374,6 +376,15 @@ export function ClientDashboard({
                 )}
               </button>
             ))}
+            <a
+              href={COMPANIES_HOUSE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[0.8125rem] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="flex-1 text-start">{t("menuLicense")}</span>
+            </a>
             <div className="my-2 h-px bg-slate-100" />
             <button
               onClick={signOut}
@@ -575,6 +586,16 @@ export function ClientDashboard({
                     )}
                   </button>
                 ))}
+                <a
+                  href={COMPANIES_HOUSE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setDrawer(false)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-[0.84375rem] font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="flex-1 text-start">{t("menuLicense")}</span>
+                </a>
               </div>
               <div className="border-t border-slate-200/80 p-2">
                 <button
