@@ -187,6 +187,7 @@ export interface StaffMember {
   id: string;
   name: string;
   email: string;
+  passwordHash?: ClientPasswordHash;
   role: string;
   status: "ACTIVE";
   lastLogin: string;
@@ -250,6 +251,7 @@ export interface ClientView {
 }
 
 export type PublicClient = Omit<Client, "passwordHash">;
+export type PublicStaffMember = Omit<StaffMember, "passwordHash"> & { hasPassword: boolean };
 
 /** Admin payload — clients + financials, all txs, notifications, audit, comments, staff. */
 export interface AdminSnapshot {
@@ -259,7 +261,7 @@ export interface AdminSnapshot {
   notifications: Notification[];
   audit: AuditEntry[];
   comments: Record<string, ClientComment[]>;
-  staff: StaffMember[];
+  staff: PublicStaffMember[];
   roles: AdminRole[];
   stats: AdminStats;
   fx: Record<string, number>; // admin-managed reference rates (USD-based)
@@ -317,7 +319,7 @@ export type AdminAction =
   | { action: "mark-read"; id: string }
   | { action: "mark-all-read" }
   | { action: "add-comment"; clientId: string; body: string }
-  | { action: "add-staff"; name: string; email: string; role: string }
+  | { action: "add-staff"; name: string; email: string; role: string; password: string }
   | { action: "remove-staff"; id: string }
   | { action: "change-admin-password"; current: string; next: string };
 

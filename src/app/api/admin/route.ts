@@ -478,9 +478,15 @@ export async function POST(req: NextRequest) {
 
   if (body.action === "add-staff") {
     if (!body.name.trim() || !body.email.trim()) return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
+    if (!body.password || body.password.length < 6) return NextResponse.json({ ok: false, error: "weak" }, { status: 400 });
+    const email = body.email.trim().toLowerCase();
+    const passwordHash = hashPassword(body.password);
+    if (data.staff.some((m) => m.email.toLowerCase() === email) || data.adminUser.email.toLowerCase() === email) {
+      return NextResponse.json({ ok: false, error: "taken" }, { status: 409 });
+    }
     mutate((d) => {
-      d.staff = [...d.staff, { id: uid("st"), name: body.name.trim(), email: body.email.trim(), role: body.role || "Agent", status: "ACTIVE" as const, lastLogin: "—" }];
-      pushAudit(d, "Create Staff", "STAFF", JSON.stringify({ email: body.email.trim(), role: body.role || "Agent", status: "ACTIVE" }));
+      d.staff = [...d.staff, { id: uid("st"), name: body.name.trim(), email, passwordHash, role: body.role || "Agent", status: "ACTIVE" as const, lastLogin: "—" }];
+      pushAudit(d, "Create Staff", "STAFF", JSON.stringify({ email, role: body.role || "Agent", status: "ACTIVE", password: "set" }));
     });
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }

@@ -232,6 +232,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("Agent");
 
   const add = async () => {
@@ -239,10 +240,15 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
       ctx.toast("Missing information", "Name and email are required.");
       return;
     }
-    const ok = await ctx.runAction({ action: "add-staff", name: name.trim(), email: email.trim(), role }, { title: "Staff added", description: `${email.trim()} can now access the admin panel.` });
+    if (password.length < 6) {
+      ctx.toast("Weak password", "The staff password must be at least 6 characters.");
+      return;
+    }
+    const ok = await ctx.runAction({ action: "add-staff", name: name.trim(), email: email.trim(), password, role }, { title: "Staff added", description: `${email.trim()} was created with a staff password.` });
     if (ok) {
       setName("");
       setEmail("");
+      setPassword("");
       setRole("Agent");
       setAddOpen(false);
     }
@@ -387,6 +393,10 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
         <div className="space-y-4">
           <TextInput label="Full Name *" value={name} onChange={setName} placeholder="Staff member name" />
           <TextInput label="Email *" type="email" value={email} onChange={setEmail} placeholder="staff@cryptowiseuk.com" />
+          <div>
+            <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Password *</span>
+            <PasswordInput theme="light" value={password} onChange={setPassword} placeholder="Staff sign-in password (min. 6 chars)" autoComplete="new-password" />
+          </div>
           <div>
             <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Role *</span>
             <Select value={role} onChange={setRole} options={ctx.state.roles.map((r) => ({ value: r.name, label: r.name }))} />

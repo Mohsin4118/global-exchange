@@ -654,7 +654,7 @@ export function adminSnapshot(): AdminSnapshot {
     notifications: [...data.notifications].sort((a, b) => b.createdAtISO.localeCompare(a.createdAtISO)),
     audit: data.audit,
     comments,
-    staff: data.staff,
+    staff: data.staff.map(({ passwordHash: _drop, ...staff }) => ({ ...staff, hasPassword: Boolean(_drop) })),
     roles: data.roles,
     stats,
     fx: data.fx,

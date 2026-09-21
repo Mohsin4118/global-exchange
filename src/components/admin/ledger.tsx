@@ -346,7 +346,7 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
 
       <Card className="mt-5">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
+          <table className="w-full min-w-[1080px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-left text-[0.8125rem] font-medium text-slate-500">
                 <th className="w-10 px-4 py-4" />
@@ -357,6 +357,7 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
                 <th className="px-4 py-4 text-right font-medium">Amount</th>
                 <th className="px-4 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 text-right font-medium">Balance After</th>
+                <th className="px-6 py-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -378,11 +379,14 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
                     </td>
                     <td className="px-4 py-4"><StatusBadge status={t.status} /></td>
                     <td className="whitespace-nowrap px-6 py-4 text-right font-bold tabular-nums text-slate-900" dir="ltr">{usd(t.balanceAfter)}</td>
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <TxActions tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} />
+                    </td>
                   </tr>
                   {expanded === t.id && (
                     <tr className="border-b border-slate-50 bg-slate-50/70">
                       <td />
-                      <td colSpan={7} className="px-4 pb-5">
+                      <td colSpan={8} className="px-4 pb-5">
                         <RequestManager tx={t} ctx={ctx} onEdit={() => setEditing(t)} onDelete={() => setDeleting(t)} />
                       </td>
                     </tr>
@@ -391,7 +395,7 @@ export function TransactionsPage({ ctx }: { ctx: AdminCtx }) {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-14 text-center text-sm text-slate-500">No transactions match your filters.</td>
+                  <td colSpan={9} className="px-6 py-14 text-center text-sm text-slate-500">No transactions match your filters.</td>
                 </tr>
               )}
             </tbody>
@@ -701,7 +705,9 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [statusEditing, setStatusEditing] = useState<TxRow | null>(null);
   const [editing, setEditing] = useState<TxRow | null>(null);
+  const [deleting, setDeleting] = useState<TxRow | null>(null);
 
   const filtered = ctx.state.txs.filter((t) => {
     if (t.kind !== "withdrawal") return false;
@@ -712,7 +718,7 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
   });
 
   const pendingTotal = filtered.filter((t) => t.status === "PENDING" || t.status === "PROCESSING").reduce((s, t) => s + t.amount, 0);
-  const editingW = editing ? filtered.find((w) => w.id === editing.id) ?? null : null;
+  const editingW = statusEditing ? filtered.find((w) => w.id === statusEditing.id) ?? null : null;
 
   return (
     <div>
@@ -773,9 +779,15 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
                             </OutlineButton>
                           </>
                         )}
-                        <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" onClick={() => setEditing(w)}>
+                        <OutlineButton className="px-3 py-1.5 text-[0.8125rem]" onClick={() => setStatusEditing(w)}>
                           <Pencil className="h-3.5 w-3.5" /> Update
                         </OutlineButton>
+                        <button onClick={() => setEditing(w)} className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[0.75rem] font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </button>
+                        <button onClick={() => setDeleting(w)} className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[0.75rem] font-semibold text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600">
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -804,16 +816,36 @@ export function WithdrawalsPage({ ctx }: { ctx: AdminCtx }) {
 
       <UpdateWithdrawalModal
         withdrawal={editingW}
-        onClose={() => setEditing(null)}
+        onClose={() => setStatusEditing(null)}
         onSave={async (newStatus, note) => {
           if (!editingW) return;
           const ok = await ctx.runAction(
             { action: "set-transaction-status", id: editingW.id, status: newStatus, note: note || undefined },
             { title: `Withdrawal ${statusLabel(newStatus).toLowerCase()}`, description: `${editingW.clientName}'s request ${editingW.reference} → ${statusLabel(newStatus)} — balances recalculated and the client notified.` },
           );
-          if (ok) setEditing(null);
+          if (ok) setStatusEditing(null);
         }}
       />
+      <EditTxModal tx={editing} onClose={() => setEditing(null)} ctx={ctx} />
+      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title="Delete Withdrawal Transaction">
+        <p className="text-sm leading-relaxed text-slate-600">
+          Delete the withdrawal of <span className="font-bold">{usd(deleting?.amount ?? 0)}</span> for{" "}
+          <span className="font-semibold text-slate-900">{deleting?.clientName}</span>? Balances, statistics and the client dashboard update immediately. This cannot be undone.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <OutlineButton onClick={() => setDeleting(null)}>Cancel</OutlineButton>
+          <PrimaryButton
+            className="!bg-amber-600 hover:!bg-amber-700"
+            onClick={async () => {
+              if (!deleting) return;
+              const ok = await ctx.runAction({ action: "delete-transaction", id: deleting.id }, { title: "Withdrawal deleted", description: "Totals, balances and statistics were recalculated." });
+              if (ok) setDeleting(null);
+            }}
+          >
+            Delete Withdrawal
+          </PrimaryButton>
+        </div>
+      </Modal>
     </div>
   );
 }
