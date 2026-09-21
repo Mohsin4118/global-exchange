@@ -47,20 +47,17 @@ export function Hero({
   const ctaRow = (
     <div className="flex flex-wrap items-center gap-3">
       <button
-        onClick={onLogin}
+        onClick={onRegister ?? onLogin}
         className="group inline-flex items-center gap-2 rounded-full bg-[#00E5A0] px-7 py-3 text-[0.90625rem] font-bold text-[#022c20] shadow-[0_8px_36px_-8px_rgba(0,229,160,0.65)] hover:bg-[#2cf0b5] active:scale-[0.98] transition-all"
       >
-        {t("signIn")}
+        {t("getStarted")}
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
       </button>
-      {/* second CTA = NEW ACCOUNT REQUEST → registration form (EN: Get
-          Started / AR: انشاء حساب جديد) — falls back to the login view when
-          no registration handler is provided */}
       <button
-        onClick={onRegister ?? onLogin}
+        onClick={onLogin}
         className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.04] px-7 py-3 text-[0.90625rem] font-semibold text-white/85 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
       >
-        {t("getStarted")}
+        {t("signIn")}
       </button>
     </div>
   );
@@ -70,7 +67,6 @@ export function Hero({
   const areaPath = `${path} L560,110 L0,110 Z`;
   const lastY = useMemo(() => (path.match(/([\d.]+)\s*$/)?.[1] ?? "55"), [path]);
   const up = btc.change24h >= 0;
-
   return (
     <section id="home" className="relative overflow-hidden">
       {/* ambient glows */}
@@ -107,7 +103,7 @@ export function Hero({
             </p>
 
             {/* desktop: chips + CTAs stay inside the copy column (approved layout) */}
-            <div className="mt-7 hidden xl:block">
+            <div className="mt-6 hidden xl:block">
               {trustChips}
               <div className="mt-8">{ctaRow}</div>
             </div>
@@ -200,6 +196,29 @@ export function Hero({
             </div>
           </div>
         </motion.div>
+      </div>
+    </section>
+  );
+}
+
+export function CustodyHighlights({ t }: { t: (k: StringKey) => string }) {
+  const points = [
+    { title: t("heroPoint1Title"), desc: t("heroPoint1Desc") },
+    { title: t("heroPoint2Title"), desc: t("heroPoint2Desc") },
+    { title: t("heroPoint3Title"), desc: t("heroPoint3Desc") },
+    { title: t("heroPoint4Title"), desc: t("heroPoint4Desc") },
+    { title: t("heroPoint5Title"), desc: t("heroPoint5Desc") },
+  ];
+
+  return (
+    <section className="border-t border-white/[0.05] bg-[#020b12]/70">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-px px-4 py-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-5">
+        {points.map((point) => (
+          <div key={point.title} className="bg-[#04121c]/70 px-3.5 py-4 sm:px-4">
+            <p className="text-[0.8125rem] font-bold leading-snug text-white">{point.title}</p>
+            <p className="mt-1.5 text-[0.71875rem] leading-relaxed text-white/45">{point.desc}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
