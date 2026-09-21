@@ -109,6 +109,8 @@ export function Backoffice({ onSignOut }: { onSignOut: () => void }) {
           "client-not-found": "Select a client for this transaction.",
           amount: "Enter a valid amount greater than zero.",
           "not-found": "That record no longer exists.",
+          protected: "This protected role cannot be changed.",
+          "role-in-use": "Move staff to another role before deleting this role.",
           network: "Network error — please try again.",
         };
         toastFn("Action failed", messages[res.error ?? ""] ?? "Something went wrong. Please try again.");

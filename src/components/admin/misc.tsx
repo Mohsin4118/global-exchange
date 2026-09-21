@@ -49,6 +49,7 @@ const ACTIONS: AuditAction[] = [
   "Update Staff",
   "Create Role",
   "Update Role",
+  "Delete Role",
   "Sign In",
   "Send Notification",
   "Change Password",
@@ -234,6 +235,8 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Agent");
+  const [roleModal, setRoleModal] = useState<null | { id?: string; name: string; permissions: string }>(null);
+  const [deleteRole, setDeleteRole] = useState<AdminCtx["state"]["roles"][number] | null>(null);
 
   const add = async () => {
     if (!name.trim() || !email.trim()) {
@@ -330,7 +333,7 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
               <p className="mt-0.5 text-sm text-slate-500">Define what each role can access. Staff &amp; role management always requires Super Admin.</p>
             </div>
           </div>
-          <OutlineButton>
+          <OutlineButton onClick={() => setRoleModal({ name: "", permissions: "View, Create, Edit" })}>
             <Plus className="h-4 w-4" /> New Role
           </OutlineButton>
         </div>
@@ -373,10 +376,18 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
                   <td className="py-4 pl-4 text-right">
                     {!r.allAccess && (
                       <div className="inline-flex items-center gap-1">
-                        <button aria-label="Edit role" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                        <button
+                          aria-label="Edit role"
+                          onClick={() => setRoleModal({ id: r.id, name: r.name, permissions: r.permissions.join(", ") })}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        >
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button aria-label="Delete role" className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600">
+                        <button
+                          aria-label="Delete role"
+                          onClick={() => setDeleteRole(r)}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -405,6 +416,64 @@ export function StaffPage({ ctx }: { ctx: AdminCtx }) {
             <OutlineButton onClick={() => setAddOpen(false)}>Cancel</OutlineButton>
             <PrimaryButton onClick={add}>Add Staff</PrimaryButton>
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={roleModal !== null} onClose={() => setRoleModal(null)} title={roleModal?.id ? "Edit Role" : "New Role"}>
+        {roleModal && (
+          <div className="space-y-4">
+            <TextInput label="Role Name *" value={roleModal.name} onChange={(v) => setRoleModal({ ...roleModal, name: v })} placeholder="e.g. Compliance Officer" />
+            <label className="block">
+              <span className="mb-1.5 block text-[0.8125rem] font-medium text-slate-600">Permissions / Labels</span>
+              <textarea
+                rows={3}
+                value={roleModal.permissions}
+                onChange={(e) => setRoleModal({ ...roleModal, permissions: e.target.value })}
+                placeholder="View, Create, Edit, Delete"
+                className="w-full resize-y rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15"
+              />
+              <span className="mt-1.5 block text-[0.75rem] text-slate-400">Comma-separated labels only. These do not enforce access yet.</span>
+            </label>
+            <div className="flex justify-end gap-3 pt-2">
+              <OutlineButton onClick={() => setRoleModal(null)}>Cancel</OutlineButton>
+              <PrimaryButton
+                onClick={async () => {
+                  const name = roleModal.name.trim();
+                  const permissions = roleModal.permissions.split(",").map((p) => p.trim()).filter(Boolean);
+                  if (!name) {
+                    ctx.toast("Missing information", "Role name is required.");
+                    return;
+                  }
+                  const ok = await ctx.runAction(
+                    roleModal.id ? { action: "update-role", id: roleModal.id, name, permissions } : { action: "create-role", name, permissions },
+                    { title: roleModal.id ? "Role updated" : "Role created", description: `${name} is now available for staff assignment.` },
+                  );
+                  if (ok) setRoleModal(null);
+                }}
+              >
+                {roleModal.id ? "Save Role" : "Create Role"}
+              </PrimaryButton>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={deleteRole !== null} onClose={() => setDeleteRole(null)} title="Delete Role">
+        <p className="text-sm leading-relaxed text-slate-600">
+          Delete role <span className="font-semibold text-slate-900">{deleteRole?.name}</span>? Roles assigned to staff cannot be deleted until staff are moved to another role.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <OutlineButton onClick={() => setDeleteRole(null)}>Cancel</OutlineButton>
+          <PrimaryButton
+            className="!bg-amber-600 hover:!bg-amber-700"
+            onClick={async () => {
+              if (!deleteRole) return;
+              const ok = await ctx.runAction({ action: "delete-role", id: deleteRole.id }, { title: "Role deleted", description: `${deleteRole.name} was removed.` });
+              if (ok) setDeleteRole(null);
+            }}
+          >
+            Delete Role
+          </PrimaryButton>
         </div>
       </Modal>
     </div>

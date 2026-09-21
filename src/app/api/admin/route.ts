@@ -502,6 +502,59 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
   }
 
+  /* ---------------- roles (labels only; permissions are descriptive) ---------------- */
+
+  if (body.action === "create-role") {
+    const name = body.name.trim();
+    const permissions = body.permissions.map((p) => p.trim()).filter(Boolean);
+    if (!name) return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
+    if (data.roles.some((r) => r.name.toLowerCase() === name.toLowerCase())) {
+      return NextResponse.json({ ok: false, error: "taken" }, { status: 409 });
+    }
+    mutate((d) => {
+      d.roles = [...d.roles, { id: uid("r"), name, permissions, staffCount: 0 }];
+      pushAudit(d, "Create Role", "ROLE", JSON.stringify({ name, permissions }));
+    });
+    return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
+  }
+
+  if (body.action === "update-role") {
+    const target = data.roles.find((r) => r.id === body.id);
+    if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+    if (target.allAccess) return NextResponse.json({ ok: false, error: "protected" }, { status: 403 });
+    const name = body.name.trim();
+    const permissions = body.permissions.map((p) => p.trim()).filter(Boolean);
+    if (!name) return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
+    if (data.roles.some((r) => r.id !== body.id && r.name.toLowerCase() === name.toLowerCase())) {
+      return NextResponse.json({ ok: false, error: "taken" }, { status: 409 });
+    }
+    mutate((d) => {
+      const role = d.roles.find((r) => r.id === body.id)!;
+      const old = { name: role.name, permissions: role.permissions };
+      role.name = name;
+      role.permissions = permissions;
+      for (const member of d.staff) {
+        if (member.role === old.name) member.role = name;
+      }
+      pushAudit(d, "Update Role", "ROLE", JSON.stringify({ name, permissions }), JSON.stringify(old));
+    });
+    return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
+  }
+
+  if (body.action === "delete-role") {
+    const target = data.roles.find((r) => r.id === body.id);
+    if (!target) return NextResponse.json({ ok: false, error: "not-found" }, { status: 404 });
+    if (target.allAccess) return NextResponse.json({ ok: false, error: "protected" }, { status: 403 });
+    if (data.staff.some((m) => m.role === target.name)) {
+      return NextResponse.json({ ok: false, error: "role-in-use" }, { status: 409 });
+    }
+    mutate((d) => {
+      d.roles = d.roles.filter((r) => r.id !== body.id);
+      pushAudit(d, "Delete Role", "ROLE", JSON.stringify({ name: target.name, removed: true }));
+    });
+    return NextResponse.json({ ok: true, snapshot: adminSnapshot() });
+  }
+
   /* ---------------- admin password ---------------- */
 
   if (body.action === "change-admin-password") {

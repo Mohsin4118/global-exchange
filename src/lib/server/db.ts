@@ -655,7 +655,10 @@ export function adminSnapshot(): AdminSnapshot {
     audit: data.audit,
     comments,
     staff: data.staff.map(({ passwordHash: _drop, ...staff }) => ({ ...staff, hasPassword: Boolean(_drop) })),
-    roles: data.roles,
+    roles: data.roles.map((role) => ({
+      ...role,
+      staffCount: data.staff.filter((member) => member.role === role.name).length,
+    })),
     stats,
     fx: data.fx,
   };

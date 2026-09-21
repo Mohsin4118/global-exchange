@@ -158,6 +158,7 @@ export type AuditAction =
   | "Create Staff"
   | "Create Role"
   | "Update Role"
+  | "Delete Role"
   | "Sign In"
   | "Send Notification"
   | "Change Password"
@@ -321,6 +322,9 @@ export type AdminAction =
   | { action: "add-comment"; clientId: string; body: string }
   | { action: "add-staff"; name: string; email: string; role: string; password: string }
   | { action: "remove-staff"; id: string }
+  | { action: "create-role"; name: string; permissions: string[] }
+  | { action: "update-role"; id: string; name: string; permissions: string[] }
+  | { action: "delete-role"; id: string }
   | { action: "change-admin-password"; current: string; next: string };
 
 export interface NewClientInput {
